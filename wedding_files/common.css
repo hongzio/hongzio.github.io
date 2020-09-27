@@ -1,0 +1,503 @@
+﻿@charset "UTF-8"; /*@charset "euc-kr"; */
+
+/*UI CSS*/
+@import url("/resources/css/ui/selectric_default.css");
+@import url("/resources/css/ui/scrollbar.css");
+
+/************************************************************************
+ * 최적화       : html5
+ * 서비스       : ***** 사이트 공통
+ * 최초작성일   : 140101
+ * 작성자       : ***
+************************************************************************/
+
+/*■■ 채널의 기본 element 정의 ■■*/
+/* html5 element make
+----------------------- */
+article, aside, details, figcaption, figure, footer, header, hgroup, main, nav, section, summary { display: block; }
+audio, canvas, video { display: inline-block;  *display: inline; *zoom: 1;}
+/* * Prevent modern browsers from displaying `audio` without controls.  * Remove excess height in iOS 5 devices.  */
+audio:not([controls]) { display: none; height: 0; }
+/** Address styling not present in IE 7/8/9, Firefox 3, and Safari 4. * Known issue: no IE 6 support.*/
+[hidden] { display: none;}
+
+/* Base
+----------------------- */
+* {-webkit-text-size-adjust: none; -moz-text-size-adjust: none;-ms-text-size-adjust: none;text-size-adjust: none;} 
+html {font:16px/1.2 "맑은 고딕", "Malgun Gothic", "나눔고딕", "NanumGothic", "NanumGothicWEB", "돋움", Dotum, "굴림", Gulim, sans-serif; color:#666; letter-spacing:-1px; }
+html, button, input, select, textarea {font:16px/1.2 "맑은 고딕", "Malgun Gothic", "나눔고딕", "NanumGothic", "NanumGothicWEB", "돋움", Dotum, "굴림", Gulim, sans-serif; color:#666; letter-spacing:-1px;}
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, abbr, address, cite, code, del, dfn, em, img, ins, kbd, q, samp, small, strong, sub, sup, var, b, i, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, figcaption, figure, footer, header, hgroup, menu, nav, section, summary, time, mark, audio, video, input { margin: 0; padding: 0; vertical-align: baseline;}
+
+/* Links
+----------------------- */
+a:focus { outline: thin dotted; }
+a:active, a:hover { outline: 0; }
+
+/* Typography
+----------------------- */
+h1,h2,h3,h4,h5,h6 { font-weight:normal;}
+h1 {}
+h2 {}
+h3 {}
+h4 {}
+h5 {}
+h6 {}
+
+/* mark,인용
+----------------------- */
+abbr[title] { border-bottom: 1px dotted;}
+b, strong { font-weight: normal; color:#2e96ff;}
+blockquote {}
+pre {}
+hr { -moz-box-sizing: content-box; box-sizing: content-box; height: 0; display:none; margin:50px 0;}
+mark { background: #ff0; color: #000; }
+pre { white-space: pre; white-space: pre-wrap; word-wrap: break-word; }
+small { font-size: 80%; }
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
+sup { top: -2px; }
+sub { bottom: -2px; }
+
+/* Lists
+----------------------- */
+ul, ol { list-style: none; list-style-image: none; }
+
+/* Embedded content
+----------------------- */
+img { border: 0; -ms-interpolation-mode: bicubic;}
+input+img {vertical-align:middle}
+input+a>img {vertical-align:middle}
+svg:not(:root) { overflow: hidden; }
+
+/* Forms
+----------------------- */
+button, input, select, textarea { font-size: 100%; vertical-align:baseline; *vertical-align: middle;}
+button, input { line-height: normal;}
+button {display:inline-block; #display:inline; zoom:1; border:none; background-color:transparent; margin:0; padding:0; vertical-align:middle;}
+	button img { vertical-align:middle}
+button, select { text-transform: none; }
+button, html input[type="button"], input[type="reset"], input[type="submit"] { -webkit-appearance: button; cursor: pointer; *overflow: visible;}
+button[disabled], html input[disabled] { cursor: default; }
+input[type="checkbox"], input[type="radio"] { box-sizing: border-box; margin-right:2px;}
+input[type="radio"] { margin-top:-3px;}
+input[type="checkbox"] { margin-top:-3px;}
+input[type="search"] { -webkit-appearance: textfield; -moz-box-sizing: content-box; -webkit-box-sizing: content-box; box-sizing: content-box; }
+input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration {-webkit-appearance: none;}
+button::-moz-focus-inner, input::-moz-focus-inner { border: 0; padding: 0;}
+textarea { overflow: auto; vertical-align: top;}
+input, select { vertical-align:middle;}
+label { padding-right:5px;}
+
+/* Tables
+----------------------- */
+table {border-collapse: collapse; empty-cells:show; border-spacing: 0;}
+table th,table td {border:1px solid #ccc;}
+caption {visibility:hidden; left:-10000px; text-indent:-10000px; width:0; height:0; font-size:0;}
+
+
+
+/*■■ 채널의 공통영역 정의 ■■
+-------------------------------------------------------------------------- */
+/* 기본 링크 정의
+----------------------- */
+a {color:#444; text-decoration:none;}
+
+
+/* 링크 정의
+----------------------- */
+	
+/* font 정의
+----------------------- */
+.b_font_b {font-weight:bold !important;}
+.b_font_n {font-weight:normal !important;}
+
+/* Background Color 정의
+----------------------- */
+.jtxton		{background-color:#e9f3f8 !important; color:#244859; border:1px solid #94caed !important; outline:none;}
+.jtxtoff	{background-color:#f6f6f6  !important;}
+	
+/* Text 정의
+----------------------- */
+.b_talign_l {text-align:left !important;} 
+.b_talign_r {text-align:right !important;}
+.b_talign_c {text-align:center !important;}
+
+
+/* Vertical 정의
+----------------------- */
+.b_valin_t {vertical-align:top;}
+
+/* border 정의
+----------------------- */
+
+
+/* margin,padding 정의
+----------------------- */
+.b_mt0 {margin-top:0px;}
+.b_mt10 {margin-top:10px;}
+.b_mt20 {margin-top:20px;}
+.b_mt30 {margin-top:30px;}
+.b_mt40 {margin-top:40px;}
+.b_mt50 {margin-top:50px;}
+.b_mb0 {margin-bottom:0px;}
+.b_mb10 {margin-bottom:10px;}
+.b_mb20 {margin-bottom:20px;}
+.b_mb30 {margin-bottom:30px;}
+.b_mb40 {margin-bottom:40px;}
+.b_mb50 {margin-bottom:50px;}
+
+.b_p0	{padding:0px !important;}
+.b_pt0	{padding-top:0px !important;}
+.b_pt5	{padding-top:5px !important;}
+.b_pt10	{padding-top:10px !important;}
+.b_pt15	{padding-top:15px !important;}
+.b_pt20	{padding-top:20px !important;}
+.b_pt50	{padding-top:50px !important;}
+.b_pl10	{padding-left:10px !important;}
+.b_pl20	{padding-left:20px !important;}
+.b_pl29	{padding-left:29px !important;}
+.b_pl39	{padding-left:39px !important;}
+.b_pl110 {padding-left:110px !important;}
+.b_pr0	{padding-right:0px !important;}
+.b_pr4	{padding-right:4px !important;}
+.b_pb40 {padding-bottom:40px !important;}
+.b_p0030	{padding:0 0 30px !important;}
+.b_p010	{padding:0 10px !important;}
+
+/* Float 정의
+----------------------- */
+.b_float_l {float:left;}
+.b_float_r {float:right;}
+
+/* position 정의
+----------------------- */
+	
+/* clear 정의
+----------------------- */
+.clearfix:before,
+.clearfix:after {content: "";display: table;} 
+.clearfix:after {clear: both;}
+.clearfix {zoom: 1; /* For IE 6/7 (trigger hasLayout) */}
+.b_clear {height:1%; overflow:hidden;} /*%를 이용한 Float의 초기화시 브라우져 크기에 따라 떨어짐오류발생 주의바람*/
+.b_clear {clear:both;}
+	
+/* Display 정의 (IR기법정의)
+----------------------- */
+.b_dp_hidden, .hidden {overflow:hidden; text-indent:-5000px; position:absolute; line-height:0; font-size:0; width:0; height:0;} /*자막 읽어줌, 단순히 Taxt를 숨기기위해 사용)*/
+/*보류 .b_dp_hidden {position:absolute; z-index:-1; visibility:hidden; width:0; height:0; font-size:0;line-height:0;} 자막 읽어줌, 단순히 Taxt를 숨기기위해 사용)*/
+.b_dp_blind, .blind {display:none;} /*자막 안 읽어줌 완전히 숨겨야 될때 사용(Tab)*/
+
+/* 인쇄 잘리기 정의
+----------------------- */
+
+
+
+
+/*■■ 채널 공통 템플릿 정의 ■■
+-------------------------------------------------------------------------- */
+/* 표 table or Div Style 정의 : Table안의 Table 사용가능하게 정의
+----------------------- */
+.b_dtable_1 { background-color:#fff; margin-top:10px;}
+	.b_dtable_1 dl {border-bottom:1px solid #d9d9d9;}
+		.b_dtable_1 dl:before,
+		.b_dtable_1 dl:after {content: "";display: table;} 
+		.b_dtable_1 dl:after {clear: both;}
+		.b_dtable_1 dl {zoom: 1; /* For IE 6/7 (trigger hasLayout) */}
+	.b_dtable_1 dt,.b_dtable_1 dd { float:left; text-align:left;}
+	.b_dtable_1 dt { width:25%; color:#333333; min-height:46px; line-height:46px; padding:15px 0;}
+		.b_dtable_1 dt p {padding-left:40px;}
+	.b_dtable_1 dd { width:75%; min-height:46px; line-height:46px; padding:15px 0;}
+		.b_dtable_1 dd input { height:38px; line-height:38px; background-color:#F8F8F8; border:1px solid #ddd; padding-left:5px;}
+		.b_dtable_1 dl.addr dd .row:first-child input { padding-left:2px; padding-right:3px;}/*우편번호 input*/
+		.b_dtable_1 dd .selectric .label { text-align:center}
+		.b_dtable_1 dd span.noti { font-size:14px; color:#cc3333; padding-left:10px;}
+		.b_dtable_1 dd p.noti2 { font-size:14px; color:#cc3333; padding-left:10px; line-height:1.4; margin-top:20px;}
+
+	/*row 정의*/
+	.b_dtable_1 dd div.row { padding-top:5px; line-height:1.2}
+	.b_dtable_1 dd div:first-child.row { padding-top:0;}
+	/*mark 정의*/
+	.b_dtable_1 dt.mark {background:url('/resources/img_inc/icon_mark.png') no-repeat 20px 50%;}
+
+/* 리스트 Table or Div Style 정의 : Table안의 Table 사용가능하게 정의
+----------------------- */
+
+/* table_top 정의
+----------------------- */
+
+/* box 정의
+----------------------- */
+
+/* select 정의
+----------------------- */
+.b_sel_line { display:inline-block; #display:inline; zoom:1; vertical-align:middle}
+	.b_sel_line+span {padding:0 10px 0 5px}
+	.b_sel_line+label { vertical-align:middle; padding:0 10px 0 5px}
+	.b_sel_line select {vertical-align:middle}
+
+/* Title Style 정의
+----------------------- */
+		
+/* list Style 정의 - Contents List영역(2~6줄)의 정의
+----------------------- */
+
+/* notice Style 정의
+----------------------- */
+.b_noti01 li { text-align:left; font-size:14px;background:url('/resources/img_inc/bul_4x2.png') no-repeat 5px 7px; padding-left:15px; padding-bottom:10px;}
+.noti_mark {background:url('/resources/img_inc/icon_mark.png') no-repeat 20px 50%; text-align:left; font-size:14px; padding-left:40px;}
+.noti_email {margin-top:10px;}
+	.noti_email p {font-size:14px; padding-left:25px; margin-top:5px;}
+
+
+/* Tab Style 정의
+----------------------- */
+.jbtn_a dd:focus,.jbtn_a li:focus { outline:0;}
+.jbtn_a label {cursor:pointer;}
+.jbtnlist_a { clear:both;}
+
+
+/* Bullet(title용) 정의
+----------------------- */
+	
+/* Bullet(list용) 정의
+----------------------- */
+
+/* line 정의
+----------------------- */
+
+/* Icon 정의
+----------------------- */
+
+/* box 정의
+----------------------- */
+.ico_loading { vertical-align:middle;}
+
+/* form check,radio 정의
+----------------------- */
+/*기본세팅*/
+.ez-hide { opacity:0; filter:alpha(opacity=0);}
+	.input_b {display:inline-block; #display:inline; zoom:1; vertical-align:middle}
+	.input_b .ez-checkbox,.input_b .ez-radio { display:inline-block; #display:inline; zoom:1; margin-right:5px; background-image:url('/resources/img_inc/set_check.png'); background-repeat:no-repeat; vertical-align:top}
+	.input_b .ez-checkbox+label, .input_b .ez-radio+label,
+	.input_b .ez-checkbox input,.input_b .ez-radio input {cursor:pointer}
+	/*Type 정의*/
+	
+	/*34px*/
+	.size_big.input_b	{line-height:34px;}
+		.size_big input,
+		.size_big .ez-checkbox,
+		.size_big .ez-radio {height:34px; width:34px;}
+		/*checkbox*/
+		.size_big.type1 .ez-checkbox				{background-position:0 0;}
+		.size_big.type1 .ez-checkbox.ez-checked 	{background-position:-50px 0}
+		.size_big.type2 .ez-checkbox				{background-position:0 -50px;}
+		.size_big.type2 .ez-checkbox.ez-checked 	{background-position:-50px -50px}
+		/*radio*/
+		.size_big.type1 .ez-radio 				{background-position:-150px 0;}
+		.size_big.type1 .ez-radio.ez-selected 	{background-position:-200px 0}
+		.size_big.type2 .ez-radio 				{background-position:-150px -50px;}
+		.size_big.type2 .ez-radio.ez-selected 	{background-position:-200px -50px;}
+		
+	/*26px*/
+	.size_md.input_b	{line-height:26px;}
+		.size_md input,
+		.size_md .ez-checkbox,
+		.size_md .ez-radio {height:26px; width:26px;}
+		/*checkbox*/
+		.size_md.type1 .ez-checkbox				{background-position:0 -100px;}
+		.size_md.type1 .ez-checkbox.ez-checked 	{background-position:-50px -100px}
+		.size_md.type2 .ez-checkbox				{background-position:0 -150px;}
+		.size_md.type2 .ez-checkbox.ez-checked 	{background-position:-50px -150px}
+		/*radio*/
+		.size_md.type1 .ez-radio 					{background-position:-150px -100px;}
+		.size_md.type1 .ez-radio.ez-selected 		{background-position: -200px -100px}
+		.size_md.type2 .ez-radio 					{background-position:-150px -150px;}
+		.size_md.type2 .ez-radio.ez-selected 		{background-position: -200px -150px}
+	
+	/*20px*/
+	.size_sm.input_b	{line-height:20px;}
+		.size_sm input,
+		.size_sm .ez-checkbox,
+		.size_sm .ez-radio {height:20px; width:20px;}
+		/*checkbox*/
+		.size_sm.type1 .ez-checkbox				{background-position:0 -200px;}
+		.size_sm.type1 .ez-checkbox.ez-checked 	{background-position:-50px -200px}
+		.size_sm.type2 .ez-checkbox				{background-position:0 -250px;}
+		.size_sm.type2 .ez-checkbox.ez-checked 	{background-position:-50px -250px}
+		.size_sm.type3 .ez-checkbox				{background-position:0 -300px;}
+		.size_sm.type3 .ez-checkbox.ez-checked 	{background-position:-50px -300px}
+		/*radio*/
+		.size_sm.type1 .ez-radio 					{background-position:-150px -200px;}
+		.size_sm.type1 .ez-radio.ez-selected 		{background-position: -200px -200px}
+		.size_sm.type2 .ez-radio 					{background-position:-150px -250px;}
+		.size_sm.type2 .ez-radio.ez-selected 		{background-position: -200px -250px}
+		.size_sm.type3 .ez-radio 					{background-position:-150px -300px;}
+		.size_sm.type3 .ez-radio.ez-selected 		{background-position: -200px -300px}
+		
+
+/* button Style 정의
+----------------------- */
+.b_btn_a { text-align:center; margin-top:50px;}
+
+.b_btn {background:url('/resources/img_inc/line_box_rightbottom.png') no-repeat right bottom; display:inline-block; vertical-align:middle}
+	.b_btn span { display:block; text-align:center;}
+	
+.b_btn.type1 {background-color:#2e96ff; }
+	.b_btn.type1 span {height:40px; line-height:40px; font-size:18px; background:url('/resources/img_inc/bul_arrow1_right.png') no-repeat right 50%; padding-left:20px; padding-right:50px; color:#fff;}
+.b_btn.type2 {background-color:#2e96ff; }
+	.b_btn.type2 span {height:60px; line-height:60px; font-size:22px; text-align:center;color:#fff; min-width:300px;}
+	.b_btn.type2.right span {height:60px; line-height:60px; font-size:22px; background:url('/resources/img_inc/bul_arrow2_right.png') no-repeat right 50%; text-align:center;color:#fff;min-width:300px;}
+	.b_btn.type2.left span {height:60px; line-height:60px; font-size:22px; background:url('/resources/img_inc/bul_arrow2_left.png') no-repeat left 50%; text-align:center; color:#fff;min-width:300px;}
+
+.b_btn.type3 {background-color:#2e96ff; }
+	.b_btn.type3 span {height:40px; line-height:40px; font-size:16px; padding-left:10px; padding-right:10px; color:#fff;}
+	.b_btn.type3.pop span {background:url('/resources/img_inc/bul_pop_right.png') no-repeat right 50%; padding-right:35px;}
+	.b_btn.type3.check span {background:url('/resources/img_inc/bul_chcek_right.png') no-repeat right 50%; padding-right:40px;}
+	.b_btn.type3.del span {background:url('/resources/img_inc/bul_del_right.png') no-repeat right 50%; padding-right:40px;}
+	
+	
+.b_btn.type4 {background-color:#fff; border-radius:4px;-webkit-box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.2);box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.2);}
+	.b_btn.type4 span {height:70px; width:300px; line-height:70px; font-size:24px; color:#ab5252;}
+
+.b_btn.type5  {background-color:#e0e0e0; border-radius:4px;-webkit-box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.2);box-shadow: 1px 1px 1px 0 rgba(0,0,0,0.2);}
+	
+	/*추가정의*/
+	.b_btn.dim {background-color:#7fa9d3;}
+	.b_btn:hover {-webkit-box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.3);box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.3);}	
+    /*추가정의*/
+	.b_btn.black {background-color:#666666;}
+	.b_btn.blue {background-color:#3f86da;}
+	.b_btn.disable {background-color:#c9c9c9;}
+	
+.b_btn_help1 { background:url('/resources/img_inc/btn_help.png') no-repeat left top; display:inline-block; width:23px; height:23px; vertical-align:middle; margin-left:6px;}
+/* pagination 정의
+----------------------- */
+
+/* search 정의
+----------------------- */
+
+/* Scroll 정의
+----------------------- */
+
+/* animaton 정의
+----------------------- */
+.authway_a dl a,
+.authway_a dl dd img,
+.j_tab_01>dd,.j_tab_01>li {-webkit-transition:all .3s ease-out;-moz-transition:all .3s ease-out;-ms-transition:all .3s ease-out;-o-transition:all .3s ease-out;transition:all .3s ease-out;}
+.b_btn {-webkit-transition:all .2s linear;-moz-transition:all .2s linear;-ms-transition:all .2s linear;-o-transition:all .2s linear;transition:all .2s linear;}
+
+/*■■ 채널 공통 레이아웃, 디자인 ID,Class,Element 정의 ■■
+-------------------------------------------------------------------------- */
+/* 전체 Width정의
+----------------------- */
+html,body {width:100%;}
+/*.wrap {width:100%; min-width:1100px;}*/
+.head_a_in,.cont_a_in,.familysite_a_in,.step_a_in { width:1100px; margin:0 auto;}
+
+/* SGNB GNB or Header 영역
+----------------------- */
+.head_a { background-color:#fff;}
+	.head_a_in { position:relative; height:60px;}
+	.head_a .ci { float:left; margin-top:18px;}
+		.head_a .ci img { margin-left:10px;}
+	.head_a .bi { float:right; margin-top:18px; text-align:right;}
+		.head_a .bi img { margin-right:10px; }
+	
+/* body 영역	
+----------------------- */
+html {}
+body { background-color:#292a37;}
+
+/* Left 영역
+----------------------- */
+
+/* content 영역
+----------------------- */
+.cont_a { background-color:#f1f1f1; text-align:center; padding:40px 0 50px 0 ;}
+	
+/* footer 영역
+----------------------- */
+.foot_a	{ text-align:center; padding:30px 0 50px; clear:both; color:#aeaeae;}
+.foot_a strong	{ color:#fff;}
+
+
+/*■■ ETC 레이아웃, 디자인 ID,Class,Element 정의 ■■
+-------------------------------------------------------------------------- */
+.b_samplepage_p { padding:20px; background-color:#333; color:#FF3; font:20px/1.6 "맑은 고딕", "Malgun Gothic", "나눔고딕", "NanumGothic", "NanumGothicWEB", "돋움", Dotum, "굴림", Gulim, sans-serif; text-align:center; position: fixed; width:100%; z-index:10000}
+	.b_samplepage_p+.wrap { padding-top:72px;}
+/*롤링배너
+------------------------------------------*/
+.clsBanner {position:relative;float:left}
+	.clsBannerButton {z-index:999;}
+	.clsBannerScreen {z-index:1;}
+	.clsBannerScreen div {display:none;}
+	.affiliated_join {width:850px;height:162px;border:1px solid #cadae3; margin:0 auto; background-color:#fff; margin-top:40px;}
+	.affiliated_join .aff_list {position:absolute;left:0px;top:0px;padding:12px 0 0;font-size:0px;width:850px;height:25px;text-align:center;border-bottom:1px solid #cadae3;}
+	.affiliated_join .aff_list li{ font:13px/1.2 "맑은 고딕", "Malgun Gothic", "나눔고딕", "NanumGothic", "NanumGothicWEB", "돋움", Dotum, "굴림", Gulim, sans-serif; color:#666; display:inline-block; padding:0 10px; font-weight:bold; cursor:pointer; background:url('/resources/img_inc/line_1x10.png') no-repeat left 3px;}
+	.affiliated_join .aff_list li:first-child { background:none;}
+	.affiliated_join .aff_list li.labelOverClass { color:#33a0d7;}
+	.affiliated_join .aff_bnr {position:absolute;left:0px;top:38px;font-size:0px;margin:0;width:850px;height:124px; text-align:center;}
+	
+/*스텝
+------------------------------------------*/
+.step_a {background:url('/resources/img_inc/bg_pattern01.png') repeat left top;}
+	.step_a_in {text-align:center;} 
+	.step_a_in .tit { padding:35px 0;}
+	.step_a_in .tit+ul {height:1%; overflow:hidden;}
+	.step_a_in ul li { width:270px; background-color:#3779d1; float:left; margin-left:1px;}
+	.step_a_in ul li:first-child { margin-left:0;}
+	.step_a_in ul li.on {width:287px; background-color:#2e96ff;}
+	.step_a_in {text-align:center;} 
+	.step_two ul li {width:549px; background-color:#3779d1; float:left; margin-left:1px;}
+	.step_two ul li.on {width:550px; background-color:#2e96ff;}
+	
+/*패밀리 사이트
+------------------------------------------*/
+.familysite_a { background-color:#fff; text-align:center;}
+	.familysite_a_in  {padding:30px 0 10px;}
+	.familysite_a .tit { color:#1d61b2; font-size:20px; padding-bottom:20px;}
+	.familysite_a .list_a dl { height:1%; overflow:hidden;border-bottom:1px solid #efeff0; padding-bottom:20px;}
+	.familysite_a .list_a dt {text-align:center; background:url('/resources/img_inc/line_20x1_2.png') no-repeat 50% bottom; color:#3f86da; margin-bottom:10px; padding-bottom:5px;}
+	.familysite_a .list_a dd { margin-left:30px; display:inline-block}
+	.familysite_a .list_a dt+dd {margin-left:0;}
+	.familysite_a .list_a dl+dl { border-bottom:none;}
+	.familysite_a .list_a dl+dl dt { padding-top:20px; }
+	
+/*이용약관
+------------------------------------------*/
+/*폰트정의*/
+.policy_a { font-size:14px}
+.policy_a * { word-break:break-all;word-wrap:break-word;}
+.policy_a h3,.policy_a p,.policy_a ul,.policy_a ol { font-size:1em;} /*same size*/
+/*기타*/
+.policy_a h3 { font-weight:bold; padding:20px 0 10px; color:#333;}
+.policy_a p {padding:5px 0;}
+.policy_a ul li { padding:4px 0; line-height:1.2;}
+.policy_a ul ul,
+.policy_a ul ol { margin-top:5px;}
+/*li타입정의*/
+.policy_a ul li * { text-indent:0}
+.policy_a ul.type_hyphen li {padding-left:9px; text-indent:-9px;}
+.policy_a ul.type_abc li {padding-left:15px; text-indent:-15px;}
+.policy_a ul.type_star li {padding-left:9px; text-indent:-9px;}
+.policy_a ul.type_num li { padding-left:13px; text-indent:-13px;}
+/*table정의*/
+.policy_a table { width:100%; margin-top:20px; margin-bottom:20px; font-size:0.938em}
+.policy_a table.header_h tr:first-child td { background-color:#efefef; color:#333; text-align:center}
+.policy_a table.header_h tr:first-child td strong { color:#333}
+.policy_a table.header_h tr:first-child td p { text-align:center; }
+.policy_a table.header_h td { padding:6px 0; text-align:left; padding-left:5px;}
+.policy_a table td p { text-align:left;}
+
+/*삼성전자용 - 구 바른손,비핸즈포맷*/
+.samsungpolicy_a * { }
+.samsungpolicy_a { line-height:1.4; }
+.samsungpolicy_a h1+h3 { margin-top:5px;}
+.samsungpolicy_a pre h1+h3 { margin-top:-5px;}
+.samsungpolicy_a h4 { margin-top:10px;}
+.samsungpolicy_a h3+h4 { margin-top:2px}
+.samsungpolicy_a ol {list-style-position: outside; list-style-type:decimal; color:#666;margin-left:20px;#margin-left:25px;}
+.samsungpolicy_a ul {list-style-position: outside; list-style-type:disc; color:#777;margin-left:15px;}
+	.samsungpolicy_a ol>li { padding-top:5px}
+	.samsungpolicy_a ol>li>ol {margin-left:20px; margin-top:2px; margin-bottom:10px;}
+	.samsungpolicy_a ol>li>ul {margin-top:2px; margin-bottom:10px;}
+	.samsungpolicy_a ol>li>ol>li { margin-left:0px; padding-top:2px;list-style-type:upper-alpha; }
