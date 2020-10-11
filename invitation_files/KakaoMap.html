@@ -1,0 +1,461 @@
+
+<!-- saved from url=(0092)http://mcard.barunnfamily.com/Invitations/KakaoMap?lat=37.5706978504521&lng=126.975398227489 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <style type="text/css">
+        html {
+            height: 100%;
+        }
+
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .customoverlay {
+            position: relative;
+            bottom: 55px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            border-bottom: 2px solid #ddd;
+            float: left;
+        }
+
+        .customoverlay:nth-of-type(n) {
+            border: 0;
+            box-shadow: 0px 1px 2px #888;
+        }
+
+        .customoverlay a {
+            display: block;
+            text-decoration: none;
+            color: #000;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            overflow: hidden;
+            background: #d95050;
+            background: #d95050 url(http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/arrow_white.png) no-repeat right 14px center;
+        }
+
+        .customoverlay .title {
+            display: block;
+            text-align: center;
+            background: #fff;
+            margin-right: 35px;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .customoverlay:after {
+            content: '';
+            position: absolute;
+            margin-left: -12px;
+            left: 50%;
+            bottom: -12px;
+            width: 22px;
+            height: 12px;
+            background: url('http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png')
+        }
+
+        .mapOverlay {
+            position: relative;
+            bottom: -2px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            border-bottom: 2px solid #ddd;
+            float: left;
+            background-color: #ffff;
+            margin:-5px;
+        }
+
+        .mapOverlay:nth-of-type(n) {
+            border: 0;
+            box-shadow: 0px 1px 2px #888;
+        }
+
+        .mapOverlay a {
+            display: block;
+            text-decoration: none;
+            color: #000;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            overflow: hidden;
+            background: #d95050;
+            background: #d95050 url(http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/arrow_white.png) no-repeat right 14px center;
+        }
+
+        .mapOverlay .title {
+            display: block;
+            text-align: center;
+            background: #fff;
+            margin-right: 35px;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .mapOverlay:after {
+            content: '';
+            position: absolute;
+            margin-left: -12px;
+            left: 50%;
+            bottom: -12px;
+            width: 22px;
+            height: 12px;
+            background: url('http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png')
+        }
+
+    </style>
+
+    <!--<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>-->
+    <script src="./jquery_1.9.1.min.js"></script>
+         
+    <script type="text/javascript">
+
+
+
+        /*
+function SetGeocodeToReverseGeocode(lat, lng) {
+
+        infowindow.close();
+
+        $.ajax({
+            type: 'GET',
+            url: '/Invitations/ReverseGeocodeForNaver',
+            data: {
+                'lat': lat,
+                'lng': lng
+            },
+            error: function () {
+                alert("error");
+            },
+            success: function (data) {
+
+                console.log(data);
+                var d = jQuery.parseJSON(data);
+
+                if (d.results.length > 0) {
+                    var idx = d.results.length - 1;
+                    //var address = d.result.items[idx].address;
+
+                    var loc = "";
+                    if (parent.document.getElementById("map_lat")) {
+                        parent.document.getElementById("map_lat").value = lat;
+                        parent.document.getElementById("map_lng").value = lng;
+                        parent.document.getElementsByClassName("map_lat")[0].innerHTML = "";
+                        loc = parent.document.getElementById("input_hall").value;
+                        parent.hiddenFile();
+                    }
+                    if (parent.parent.document.getElementById("input_hall")) {
+                        loc = parent.parent.document.getElementById("input_hall").value;
+                    }
+
+                    var contentString = [
+                        '<div style="padding-left:2px;padding-right:2px;">',
+                        '   ' + (loc != "" ? '<div style="font-size:19px;letter-spacing:-1px;font-weight:bold"> ' + loc + ' </div>' : ''),
+                        '</div>'
+                    ].join('');
+
+                    infowindow.setContent(contentString);
+                    infowindow.open(map, marker);
+
+                }
+
+            }
+        });
+}
+*/
+
+
+
+    </script>
+</head>
+<body>
+    <!--
+    <input type="text" id="sample5_address" placeholder="주소">
+    <input type="button" onclick="sample5_execDaumPostcode()" value="주소 검색"><br>
+           -->
+    <div id="map" style="width: 100%; height: 100%; position: relative; overflow: hidden; background: url(&quot;http://t1.daumcdn.net/mapjsapi/images/2x/bg_tile.png&quot;);"><div style="position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; touch-action: none; cursor: url(&quot;http://i1.daumcdn.net/dmaps/apis/cursor/openhand.cur.ico&quot;) 7 5, url(&quot;http://i1.daumcdn.net/dmaps/apis/cursor/openhand.cur.ico&quot;), default;"><div style="position: absolute;"><div style="position: absolute; z-index: 0;"></div><div style="position: absolute; z-index: 1; left: 0px; top: 0px;"><img src="./221.png" alt="" draggable="false" style="position: absolute; user-select: none; -webkit-user-drag: none; min-width: 0px; min-height: 0px; max-width: none; max-height: none; left: -167px; top: 187px; opacity: 1; transition-property: opacity; transition-duration: 0.2s; transition-timing-function: ease; width: 256px; height: 256px;"><img src="./222.png" alt="" draggable="false" style="position: absolute; user-select: none; -webkit-user-drag: none; min-width: 0px; min-height: 0px; max-width: none; max-height: none; left: 89px; top: 187px; opacity: 1; transition-property: opacity; transition-duration: 0.2s; transition-timing-function: ease; width: 256px; height: 256px;"><img src="./223.png" alt="" draggable="false" style="position: absolute; user-select: none; -webkit-user-drag: none; min-width: 0px; min-height: 0px; max-width: none; max-height: none; left: 345px; top: 187px; opacity: 1; transition-property: opacity; transition-duration: 0.2s; transition-timing-function: ease; width: 256px; height: 256px;"><img src="./221(1).png" alt="" draggable="false" style="position: absolute; user-select: none; -webkit-user-drag: none; min-width: 0px; min-height: 0px; max-width: none; max-height: none; left: -167px; top: -69px; opacity: 1; transition-property: opacity; transition-duration: 0.2s; transition-timing-function: ease; width: 256px; height: 256px;"><img src="./222(1).png" alt="" draggable="false" style="position: absolute; user-select: none; -webkit-user-drag: none; min-width: 0px; min-height: 0px; max-width: none; max-height: none; left: 89px; top: -69px; opacity: 1; transition-property: opacity; transition-duration: 0.2s; transition-timing-function: ease; width: 256px; height: 256px;"><img src="./223(1).png" alt="" draggable="false" style="position: absolute; user-select: none; -webkit-user-drag: none; min-width: 0px; min-height: 0px; max-width: none; max-height: none; left: 345px; top: -69px; opacity: 1; transition-property: opacity; transition-duration: 0.2s; transition-timing-function: ease; width: 256px; height: 256px;"></div><div style="position: absolute; z-index: 1;"></div><div style="width: 426px; height: 200px; position: absolute; z-index: 1;"></div><div style="position: absolute; z-index: 1;"><svg version="1.1" style="stroke: none; stroke-dashoffset: 0.5; stroke-linejoin: round; fill: none; transform: translateZ(0px); position: absolute; width: 2130px; height: 1000px; left: -852px; top: -400px;" viewBox="0 0 2130 1000"><defs></defs></svg></div><div style="position: absolute; z-index: 1; width: 100%; height: 0px; transform: translateZ(0px);"><div style="position: absolute; margin: -39px 0px 0px -14px; z-index: 0; left: 213px; top: 100px;"><img draggable="false" src="./marker.png" alt="" title="" style="min-width: 0px; min-height: 0px; max-width: 99999px; max-height: none; border: 0px; display: block; position: absolute; user-select: none; -webkit-user-drag: none; clip: rect(0px, 29px, 42px, 0px); top: 0px; left: 0px; width: 29px; height: 42px;"><img src="./transparent.gif" alt="" draggable="false" usemap="#daum.maps.Marker.Area:1" style="min-width: 0px; min-height: 0px; max-width: 99999px; max-height: none; border: 0px; display: block; position: absolute; user-select: none; -webkit-user-drag: none; width: 29px; height: 42px;"><map id="daum.maps.Marker.Area:1" name="daum.maps.Marker.Area:1"><area href="javascript:void(0)" alt="" shape="poly" coords="14,39,9,27,4,21,1,16,1,10,4,4,11,0,18,0,25,4,28,10,28,16,25,21,20,27" title="" style="-webkit-tap-highlight-color: transparent;"></map></div><div style="position: absolute; z-index: 0; white-space: nowrap; margin: -18px 0px 0px -68px; left: 213px; top: 100px;"><div class="customoverlay" style="padding-left:10px; padding-right:10px; background-color:#ffff;">   <div style="font-size:15px;letter-spacing:-1px;font-weight:bold;">포시즌스 호텔 서울</div></div></div></div></div></div><div style="position: absolute; cursor: default; z-index: 1; margin: 0px 6px; height: 19px; line-height: 14px; left: 0px; bottom: 0px; color: rgb(0, 0, 0);"><div style="color: rgb(0, 0, 0); text-align: center; font-size: 10px; float: left;"><div style="float: left; margin: 2px 3px 0px 4px; height: 6px; transition: width 0.1s ease 0s; border-top: none rgb(0, 0, 0); border-right: 2px solid rgb(0, 0, 0); border-bottom: 2px solid rgb(0, 0, 0); border-left: 2px solid rgb(0, 0, 0); border-image: initial; width: 58px;"></div><div style="float: left; margin: 0px 4px 0px 0px; font-family: AppleSDGothicNeo-Regular, 돋움, dotum, sans-serif; font-weight: bold; color: rgb(0, 0, 0);">250m</div></div><div style="margin: 0px 4px; float: left;"><a target="_blank" href="http://map.kakao.com/" title="Kakao 지도로 보시려면 클릭하세요." style="float: left; width: 32px; height: 10px;"><img src="./m_bi_b.png" alt="Kakao 지도로 이동" style="float: left; width: 32px; height: 10px; border: none;"></a><div style="font: 11px / 11px Arial, Tahoma, Dotum, sans-serif; float: left;"></div></div></div><div style="cursor: auto; position: absolute; z-index: 2; left: 0px; top: 0px;"></div></div>
+    <script src="./sdk.js"></script><script charset="UTF-8" src="./kakao.js"></script><script charset="UTF-8" src="./services.js"></script><script charset="UTF-8" src="./clusterer.js"></script><script charset="UTF-8" src="./drawing.js"></script>
+    <script>
+
+    var map;
+    var infowindow;
+        var marker;
+        var customOverlay_m;
+        var customOverlay;
+
+
+     $(document).ready(function () {
+
+        var lat = "37.5706978504521";
+        //var lat = 33.450701;
+        var lng = "126.975398227489";
+
+
+        if (lat == "") {
+            if (parent.document.getElementById("map_lat")) {
+                lat = parent.document.getElementById("map_lat").value;
+            } else if (parent.parent.document.getElementById("map_lat")) {
+                lat = parent.parent.document.getElementById("map_lat").value;
+            }
+            if(lat == "") {
+                lat = "37.711766641578876";
+            }
+        }
+        if (lng == "") {
+            if (parent.document.getElementById("map_lng")) {
+                lng = parent.document.getElementById("map_lng").value;
+            } else if (parent.parent.document.getElementById("map_lng")) {
+                lng = parent.parent.document.getElementById("map_lng").value;
+            }
+            if (lng=="") {
+                lng = "126.68770551681519";
+            }
+         }
+        // infowindow = new kakao.maps.InfoWindow({zIndex:1});
+
+        var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+            mapOption = {
+                center: new kakao.maps.LatLng(lat, lng), // 지도의 중심좌표
+                level: 5 // 지도의 확대 레벨
+            };
+
+        //지도를 미리 생성
+        map = new kakao.maps.Map(mapContainer, mapOption);
+
+
+        //주소-좌표 변환 객체를 생성
+        var geocoder = new kakao.maps.services.Geocoder();
+        //마커를 미리 생성
+        marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(lat, lng),
+            map: map
+        });
+
+
+        infowindow = new kakao.maps.InfoWindow({
+            content: ""
+        });
+
+         customOverlay_m = new kakao.maps.CustomOverlay({
+                        position: '',
+                        content: ''  
+         });
+        customOverlay = new kakao.maps.CustomOverlay({
+            map: '',
+            position: '',
+            content: '',
+            yAnchor: 1 
+        });
+
+
+        if (parent.document.getElementById("map_lat")) {
+            kakao.maps.event.addListener(map, 'click', function (e) {
+                marker.setPosition(e.latLng);
+               // alert(e.latLng.getLat());
+               // alert(e.latLng.getLng());
+                      
+              SetGeocodeToReverseGeocode(e.latLng.getLat(), e.latLng.getLng());
+            });
+        }
+
+        var loc = "";
+        if (parent.document.getElementById("input_hall")) {
+            loc = parent.document.getElementById("input_hall").value;
+        }
+
+        if (parent.parent.document.getElementById("input_hall")) {
+            loc = parent.parent.document.getElementById("input_hall").value;
+        }
+
+
+
+        if (loc != "") {
+            var position = new kakao.maps.LatLng(lat, lng);
+            var contentString = [
+                '<div class="customoverlay" style="padding-left:10px; padding-right:10px; background-color:#ffff;">',
+                '   <div style="font-size:15px;letter-spacing:-1px;font-weight:bold;">' + loc + '</div>',
+                '</div>'
+            ].join('');
+            //alert(contentString);
+            // 커스텀 오버레이를 생성합니다
+            customOverlay = new kakao.maps.CustomOverlay({
+                map: map,
+                position: position,
+                content: contentString,
+                yAnchor: 1 
+            });
+            //infowindow.setContent(contentString);
+            //infowindow.open(map, marker);
+             // kakao.maps.event.addEventHandle(document, 'mousemove', onMouseMove);
+       }
+
+
+
+     })
+        function onMouseMove(e) {
+
+                if (e.preventDefault) {
+                    e.preventDefault();
+                } else {
+                    e.returnValue = false;
+                }
+
+                var proj = map.getProjection(),// 지도 객체로 부터 화면픽셀좌표, 지도좌표간 변환을 위한 MapProjection 객체를 얻어옵니다 
+                    deltaX = startX - e.clientX, // mousedown한 픽셀좌표에서 mousemove한 좌표를 빼서 실제로 마우스가 이동된 픽셀좌표를 구합니다 
+                    deltaY = startY - e.clientY,
+                    // mousedown됐을 때의 커스텀 오버레이의 좌표에 실제로 마우스가 이동된 픽셀좌표를 반영합니다 
+                    newPoint = new kakao.maps.Point(startOverlayPoint.x - deltaX, startOverlayPoint.y - deltaY), 
+                    // 계산된 픽셀 좌표를 지도 컨테이너에 해당하는 지도 좌표로 변경합니다 
+                    newPos = proj.coordsFromContainerPoint(newPoint);
+
+                // 커스텀 오버레이의 좌표를 설정합니다 
+                customoverlay.setPosition(newPos);
+        }
+    function SetGeocodeToReverseGeocode(lat, lng) {
+
+        infowindow.close();
+        customOverlay_m.setMap(null);
+        customOverlay.setMap(null);
+        $(".customoverlay").remove();
+        $(".customoverlay").empty();
+        
+        $.ajax({
+            type: 'GET',
+            url: '/Invitations/ReverseGeocodeForKakao',
+            data: {
+                'lat': lat,
+                'lng': lng
+            },
+            error: function () {
+                alert("error");
+            },
+            success: function (data) {
+
+                console.log(data);
+                var d = jQuery.parseJSON(data);
+                // if (d.results.length > 0) {
+                if (d.meta.total_count > 0) {
+                    //var idx = d.results.length - 1;
+                    //var address = d.result.items[idx].address;
+
+                    var loc = ""; 
+                    if (parent.document.getElementById("map_lat")) {
+                        parent.document.getElementById("map_lat").value = lat;
+                        parent.document.getElementById("map_lng").value = lng;
+                        parent.document.getElementsByClassName("map_lat")[0].innerHTML = "";
+                        loc = parent.document.getElementById("input_hall").value;
+                        parent.hiddenFile();
+                    }
+                    if (parent.parent.document.getElementById("input_hall")) {
+                        loc = parent.parent.document.getElementById("input_hall").value;
+                    }
+                    $(".customoverlay").remove();
+                    var contentString_m = [
+                        '<div class="customoverlay"  style="padding-left:10px;padding-right:10px;background:#ffff; margin-bottom:10px;">',
+                        '   ' + (loc != "" ? '<div style="font-size:19px;letter-spacing:-1px;font-weight:bold;"> ' + loc + ' </div>' : ''),
+                        '</div>'
+                    ].join('');
+
+                    var position = new kakao.maps.LatLng(lat, lng);
+                    customOverlay_m = new kakao.maps.CustomOverlay({
+                        position: position,
+                        content: contentString_m  
+                    });
+                    customOverlay_m.setMap(map);
+
+
+                   // infowindow.setContent(contentString);
+                  //  infowindow.open(map, marker);
+
+                }
+
+            }
+        });
+    }
+
+        function codeAddress() {
+
+        customOverlay_m.setMap(null);
+        customOverlay.setMap(null);
+        $(".customoverlay").remove();
+        $(".customoverlay").empty();
+
+        var address = parent.document.getElementById("input_address").value;
+        $.ajax({
+            type: 'GET',
+            url: '/Invitations/GeocodeForKakao',
+            data: {
+                'query': address
+            },
+            error: function () {
+                alert("error");
+            },
+            success: function (data) {
+                //alert(data);
+                var d = jQuery.parseJSON(data);
+                // if (d.meta.totalCount > 0) {
+                if (d.meta.total_count > 0) {
+                    var idx = 0;
+                    //var address = d.addresses[idx].roadAddress;
+                    var address = d.documents[idx].address_name;
+                    //var lng = d.addresses[idx].x;
+                    //var lat = d.addresses[idx].y;
+                    var lng = d.documents[idx].x;
+                    var lat = d.documents[idx].y;
+                    //  var latlng = new naver.maps.LatLng(lat, lng);
+                    var latlng = new kakao.maps.LatLng(lat, lng);
+                    //alert(address);
+                    map.setCenter(latlng);
+                    marker.setPosition(latlng);
+
+                    var loc = "";
+                    if (parent.document.getElementById("map_lat")) {
+                        parent.document.getElementById("map_lat").value = lat;
+                        parent.document.getElementById("map_lng").value = lng;
+                        parent.document.getElementsByClassName("map_lat")[0].innerHTML = "";
+                        loc = parent.document.getElementById("input_hall").value;
+                        parent.hiddenFile();
+                    }
+                    if (parent.parent.document.getElementById("input_hall")) {
+                        loc = parent.parent.document.getElementById("input_hall").value;
+
+                    }
+
+                    var contentString = [
+                        '<div class="mapOverlay" style="padding-left:10px;padding-right:10px;">',
+                        '   ' + (loc != "" ? '<div style="font-size:19px;letter-spacing:-1px;font-weight:bold"> ' + loc + ' </div>' : ''),
+                        '   <div style="font-size:12px;letter-spacing:-1px;padding-top:2px"> ' + address + ' </div>',
+                        '</div>'
+                    ].join('');
+
+                    infowindow.setContent(contentString);
+                    infowindow.open(map, marker);
+
+                } else {
+                    alert("해당주소로 검색되는 지역이 없습니다. 다른 주소로 다시 검색해주십시오.");
+                }
+            }
+        });
+    }
+
+
+    </script>
+
+
+
+</body></html>
