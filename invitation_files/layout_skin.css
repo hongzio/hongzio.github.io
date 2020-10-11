@@ -33,7 +33,7 @@
 .guestbook_close a {display:block; width:24px; height:24px; padding:5px;}
 .skin_w_typo .mobile_wrap {background:url(/resources/skin/typo/bg_skin.png) repeat left top; background-size:30px 30px; -webkit-background-size:30px 30px; -moz-background-size:30px 30px;}
 
-.mobile_wrap {min-width:320px; text-align:center; min-height:100px; margin:0 auto;}
+.mobile_wrap {min-width:320px; text-align:center; min-height:100px; margin:0 auto; padding: 0 calc(50% - 300px);}
 .mobile_wrap img {max-width:100%; vertical-align:middle;}
 .mobile_wrap .pages .bg_line {padding-bottom:50px;}
 .mobile_wrap .pages h2 {padding:30px 0px 8px 0px;}
