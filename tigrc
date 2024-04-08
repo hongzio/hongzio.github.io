@@ -1,0 +1,26 @@
+set main-view-line-number-display = no
+set main-view-id-display = yes
+
+set diff-view-line-number-display = yes
+
+set show-changes = yes
+set wrap-lines = no
+set tab-size = 4
+set line-graphics = utf-8
+set main-view-author-display = abbreviated
+
+bind main       <Ctrl-C>  !git switch -C "%(prompt Branch:)"
+bind main       <Ctrl-W>  !git switch %(branch)
+bind main       <Ctrl-R>  ?git rebase -i %(commit)
+bind main       <Ctrl-L>  !git pull
+bind main       <Ctrl-P>  !git push
+bind main       <Ctrl-Y>  !git stash
+
+
+bind generic    <Ctrl-F>  scroll-page-down
+bind generic    <Ctrl-B>  scroll-page-up
+
+bind refs       C         none
+bind refs       <Ctrl-W>  ?git switch %(branch)
+
+bind status     C         !git commit --verbose
