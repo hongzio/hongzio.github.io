@@ -71,7 +71,7 @@ apps=(
 
   "notion"
   "1password"
-  "google-chrome"
+  "firefox"
   "raycast"
   "mas"
   "maccy"
