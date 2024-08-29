@@ -79,7 +79,7 @@ apps=(
   "maccy"
   "rectangle"
   "hiddenbar"
-  "homebrew/cask-fonts/font-d2coding"
+  "font-d2coding"
 )
 
 for app in "${apps[@]}"; do
