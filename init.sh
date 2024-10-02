@@ -4,7 +4,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-if ! xcode-select -p &> /dev/null; then
+if ! xcode-select -p &>/dev/null; then
   echo -e "${GREEN}Command line tools are not installed. Installing...${NC}"
   xcode-select --install
   echo -e "${GREEN}After installing, run this script again.${NC}"
@@ -13,17 +13,23 @@ if ! xcode-select -p &> /dev/null; then
   exit 0
 fi
 
-if ! command -v brew &> /dev/null; then
+if ! command -v brew &>/dev/null; then
   echo -e "${GREEN}Homebrew is not installed. Installing...${NC}"
   echo -e "${RED}What version of Homebrew do you want to install? (${GREEN}local${RED}/${GREEN}global${RED})${NC}"
   read -r version
   if [[ $version == "local" ]]; then
-    cd && mkdir .homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C .homebrew || { echo -e "${RED}Failed to install homebrew${NC}"; exit 1; }
+    cd && mkdir .homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C .homebrew || {
+      echo -e "${RED}Failed to install homebrew${NC}"
+      exit 1
+    }
     echo -e "${GREEN}To set up binary path, add below to your shell configuration file:${NC}"
     echo -e "${RED}export PATH=\$HOME/.homebrew/bin:\$PATH${NC}"
     export PATH=$HOME/.homebrew/bin:$PATH
   elif [[ $version == "global" ]]; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || { echo -e "${RED}Failed to install homebrew${NC}"; exit 1; }
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
+      echo -e "${RED}Failed to install homebrew${NC}"
+      exit 1
+    }
   else
     exit 1
   fi
@@ -32,19 +38,39 @@ else
 fi
 BREW_PATH=$(command -v brew)
 
-$BREW_PATH install karabiner-elements || { echo -e "${RED}Failed to install karabiner-elements"; exit 1; }
+$BREW_PATH install karabiner-elements || {
+  echo -e "${RED}Failed to install karabiner-elements"
+  exit 1
+}
 echo -e "${RED}Karabiner-Elements is installed. Please set up the configuration manually and System Preferences${NC}"
 
-
 echo -e "\n${RED}Installing Git...${NC}"
-$BREW_PATH install git || { echo -e "${RED}Failed to install git"; exit 1; }
+$BREW_PATH install git || {
+  echo -e "${RED}Failed to install git"
+  exit 1
+}
 
 echo -e "\n${RED}Installing Zsh...${NC}"
-$BREW_PATH install zsh zsh-completions || { echo -e "${RED}Failed to install zsh"; exit 1; }
-RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || { echo -e "${RED}Failed to install oh-my-zsh${NC}"; exit 1; }
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting || { echo -e "${RED}Failed to install zsh-syntax-highlighting${NC}"; exit 1; }
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions || { echo -e "${RED}Failed to install zsh-autosuggestions${NC}"; exit 1; }
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k || { echo -e "${RED}Failed to install powerlevel10k${NC}"; exit 1; }
+$BREW_PATH install zsh zsh-completions || {
+  echo -e "${RED}Failed to install zsh"
+  exit 1
+}
+RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || {
+  echo -e "${RED}Failed to install oh-my-zsh${NC}"
+  exit 1
+}
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting || {
+  echo -e "${RED}Failed to install zsh-syntax-highlighting${NC}"
+  exit 1
+}
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions || {
+  echo -e "${RED}Failed to install zsh-autosuggestions${NC}"
+  exit 1
+}
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k || {
+  echo -e "${RED}Failed to install powerlevel10k${NC}"
+  exit 1
+}
 
 echo -e "${RED}Setting up Zsh...${NC}"
 sed -i '' 's/ZSH_THEME="robbyrussell"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' $HOME/.zshrc
@@ -58,18 +84,20 @@ if type brew &>/dev/null; then
   autoload -Uz compinit
   compinit
 fi
-" >> $HOME/.zshrc
-
+" >>$HOME/.zshrc
 
 apps=(
   "iterm2"
   "fzf"
   "zoxide"
   "asdf"
-  "xz"  # for python build
+  "xz" # for python build
   "direnv"
-  "tig"
+  "fd"
+  "ripgrep"
+  "lazygit"
   "neovim"
+  "tmux"
 
   "notion"
   "1password"
@@ -79,7 +107,7 @@ apps=(
   "maccy"
   "rectangle"
   "hiddenbar"
-  "font-d2coding"
+  "font-hack-nerd-font"
 )
 
 for app in "${apps[@]}"; do
@@ -89,14 +117,17 @@ for app in "${apps[@]}"; do
   # if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]; then
   #  $BREW_PATH install $app || { echo -e "${RED}Failed to install $app"; exit 1; }
   # fi
-  $BREW_PATH install $app || { echo -e "${RED}Failed to install $app"; exit 1; }
+  $BREW_PATH install $app || {
+    echo -e "${RED}Failed to install $app"
+    exit 1
+  }
 done
 
 echo -e "${RED}Do you want to install apps from App Store? (${GREEN}y${RED}/${GREEN}n${RED})${NC}"
 read -r response
 if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]; then
   echo -e "${RED}Installing apps from App Store...${NC}"
-  mas install 937984704  # Amphetamine
+  mas install 937984704 # Amphetamine
 fi
 
 echo -e "${RED}Setting up zshrc...${NC}"
@@ -114,7 +145,7 @@ alias vi=\"nvim\"
 alias vimdiff=\"nvim -d\"
 export EDITOR=\$(which nvim)
 
-" >> $HOME/.zshrc
+" >>$HOME/.zshrc
 
 # setup plugins
 sed -i '' 's/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions fzf zoxide asdf direnv macos)/' $HOME/.zshrc
@@ -127,11 +158,11 @@ echo -e "${RED}Disabling press and hold...${NC}"
 defaults write -g ApplePressAndHoldEnabled -bool false
 
 echo -e "${RED}Setting up dotfiles...${NC}"
-curl hongzio.com/tigrc > $HOME/.tigrc
+curl hongzio.com/tigrc >$HOME/.tigrc
 
 echo -e "${RED}Setting up key bindings...${NC}"
 mkdir -p $HOME/Library/KeyBindings/
-curl hongzio.com/DefaultkeyBinding.dict > $HOME/Library/KeyBindings/DefaultkeyBinding.dict
+curl hongzio.com/DefaultkeyBinding.dict >$HOME/Library/KeyBindings/DefaultkeyBinding.dict
 
 echo -e "${RED}Setting up git...${NC}"
 git config --global user.name hongzio
@@ -144,6 +175,14 @@ echo ".tool-versions
 .direnv
 .envrc
 .idea
-.DS_Store" > $HOME/.gitignore
+.DS_Store" >$HOME/.gitignore
+
+echo -e "${RED}Setting up lazyvim...${NC}"
+git clone github.com/hongzio.github.io $HOME/.hongzio.com.github.io
+ln -s $HOME/.hongzio.github.io/lazyvim $HOME/.config/lazyvim
+
+echo -e "${RED}Setting up tmux...${NC}"
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+cp $HOME/.hongzio.github.io/tmux.conf $HOME/.tmux.conf
 
 echo -e "${RED}Finished!${NC}"
