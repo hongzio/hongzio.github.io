@@ -1,106 +1,37 @@
-return {}
--- return {
---   "ziontee113/syntax-tree-surfer",
---   disable = true,
---   keys = {
---     {
---       "vd",
---       function()
---         require("syntax-tree-surfer").surf("next", "normal", true)
---       end,
---       mode = { "n" },
---       desc = "STSSwapCurrentNodeNextNormal",
---     },
---     {
---       "vu",
---       function()
---         require("syntax-tree-surfer").surf("prev", "normal", true)
---       end,
---       mode = { "n" },
---       desc = "STSSwapCurrentNodePrevNormal",
---     },
---     {
---       "vD",
---       function()
---         require("syntax-tree-surfer").move("n", false)
---       end,
---       mode = { "n" },
---       silent = true,
---       desc = "Swap up normal",
---       expr = true,
---     },
---     {
---       "vU",
---       function()
---         require("syntax-tree-surfer").move("n", true)
---       end,
---       mode = { "n" },
---       silEnt = true,
---       desc = "Swap up normal",
---     },
---     {
---       "vx",
---       function()
---         require("syntax-tree-surfer").select()
---       end,
---       mode = { "n" },
---       desc = "Select master node",
---     },
---     {
---       "vn",
---       function()
---         require("syntax-tree-surfer").select_current_node()
---       end,
---       mode = { "n" },
---       desc = "Select current node",
---     },
---     {
---       "J",
---       function()
---         require("syntax-tree-surfer").surf("next", "visual")
---       end,
---       mode = { "x" },
---       desc = "Select next sibling node"
---     },
---     {
---       "K",
---       function()
---         require("syntax-tree-surfer").surf("prev", "visual")
---       end,
---       mode = { "x" },
---       desc = "Select previous sibling node"
---     },
---     {
---       "H",
---       function()
---         require("syntax-tree-surfer").surf("parent", "visual")
---       end,
---       mode = { "x" },
---       desc = "Select parent node"
---     },
---     {
---       "L",
---       function()
---         require("syntax-tree-surfer").surf("child", "visual")
---       end,
---       mode = {"x"},
---       desc = "Select child node"
---     },
---     {
---       "<C-j>",
---       function()
---         require("syntax-tree-surfer").surf("next", "visual", true)
---       end,
---       mode = { "x" },
---       desc = "Swap next sibling"
---     },
---     {
---       "<C-k>",
---       function()
---         require("syntax-tree-surfer").surf("prev", "visual", true)
---       end,
---       mode = { "x" },
---       desc = "Swap previous sibling"
---     },
---   },
--- }
+return {
+  "ziontee113/syntax-tree-surfer",
+  disable = true,
+  keys = {
+    {
+      "<C-k>",
+      function()
+        require("syntax-tree-surfer").move("n", true)
+      end,
+      desc = "STSSwapCurrentNodePrevNormal",
+    },
+    {
+      "<C-j>",
+      function()
+        require("syntax-tree-surfer").move("n", false)
+      end,
+      desc = "STSSwapCurrentNodeNextNormal",
+    },
+    {
+      "<C-k>",
+      function()
+        require("syntax-tree-surfer").surf("prev", "visual", true)
+      end,
+      desc = "STSSwapCurrentNodePrevVisual",
+      mode = { "x" },
+    },
+    {
+      "<C-j>",
+      function()
+        require("syntax-tree-surfer").surf("next", "visual", true)
+      end,
+      desc = "STSSwapCurrentNodeNextVisual",
+      mode = { "x" },
+    }
+  },
+}
+
