@@ -4,7 +4,21 @@ return {
     {
       "<up>",
       function()
-        require("multicursor-nvim").lineAddCursor(-1)
+        local mc = require("multicursor-nvim")
+        local beforeCursorSize = 0
+        mc.action(function(ctx)
+          beforeCursorSize = #ctx.getCursors(ctx)
+        end)
+        mc.lineAddCursor(-1)
+        local afterCursorSize = 0
+        mc.action(function(ctx)
+          afterCursorSize = #ctx.getCursors(ctx)
+        end)
+        mc.action(function(ctx)
+          if beforeCursorSize == afterCursorSize then
+            ctx:nextCursor(ctx:mainCursor():getPos()):delete()
+          end
+        end)
       end,
       mode = { "n", "v" },
       desc = "Add cursor above",
@@ -12,29 +26,43 @@ return {
     {
       "<down>",
       function()
-        require("multicursor-nvim").lineAddCursor(1)
+        local mc = require("multicursor-nvim")
+        local beforeCursorSize = 0
+        mc.action(function(ctx)
+          beforeCursorSize = #ctx.getCursors(ctx)
+        end)
+        mc.lineAddCursor(1)
+        local afterCursorSize = 0
+        mc.action(function(ctx)
+          afterCursorSize = #ctx.getCursors(ctx)
+        end)
+        mc.action(function(ctx)
+          if beforeCursorSize == afterCursorSize then
+            ctx:prevCursor(ctx:mainCursor():getPos()):delete()
+          end
+        end)
       end,
       mode = { "n", "v" },
       desc = "Add cursor below",
     },
+    -- {
+    --   "<leader><up>",
+    --   function()
+    --     require("multicursor-nvim").lineSkipCursor(-1)
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Skip cursor above",
+    -- },
+    -- {
+    --   "<leader><down>",
+    --   function()
+    --     require("multicursor-nvim").lineSkipCursor(1)
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Skip cursor below",
+    -- },
     {
-      "<leader><up>",
-      function()
-        require("multicursor-nvim").lineSkipCursor(-1)
-      end,
-      mode = { "n", "v" },
-      desc = "Skip cursor above",
-    },
-    {
-      "<leader><down>",
-      function()
-        require("multicursor-nvim").lineSkipCursor(1)
-      end,
-      mode = { "n", "v" },
-      desc = "Skip cursor below",
-    },
-    {
-      "<leader>n",
+      "<C-g>",
       function()
         require("multicursor-nvim").matchAddCursor(1)
       end,
@@ -42,29 +70,45 @@ return {
       desc = "Add cursor to next match",
     },
     {
-      "<leader>s",
+      "<C-S-G>",
       function()
-        require("multicursor-nvim").matchSkipCursor(1)
+        require("multicursor-nvim").deleteCursor()
       end,
       mode = { "n", "v" },
-      desc = "Skip cursor to next match",
+      desc = ""
     },
-    {
-      "<leader>N",
-      function()
-        require("multicursor-nvim").matchAddCursor(-1)
-      end,
-      mode = { "n", "v" },
-      desc = "Add cursor to previous match",
-    },
-    {
-      "<leader>S",
-      function()
-        require("multicursor-nvim").matchSkipCursor(-1)
-      end,
-      mode = { "n", "v" },
-      desc = "Skip cursor to previous match",
-    },
+    -- {
+    --   "<leader>s",
+    --   function()
+    --     require("multicursor-nvim").matchSkipCursor(1)
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Skip cursor to next match",
+    -- },
+    -- {
+    --   "<leader>N",
+    --   function()
+    --     require("multicursor-nvim").matchAddCursor(-1)
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Add cursor to previous match",
+    -- },
+    -- {
+    --   "<leader>S",
+    --   function()
+    --     require("multicursor-nvim").matchSkipCursor(-1)
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Skip cursor to previous match",
+    -- },
+    -- {
+    --   "<leader>x",
+    --   function()
+    --     require("multicursor-nvim").deleteCursor()
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Delete cursor",
+    -- },
     {
       "I",
       function()
