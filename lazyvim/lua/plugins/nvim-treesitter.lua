@@ -24,6 +24,7 @@ return {
         "yaml",
         "html",
         "css",
+        "dockerfile",
         "prisma",
         "markdown",
         "markdown_inline",
