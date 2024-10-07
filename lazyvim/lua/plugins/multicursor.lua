@@ -62,7 +62,7 @@ return {
     --   desc = "Skip cursor below",
     -- },
     {
-      "<C-g>",
+      "vm",
       function()
         require("multicursor-nvim").matchAddCursor(1)
       end,
@@ -70,7 +70,7 @@ return {
       desc = "Add cursor to next match",
     },
     {
-      "<C-S-G>",
+      "vM",
       function()
         require("multicursor-nvim").deleteCursor()
       end,
