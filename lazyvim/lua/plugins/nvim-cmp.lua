@@ -12,5 +12,6 @@ return {
       end,
     })
     table.insert(opts.sources, { name = "emoji" })
+    table.insert(opts.sources, { name = "codeium" })
   end,
 }
