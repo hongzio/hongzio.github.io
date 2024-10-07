@@ -3,21 +3,21 @@ return {
   disable = true,
   keys = {
     {
-      "<C-k>",
+      "<C-m>",
       function()
         require("syntax-tree-surfer").move("n", true)
       end,
       desc = "STSSwapCurrentNodePrevNormal",
     },
     {
-      "<C-j>",
+      "<C-n>",
       function()
         require("syntax-tree-surfer").move("n", false)
       end,
       desc = "STSSwapCurrentNodeNextNormal",
     },
     {
-      "<C-k>",
+      "<C-m>",
       function()
         require("syntax-tree-surfer").surf("prev", "visual", true)
       end,
@@ -25,7 +25,7 @@ return {
       mode = { "x" },
     },
     {
-      "<C-j>",
+      "<C-n>",
       function()
         require("syntax-tree-surfer").surf("next", "visual", true)
       end,
