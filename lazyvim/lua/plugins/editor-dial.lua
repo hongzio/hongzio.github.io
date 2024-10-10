@@ -12,6 +12,12 @@ return {
       cyclic = true,
     })
 
+    local equal_alias = augend.constant.new({
+      elements = { "==", "!=" },
+      word = false,
+      cyclic = true,
+    })
+
     local ordinal_numbers = augend.constant.new({
       -- elements through which we cycle. When we increment, we go down
       -- On decrement we go up
@@ -144,6 +150,7 @@ return {
         go = {
           augend.integer.alias.decimal,
           logical_alias,
+          equal_alias,
           augend.constant.alias.bool,
           augend.integer.alias.hex, -- nonnegative hex number  (0x01, 0x1a1f, etc.)
           augend.date.alias["%Y/%m/%d"], -- date (2022/02/19, etc.)
