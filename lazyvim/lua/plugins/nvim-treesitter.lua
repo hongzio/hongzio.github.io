@@ -39,6 +39,7 @@ return {
 
         "python",
         "go",
+        "sql",
       },
       incremental_selection = {
         enable = true,
