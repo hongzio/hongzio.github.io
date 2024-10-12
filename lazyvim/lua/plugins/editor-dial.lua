@@ -6,21 +6,27 @@ return {
   opts = function()
     local augend = require("dial.augend")
 
-    local logical_alias = augend.constant.new({
+    local logical_operators = augend.constant.new({
       elements = { "&&", "||" },
       word = false,
       cyclic = true,
     })
 
-    local equal_alias = augend.constant.new({
+    local equal_operators = augend.constant.new({
       elements = { "==", "!=" },
       word = false,
       cyclic = true,
     })
 
-    local compare_alias = augend.constant.new({
+    local compare_operators = augend.constant.new({
       elements = { "<", ">", "<=", ">=" },
       word = false,
+      cyclic = true,
+    })
+
+    local logical_words = augend.constant.new({
+      elements = { "and", "or" },
+      word = true,
       cyclic = true,
     })
 
@@ -118,7 +124,7 @@ return {
         typescript = {
           augend.integer.alias.decimal, -- nonnegative and negative decimal number
           augend.constant.alias.bool, -- boolean value (true <-> false)
-          logical_alias,
+          logical_operators,
           augend.constant.new({ elements = { "let", "const" } }),
         },
         yaml = {
@@ -153,12 +159,20 @@ return {
         python = {
           augend.integer.alias.decimal, -- nonnegative and negative decimal number
           capitalized_boolean,
-          logical_alias,
+          logical_words,
+          equal_operators,
+          compare_operators,
+          augend.integer.alias.hex, -- nonnegative hex number  (0x01, 0x1a1f, etc.)
+          augend.date.alias["%Y/%m/%d"], -- date (2022/02/19, etc.)
+          ordinal_numbers,
+          weekdays,
+          months,
         },
         go = {
           augend.integer.alias.decimal,
-          logical_alias,
-          equal_alias,
+          logical_operators,
+          equal_operators,
+          compare_operators,
           augend.constant.alias.bool,
           augend.integer.alias.hex, -- nonnegative hex number  (0x01, 0x1a1f, etc.)
           augend.date.alias["%Y/%m/%d"], -- date (2022/02/19, etc.)
