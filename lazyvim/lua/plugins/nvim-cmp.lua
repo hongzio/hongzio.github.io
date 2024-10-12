@@ -4,12 +4,13 @@ return {
   ---@param opts cmp.ConfigSchema
   opts = function(_, opts)
     local cmp = require("cmp")
+    local cmp_window = require("cmp.config.window")
     opts.mapping = vim.tbl_extend("force", opts.mapping, {
       ["<Tab>"] = cmp.mapping.confirm({ select = true }),
       ["<CR>"] = cmp.mapping(function(fallback)
         cmp.abort()
         fallback()
-      end, {"i", "s"})
+      end, { "i", "s" }),
     })
 
     table.insert(opts.sources, { name = "emoji" })
@@ -23,5 +24,9 @@ return {
       group_index = 1,
       priority = 100,
     })
+    opts.window = {
+      completion = cmp_window.bordered(),
+      documentation = cmp_window.bordered(),
+    }
   end,
 }
