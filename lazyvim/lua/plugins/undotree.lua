@@ -10,5 +10,10 @@ return {
       end,
       desc = "UndoTree",
     },
+    {
+      "<leader>U",
+      "",
+      desc = "+undotree"
+    }
   },
 }
