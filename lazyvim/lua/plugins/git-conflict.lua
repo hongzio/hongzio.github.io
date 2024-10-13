@@ -13,6 +13,11 @@ return {
   },
   keys = {
     {
+      "<leader>h",
+      "",
+      desc = "+conflict"
+    },
+    {
       "<leader>gx",
       "<cmd>GitConflictListQf<cr>",
       desc = "List Conflicts"
