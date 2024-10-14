@@ -1,6 +1,17 @@
 return {
   {
+    "sontungexpt/witch",
+    priority = 1000,
+    lazy = false,
+    opts = {
+      dim_inactive = {
+        level = 0.8,
+      }
+    }
+  },
+  {
     "sainnhe/sonokai",
+    enabled = false,
     opts = function()
       -- Apply custom highlights on colorscheme change.
       -- Must be declared before executing ':colorscheme'.
@@ -23,7 +34,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "sonokai",
+      colorscheme = "witch-dark",
     },
   },
   {
