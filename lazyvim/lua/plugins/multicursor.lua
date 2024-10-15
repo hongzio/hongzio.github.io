@@ -62,7 +62,14 @@ return {
     --   desc = "Skip cursor below",
     -- },
     {
-      "vm",
+      "vN",
+      function()
+        require("multicursor-nvim").matchAddCursor(-1)
+      end,
+      mode = { "n", "v" },
+      desc = "Add cursor to previous match",
+    },{
+      "vn",
       function()
         require("multicursor-nvim").matchAddCursor(1)
       end,
@@ -70,12 +77,20 @@ return {
       desc = "Add cursor to next match",
     },
     {
+      "vm",
+      function()
+        require("multicursor-nvim").deleteCursor()
+      end,
+      mode = { "n", "v" },
+      desc = "Delete cursor",
+    },
+    {
       "vM",
       function()
         require("multicursor-nvim").deleteCursor()
       end,
       mode = { "n", "v" },
-      desc = ""
+      desc = "Delete cursor",
     },
     -- {
     --   "<leader>s",
