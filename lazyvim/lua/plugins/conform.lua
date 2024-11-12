@@ -5,7 +5,8 @@ return {
       formatters_by_ft = {
         python = { "ruff_format" },
         go = { "gofumpt", "goimports" },
-        yaml = { "yamlfix" }
+        yaml = { "yamlfix" },
+        sql = { "sqlfluff" },
       },
     },
   },
