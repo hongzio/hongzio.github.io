@@ -1,9 +1,10 @@
 return {
   "hongzio/launchpad.nvim",
-  lazy = false,
+  event = "VeryLazy",
   dependencies = {
     "MunifTanjim/nui.nvim",
-    "grapp-dev/nui-components.nvim"
+    "grapp-dev/nui-components.nvim",
+    "mfussenegger/nvim-dap"
   },
   opts = {},
   keys = {
