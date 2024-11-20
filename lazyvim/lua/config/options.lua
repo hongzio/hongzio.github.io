@@ -4,9 +4,9 @@
 
 vim.api.nvim_create_autocmd("TextYankPost", {
   callback = function()
-    local copy_to_unnamedplus = require("vim.ui.clipboard.osc52").copy("+")
-    copy_to_unnamedplus(vim.v.event.regcontents)
-    local copy_to_unnamed = require("vim.ui.clipboard.osc52").copy("*")
-    copy_to_unnamed(vim.v.event.regcontents)
+    local unnamed_register = vim.fn.getreg("*")
+    require("vim.ui.clipboard.osc52").copy("*")(vim.split(unnamed_register, "\n"))
+    local unnamedplus_register = vim.fn.getreg("+")
+    require("vim.ui.clipboard.osc52").copy("+")(vim.split(unnamedplus_register, "\n"))
   end,
 })
