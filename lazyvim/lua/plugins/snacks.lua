@@ -1,6 +1,11 @@
 return {
   "folke/snacks.nvim",
   opts = {
+    bigfile = {
+      enabled = true,
+      notify = true,
+      size = 10 * 1024 * 1024, -- 10mb
+    },
     dashboard = {
       enabled = true,
       preset = {
