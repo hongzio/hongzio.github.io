@@ -14,6 +14,7 @@ return {
             ["]i"] = { query = "@conditional.outer", desc = "Next conditional start" },
             ["]l"] = { query = "@loop.outer", desc = "Next loop start" },
             ["]n"] = { query = "@function.name", desc = "Next function name start" },
+            ["]="] = { query = "@assignment.rhs", desc = "Next assignment rhs" },
 
             -- You can pass a query group to use query from `queries/<lang>/<query_group>.scm file in your runtime path.
             -- Below example nvim-treesitter's `locals.scm` and `folds.scm`. They also provide highlights.scm and indent.scm.
@@ -35,9 +36,15 @@ return {
             ["[i"] = { query = "@conditional.outer", desc = "Prev conditional start" },
             ["[l"] = { query = "@loop.outer", desc = "Prev loop start" },
             ["[n"] = { query = "@function.name", desc = "Prev function name start" },
+            ["[="] = { query = "@assignment.outer", desc = "Prev assignment lhs" },
           },
           goto_previous_end = {
-            
+            ["[F"] = { query = "@call.outer", desc = "Prev function call end" },
+            ["[M"] = { query = "@function.outer", desc = "Prev method/function def end" },
+            ["[C"] = { query = "@class.outer", desc = "Prev class end" },
+            ["[I"] = { query = "@conditional.outer", desc = "Prev conditional end" },
+            ["[L"] = { query = "@loop.outer", desc = "Prev loop end" },
+            ["[N"] = { query = "@function.name", desc = "Prev function name end" },
           },
         },
         select = {
@@ -48,28 +55,28 @@ return {
 
           keymaps = {
             -- You can use the capture groups defined in textobjects.scm
-            -- ["a="] = { query = "@assignment.outer", desc = "Select outer part of an assignment" },
-            -- ["i="] = { query = "@assignment.inner", desc = "Select inner part of an assignment" },
-            -- ["l="] = { query = "@assignment.lhs", desc = "Select left hand side of an assignment" },
-            -- ["r="] = { query = "@assignment.rhs", desc = "Select right hand side of an assignment" },
-            --
-            -- ["aa"] = { query = "@parameter.outer", desc = "Select outer part of a parameter/argument" },
-            -- ["ia"] = { query = "@parameter.inner", desc = "Select inner part of a parameter/argument" },
-            --
-            -- ["ai"] = { query = "@conditional.outer", desc = "Select outer part of a conditional" },
-            -- ["ii"] = { query = "@conditional.inner", desc = "Select inner part of a conditional" },
-            --
-            -- ["al"] = { query = "@loop.outer", desc = "Select outer part of a loop" },
-            -- ["il"] = { query = "@loop.inner", desc = "Select inner part of a loop" },
-            --
-            -- ["af"] = { query = "@call.outer", desc = "Select outer part of a function call" },
-            -- ["if"] = { query = "@call.inner", desc = "Select inner part of a function call" },
-            --
-            -- ["am"] = { query = "@function.outer", desc = "Select outer part of a method/function definition" },
-            -- ["im"] = { query = "@function.inner", desc = "Select inner part of a method/function definition" },
-            --
-            -- ["ac"] = { query = "@class.outer", desc = "Select outer part of a class" },
-            -- ["ic"] = { query = "@class.inner", desc = "Select inner part of a class" },
+            ["a="] = { query = "@assignment.outer", desc = "Select outer part of an assignment" },
+            ["i="] = { query = "@assignment.inner", desc = "Select inner part of an assignment" },
+            ["l="] = { query = "@assignment.lhs", desc = "Select left hand side of an assignment" },
+            ["r="] = { query = "@assignment.rhs", desc = "Select right hand side of an assignment" },
+
+            ["aa"] = { query = "@parameter.outer", desc = "Select outer part of a parameter/argument" },
+            ["ia"] = { query = "@parameter.inner", desc = "Select inner part of a parameter/argument" },
+
+            ["ai"] = { query = "@conditional.outer", desc = "Select outer part of a conditional" },
+            ["ii"] = { query = "@conditional.inner", desc = "Select inner part of a conditional" },
+
+            ["al"] = { query = "@loop.outer", desc = "Select outer part of a loop" },
+            ["il"] = { query = "@loop.inner", desc = "Select inner part of a loop" },
+
+            ["af"] = { query = "@call.outer", desc = "Select outer part of a function call" },
+            ["if"] = { query = "@call.inner", desc = "Select inner part of a function call" },
+
+            ["am"] = { query = "@function.outer", desc = "Select outer part of a method/function definition" },
+            ["im"] = { query = "@function.inner", desc = "Select inner part of a method/function definition" },
+
+            ["ac"] = { query = "@class.outer", desc = "Select outer part of a class" },
+            ["ic"] = { query = "@class.inner", desc = "Select inner part of a class" },
           },
         },
         -- swap = {
