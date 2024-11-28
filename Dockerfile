@@ -88,6 +88,9 @@ RUN apt install -y tmux && \
 # git
 RUN cp $HOME/.hongzio.github.io/gitconfig $HOME/.gitconfig
 
+# misc
+RUN apt install -y btop
+
 # clean up
 RUN apt-get clean && \
     apt-get autoclean && \
