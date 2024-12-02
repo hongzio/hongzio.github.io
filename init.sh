@@ -144,6 +144,7 @@ apps=(
   "tmux"
 
   "notion"
+  "obsidian"
   "1password"
   "firefox"
   "raycast"
