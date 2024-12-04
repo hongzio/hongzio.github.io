@@ -4,6 +4,7 @@
 
 vim.api.nvim_create_autocmd("TextYankPost", {
   callback = function()
+    vim.cmd("let @* = @\"")
     local unnamed_register = vim.fn.getreg("*")
     require("vim.ui.clipboard.osc52").copy("*")(vim.split(unnamed_register, "\n"))
     local unnamedplus_register = vim.fn.getreg("+")
