@@ -16,5 +16,13 @@ return {
       desc = "visualize dataframe",
       mode = { "v" },
     },
+    {
+      "<leader>dV",
+      function()
+        require("visidf").prev()
+      end,
+      desc = "visualize previous dataframe",
+      mode = { "n" },
+    },
   },
 }
