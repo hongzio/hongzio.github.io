@@ -41,5 +41,12 @@ return {
         Codeium = "",
       },
     })
+
+    vim.api.nvim_create_autocmd("CursorHoldI", {
+      callback = function()
+        require("cmp").complete()
+      end,
+    })
+    vim.o.updatetime = 1000
   end,
 }
