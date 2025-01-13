@@ -46,7 +46,7 @@ RUN apt install -y zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev
 
 # zoxide
 RUN curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh && \
-    echo 'eval "$(zoxide init zsh)"' >> $HOME/.zshrc
+    echo 'eval "$(/root/.local/bin/zoxide init zsh)"' >> $HOME/.zshrc
 
 # pipx
 RUN apt install -y pipx && \
