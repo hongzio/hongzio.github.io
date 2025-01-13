@@ -143,8 +143,8 @@ apps=(
   "neovim"
   "tmux"
 
-  "notion"
   "obsidian"
+  "pronotes"
   "1password"
   "firefox"
   "raycast"
@@ -152,6 +152,7 @@ apps=(
   "maccy"
   "rectangle"
   "hiddenbar"
+  "surfshark"
   "font-hack-nerd-font"
 )
 
