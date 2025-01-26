@@ -1,5 +1,7 @@
 return {
   "m4xshen/hardtime.nvim",
   dependencies = { "MunifTanjim/nui.nvim" },
-  opts = {},
+  opts = {
+    restriction_mode = "hint",
+  },
 }
