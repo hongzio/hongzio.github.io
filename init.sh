@@ -40,14 +40,17 @@ if ! check_step "homebrew"; then
         echo -e "${RED}Failed to install homebrew${NC}"
         exit 1
       }
-      echo -e "${GREEN}To set up binary path, add below to your shell configuration file:${NC}"
-      echo -e "${RED}export PATH=\$HOME/.homebrew/bin:\$PATH${NC}"
+      echo >>$HOME/.zprofile
+      echo 'export PATH=$HOME/.homebrew/bin:$PATH' >>$HOME/.zprofile
       export PATH=$HOME/.homebrew/bin:$PATH
     elif [[ $version == "global" ]]; then
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
         echo -e "${RED}Failed to install homebrew${NC}"
         exit 1
       }
+      echo >>$HOME/.zprofile
+      echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >>$HOME/.zprofile
+      eval "$(/opt/homebrew/bin/brew shellenv)"
     else
       echo -e "${RED}Invalid option. Please choose local or global${NC}"
       exit 1
