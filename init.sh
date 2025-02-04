@@ -82,6 +82,31 @@ if ! check_step "git"; then
     echo -e "${RED}Failed to install git${NC}"
     exit 1
   }
+  git config --global user.name hongzio || {
+    echo -e "${RED}Failed to set git user name${NC}"
+    exit 1
+  }
+  git config --global user.email hongzio@user.noreply.github.com || {
+    echo -e "${RED}Failed to set git user email${NC}"
+    exit 1
+  }
+  git config --global core.excludesFile $HOME/.gitignore || {
+    echo -e "${RED}Failed to set gitignore${NC}"
+    exit 1
+  }
+  git config --global init.defaultBranch main || {
+    echo -e "${RED}Failed to set default branch${NC}"
+    exit 1
+  }
+  # git config --global url."git@github.com:".insteadOf "https://github.com/" || {
+  #   echo -e "${RED}Failed to set git url${NC}"
+  #   exit 1
+  # }
+  echo ".tool-versions
+  .direnv
+  .envrc
+  .idea
+  .DS_Store" >$HOME/.gitignore
   mark_step "git"
 else
   echo -e "${GREEN}Skipping Git installation, already completed.${NC}"
@@ -133,19 +158,130 @@ else
   echo -e "${GREEN}Skipping Zsh setup, already completed.${NC}"
 fi
 
-apps=(
-  "iterm2"
-  "fzf"
-  "zoxide"
-  "asdf"
-  "xz" # for python build
-  "direnv"
-  "fd"
-  "ripgrep"
-  "lazygit"
-  "neovim"
-  "tmux"
+if ! check_step "brew_install_iterm2"; then
+  echo -e "${RED}Installing iTerm2...${NC}"
+  $BREW_PATH install iterm2 || {
+    echo -e "${RED}Failed to install iTerm2${NC}"
+    exit 1
+  }
+  mark_step "brew_install_iterm2"
+else
+  echo -e "${GREEN}Skipping iTerm2 installation, already completed.${NC}"
+fi
 
+if ! check_step "brew_install_fzf"; then
+  echo -e "${RED}Installing fzf...${NC}"
+  $BREW_PATH install fzf || {
+    echo -e "${RED}Failed to install fzf${NC}"
+    exit 1
+  }
+  echo "source <(fzf --zsh)" >>$HOME/.zshrc
+  mark_step "brew_install_fzf"
+else
+  echo -e "${GREEN}Skipping fzf installation, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_zoxide"; then
+  echo -e "${RED}Installing zoxide...${NC}"
+  $BREW_PATH install zoxide || {
+    echo -e "${RED}Failed to install zoxide${NC}"
+    exit 1
+  }
+  echo "eval \"\$(zoxide init zsh)\"" >>$HOME/.zshrc
+  mark_step "brew_install_zoxide"
+else
+  echo -e "${GREEN}Skipping zoxide installation, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_asdf"; then
+  echo -e "${RED}Installing asdf...${NC}"
+  $BREW_PATH install xz || {
+    echo -e "${RED}Failed to install xz${NC}"
+    exit 1
+  }
+  $BREW_PATH install asdf || {
+    echo -e "${RED}Failed to install asdf${NC}"
+    exit 1
+  }
+  echo ". $(brew --prefix asdf)/libexec/asdf.sh" >>$HOME/.zshrc
+  mark_step "brew_install_asdf"
+else
+  echo -e "${GREEN}Skipping asdf installation, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_direnv"; then
+  echo -e "${RED}Installing direnv...${NC}"
+  $BREW_PATH install direnv || {
+    echo -e "${RED}Failed to install direnv${NC}"
+    exit 1
+  }
+  echo "eval \"\$(direnv hook zsh)\"" >>$HOME/.zshrc
+  mark_step "brew_install_direnv"
+else
+  echo -e "${GREEN}Skipping direnv installation, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_tmux"; then
+  echo -e "${RED}Installing Tmux...${NC}"
+  $BREW_PATH install tmux || {
+    echo -e "${RED}Failed to install tmux${NC}"
+    exit 1
+  }
+  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm || {
+    echo -e "${RED}Failed to install tpm${NC}"
+    exit 1
+  }
+  ln -s -f $HOME/.hongzio.github.io/tmux.conf $HOME/.tmux.conf || {
+    echo -e "${RED}Failed to link tmux.conf${NC}"
+    exit 1
+  }
+  mark_step "brew_install_tmux"
+else
+  echo -e "${GREEN}Skipping Tmux installation, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_neovim"; then
+  echo -e "${RED}Installing Neovim...${NC}"
+  $BREW_PATH install fd lazygit ripgrep || {
+    echo -e "${RED}Failed to install fd, lazygit, ripgrep${NC}"
+    exit 1
+  }
+  $BREW_PATH install neovim || {
+    echo -e "${RED}Failed to install neovim${NC}"
+    exit 1
+  }
+  echo "
+
+  # neovim
+  alias vim=\"nvim\"
+  alias vi=\"nvim\"
+  alias vimdiff=\"nvim -d\"
+  export EDITOR=\$(which nvim)
+
+  " >>$HOME/.zshrc
+  mark_step "brew_install_neovim"
+else
+  echo -e "${GREEN}Skipping Neovim installation, already completed.${NC}"
+fi
+
+if ! check_step "lazyvim"; then
+  echo -e "${RED}Setting up lazyvim...${NC}"
+  git clone http://github.com/hongzio/hongzio.github.io $HOME/.hongzio.github.io || {
+    echo -e "${RED}Failed to clone hongzio.github.io${NC}"
+    exit 1
+  }
+  mkdir -p $HOME/.config &>/dev/null
+  ln -s $HOME/.hongzio.github.io/lazyvim $HOME/.config/lazyvim || {
+    echo -e "${RED}Failed to link lazyvim${NC}"
+    exit 1
+  }
+  echo "export NVIM_APPNAME=lazyvim" >>$HOME/.zshrc
+  mark_step "lazyvim"
+else
+  echo -e "${GREEN}Skipping lazyvim setup, already completed.${NC}"
+fi
+
+apps=(
   "obsidian"
   "pronotes"
   "1password"
@@ -191,21 +327,6 @@ fi
 
 if ! check_step "zshrc_setup"; then
   echo -e "${RED}Setting up zshrc...${NC}"
-  echo "
-
-  # key bindings
-  eval \"\$(fzf --zsh)\" # fzf key bindings
-  eval \"\$(zoxide init zsh)\" # zoxide key bindings
-  . $(brew --prefix asdf)/libexec/asdf.sh # asdf key bindings
-  eval \"\$(direnv hook zsh)\" # direnv key bindings
-
-  # neovim
-  alias vim=\"nvim\"
-  alias vi=\"nvim\"
-  alias vimdiff=\"nvim -d\"
-  export EDITOR=\$(which nvim)
-
-  " >>$HOME/.zshrc
 
   # setup plugins
   sed -i '' 's/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions fzf zoxide asdf direnv macos)/' $HOME/.zshrc
@@ -231,14 +352,6 @@ else
   echo -e "${GREEN}Skipping press and hold disable, already completed.${NC}"
 fi
 
-if ! check_step "dotfiles"; then
-  echo -e "${RED}Setting up dotfiles...${NC}"
-  curl hongzio.com/tigrc >$HOME/.tigrc
-  mark_step "dotfiles"
-else
-  echo -e "${GREEN}Skipping dotfiles setup, already completed.${NC}"
-fi
-
 if ! check_step "key_bindings"; then
   echo -e "${RED}Setting up key bindings...${NC}"
   mkdir -p $HOME/Library/KeyBindings/
@@ -246,42 +359,6 @@ if ! check_step "key_bindings"; then
   mark_step "key_bindings"
 else
   echo -e "${GREEN}Skipping key bindings setup, already completed.${NC}"
-fi
-
-if ! check_step "git_setup"; then
-  echo -e "${RED}Setting up git...${NC}"
-  git config --global user.name hongzio
-  git config --global user.email hongzio@user.noreply.github.com
-  git config --global core.excludesFile $HOME/.gitignore
-  git config --global init.defaultBranch main
-  git config --global url."git@github.com:".insteadOf "https://github.com/"
-
-  echo ".tool-versions
-  .direnv
-  .envrc
-  .idea
-  .DS_Store" >$HOME/.gitignore
-  mark_step "git_setup"
-else
-  echo -e "${GREEN}Skipping git setup, already completed.${NC}"
-fi
-
-if ! check_step "lazyvim"; then
-  echo -e "${RED}Setting up lazyvim...${NC}"
-  git clone github.com/hongzio.github.io $HOME/.hongzio.com.github.io
-  ln -s $HOME/.hongzio.github.io/lazyvim $HOME/.config/lazyvim
-  mark_step "lazyvim"
-else
-  echo -e "${GREEN}Skipping lazyvim setup, already completed.${NC}"
-fi
-
-if ! check_step "tmux"; then
-  echo -e "${RED}Setting up tmux...${NC}"
-  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-  ln -s -f $HOME/.hongzio.github.io/tmux.conf $HOME/.tmux.conf
-  mark_step "tmux"
-else
-  echo -e "${GREEN}Skipping tmux setup, already completed.${NC}"
 fi
 
 echo -e "${RED}Finished!${NC}"
