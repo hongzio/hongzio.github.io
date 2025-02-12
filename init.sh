@@ -203,7 +203,7 @@ if ! check_step "brew_install_asdf"; then
     echo -e "${RED}Failed to install asdf${NC}"
     exit 1
   }
-  echo ". $(brew --prefix asdf)/libexec/asdf.sh" >>$HOME/.zshrc
+  echo -e "export PATH=\"\${ASDF_DATA_DIR:-\$HOME/.asdf}/shims:\$PATH\"" >> $HOME/.zshrc
   mark_step "brew_install_asdf"
 else
   echo -e "${GREEN}Skipping asdf installation, already completed.${NC}"
