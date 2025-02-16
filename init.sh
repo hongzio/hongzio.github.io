@@ -86,7 +86,7 @@ if ! check_step "git"; then
     echo -e "${RED}Failed to set git user name${NC}"
     exit 1
   }
-  git config --global user.email hongzio@user.noreply.github.com || {
+  git config --global user.email 11085613+hongzio@users.noreply.github.com || {
     echo -e "${RED}Failed to set git user email${NC}"
     exit 1
   }
