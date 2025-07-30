@@ -146,13 +146,13 @@ if ! check_step "zsh_setup"; then
 
   echo "
 
-  # zsh-completions
-  if type brew &>/dev/null; then
-    FPATH=\$(brew --prefix)/share/zsh-completions:\$FPATH
-    autoload -Uz compinit
-    compinit
-  fi
-  " >>$HOME/.zshrc
+# zsh-completions
+if type brew &>/dev/null; then
+  FPATH=\$(brew --prefix)/share/zsh-completions:\$FPATH
+  autoload -Uz compinit
+  compinit
+fi
+" >>$HOME/.zshrc
   mark_step "zsh_setup"
 else
   echo -e "${GREEN}Skipping Zsh setup, already completed.${NC}"
@@ -221,6 +221,37 @@ else
   echo -e "${GREEN}Skipping direnv installation, already completed.${NC}"
 fi
 
+if ! check_step "brew_install_neovim"; then
+  echo -e "${RED}Installing Neovim...${NC}"
+  $BREW_PATH install neovim || {
+    echo -e "${RED}Failed to install neovim${NC}"
+    exit 1
+  }
+  echo "
+
+# neovim
+alias vim=\"nvim\"
+alias vi=\"nvim\"
+alias vimdiff=\"nvim -d\"
+export EDITOR=\$(which nvim)
+
+" >>$HOME/.zshrc
+  mark_step "brew_install_neovim"
+else
+  echo -e "${GREEN}Skipping Neovim installation, already completed.${NC}"
+fi
+
+if ! check_step "dotfiles"; then
+  echo -e "${RED}Setting up dotfiles...${NC}"
+  git clone http://github.com/hongzio/hongzio.github.io $HOME/.hongzio.github.io || {
+    echo -e "${RED}Failed to clone hongzio.github.io${NC}"
+    exit 1
+  }
+  mark_step "dotfiles"
+else
+  echo -e "${GREEN}Skipping dotfiles setup, already completed.${NC}"
+fi
+
 if ! check_step "brew_install_tmux"; then
   echo -e "${RED}Installing Tmux...${NC}"
   $BREW_PATH install tmux || {
@@ -240,47 +271,6 @@ else
   echo -e "${GREEN}Skipping Tmux installation, already completed.${NC}"
 fi
 
-if ! check_step "brew_install_neovim"; then
-  echo -e "${RED}Installing Neovim...${NC}"
-  $BREW_PATH install fd lazygit ripgrep || {
-    echo -e "${RED}Failed to install fd, lazygit, ripgrep${NC}"
-    exit 1
-  }
-  $BREW_PATH install neovim || {
-    echo -e "${RED}Failed to install neovim${NC}"
-    exit 1
-  }
-  echo "
-
-  # neovim
-  alias vim=\"nvim\"
-  alias vi=\"nvim\"
-  alias vimdiff=\"nvim -d\"
-  export EDITOR=\$(which nvim)
-
-  " >>$HOME/.zshrc
-  mark_step "brew_install_neovim"
-else
-  echo -e "${GREEN}Skipping Neovim installation, already completed.${NC}"
-fi
-
-if ! check_step "lazyvim"; then
-  echo -e "${RED}Setting up lazyvim...${NC}"
-  git clone http://github.com/hongzio/hongzio.github.io $HOME/.hongzio.github.io || {
-    echo -e "${RED}Failed to clone hongzio.github.io${NC}"
-    exit 1
-  }
-  mkdir -p $HOME/.config &>/dev/null
-  ln -s $HOME/.hongzio.github.io/lazyvim $HOME/.config/lazyvim || {
-    echo -e "${RED}Failed to link lazyvim${NC}"
-    exit 1
-  }
-  echo "export NVIM_APPNAME=lazyvim" >>$HOME/.zshrc
-  mark_step "lazyvim"
-else
-  echo -e "${GREEN}Skipping lazyvim setup, already completed.${NC}"
-fi
-
 apps=(
   "obsidian"
   "pronotes"
@@ -293,6 +283,7 @@ apps=(
   "hiddenbar"
   "surfshark"
   "font-hack-nerd-font"
+  "lazygit"
 )
 
 for app in "${apps[@]}"; do
