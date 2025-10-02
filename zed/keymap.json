@@ -7,38 +7,11 @@
 // from the command palette.
 [
   {
-    "context": "Workspace",
-    "bindings": {
-      // "shift shift": "file_finder::Toggle"
-    }
-  },
-  {
-    "context": "Editor && vim_mode == insert",
-    "bindings": {
-      // "j k": "vim::NormalBefore"
-    }
-  },
-  {
     "context": "Editor",
     "bindings": {
-      "alt-cmd-j": "editor::AddSelectionBelow"
-    }
-  },
-  {
-    "context": "Editor",
-    "bindings": {
-      "alt-cmd-k": "editor::AddSelectionAbove"
-    }
-  },
-  {
-    "context": "Editor",
-    "bindings": {
-      "ctrl-shift-l": "editor::SelectLargerSyntaxNode"
-    }
-  },
-  {
-    "context": "Editor",
-    "bindings": {
+      "alt-cmd-j": "editor::AddSelectionBelow",
+      "alt-cmd-k": "editor::AddSelectionAbove",
+      "ctrl-shift-l": "editor::SelectLargerSyntaxNode",
       "ctrl-shift-h": "editor::SelectSmallerSyntaxNode"
     }
   },
@@ -49,9 +22,43 @@
     }
   },
   {
+    "context": "Editor && VimControl && !menu",
+    "bindings": {
+      "g i": "editor::GoToImplementation",
+      "cmd-shift-space": "editor::ShowSignatureHelp",
+      "g r": "editor::FindAllReferences",
+      "g t": "editor::GoToTypeDefinition"
+    }
+  },
+  {
+    "context": "((vim_mode == normal || vim_mode == visual) || vim_mode == operator)",
+    "bindings": {
+      "ctrl-j": "vim::NextSectionStart",
+      "ctrl-k": "vim::PreviousSectionStart"
+    }
+  },
+  {
+    "context": "Editor && multibuffer",
+    "bindings": {
+      "ctrl-j": "editor::MoveToStartOfNextExcerpt",
+      "ctrl-k": "editor::MoveToEndOfPreviousExcerpt",
+      "cmd-enter": "editor::OpenExcerpts"
+    }
+  },
+  {
     "context": "Editor",
     "bindings": {
-      "g i": "editor::ShowSignatureHelp"
+      "cmd-;": null,
+      "cmd-; r": "git::Restore",
+      "cmd-; d": "editor::ToggleSelectedDiffHunks"
+    }
+  },
+  {
+    "context": "debugger_stopped",
+    "bindings": {
+      "f11": "debugger::StepInto",
+      "shift-f11": "debugger::StepOut",
+      "f10": "debugger::StepOver"
     }
   }
 ]

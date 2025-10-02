@@ -10,11 +10,19 @@
   "ssh_connections": [
     {
       "host": "hongzio",
+      "args": [],
       "projects": [
         {
-          "paths": [
-            "/Users/hongzio/Projects/nexus/./"
-          ]
+          "paths": ["/Users/hongzio/Projects/nexus/./"]
+        }
+      ]
+    },
+    {
+      "host": "mini",
+      "args": [],
+      "projects": [
+        {
+          "paths": ["/Users/hongzio/Projects/expx/./"]
         }
       ]
     }
@@ -50,6 +58,11 @@
     "show": false
   },
   "agent": {
+    "inline_assistant_model": {
+      "provider": "copilot_chat",
+      "model": "gpt-4.1"
+    },
+    "play_sound_when_agent_done": true,
     "button": true,
     "enabled": true
   },
@@ -66,7 +79,7 @@
   "icon_theme": {
     "mode": "dark",
     "light": "Zed (Default)",
-    "dark": "Zed (Default)"
+    "dark": "Catppuccin Frappé"
   },
   "telemetry": {
     "diagnostics": false,
@@ -78,9 +91,21 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "Catppuccin Espresso (Blur) [Light]"
+    "dark": "Catppuccin Espresso (Blur) [Heavy]"
   },
   "features": {
     "edit_prediction_provider": "copilot"
-  }
+  },
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.jj",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings",
+    "**/.direnv"
+  ]
 }
