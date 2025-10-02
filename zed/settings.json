@@ -1,0 +1,86 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "ssh_connections": [
+    {
+      "host": "hongzio",
+      "projects": [
+        {
+          "paths": [
+            "/Users/hongzio/Projects/nexus/./"
+          ]
+        }
+      ]
+    }
+  ],
+  "inlay_hints": {
+    "enabled": true,
+    "show_value_hints": true,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true,
+    "show_background": false,
+    "edit_debounce_ms": 700,
+    "scroll_debounce_ms": 50,
+    "toggle_on_modifiers_press": {
+      "control": false,
+      "alt": false,
+      "shift": false,
+      "platform": false,
+      "function": false
+    }
+  },
+  "multi_cursor_modifier": "cmd_or_ctrl",
+  "relative_line_numbers": true,
+  "gutter": {
+    "line_numbers": true
+  },
+  "minimap": {
+    "show": "auto"
+  },
+  "show_edit_predictions": true,
+  "base_keymap": "VSCode",
+  "tab_bar": {
+    "show": false
+  },
+  "agent": {
+    "button": true,
+    "enabled": true
+  },
+  "autosave": "on_focus_change",
+  "git": {
+    "inline_blame": {
+      "enabled": true,
+      "delay_ms": 0,
+      "padding": 7,
+      "min_column": 0,
+      "show_commit_summary": false
+    }
+  },
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "vim_mode": true,
+  "ui_font_size": 16,
+  "buffer_font_size": 14.0,
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Catppuccin Espresso (Blur) [Light]"
+  },
+  "features": {
+    "edit_prediction_provider": "copilot"
+  }
+}
