@@ -33,8 +33,8 @@
   {
     "context": "((vim_mode == normal || vim_mode == visual) || vim_mode == operator)",
     "bindings": {
-      "ctrl-j": "vim::NextSectionStart",
-      "ctrl-k": "vim::PreviousSectionStart"
+      "ctrl-j": "vim::NextMethodStart",
+      "ctrl-k": "vim::PreviousMethodStart"
     }
   },
   {
