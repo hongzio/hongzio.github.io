@@ -158,17 +158,6 @@ else
   echo -e "${GREEN}Skipping Zsh setup, already completed.${NC}"
 fi
 
-if ! check_step "brew_install_iterm2"; then
-  echo -e "${RED}Installing iTerm2...${NC}"
-  $BREW_PATH install iterm2 || {
-    echo -e "${RED}Failed to install iTerm2${NC}"
-    exit 1
-  }
-  mark_step "brew_install_iterm2"
-else
-  echo -e "${GREEN}Skipping iTerm2 installation, already completed.${NC}"
-fi
-
 if ! check_step "brew_install_fzf"; then
   echo -e "${RED}Installing fzf...${NC}"
   $BREW_PATH install fzf || {
@@ -250,6 +239,23 @@ if ! check_step "dotfiles"; then
   mark_step "dotfiles"
 else
   echo -e "${GREEN}Skipping dotfiles setup, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_ghostty"; then
+  echo -e "${RED}Installing ghostty...${NC}"
+  $BREW_PATH install ghostty || {
+    echo -e "${RED}Failed to install ghostty${NC}"
+    exit 1
+  }
+  mkdir -p $HOME/.config/ghostty
+  ln -s -f $HOME/.hongzio.github.io/ghostty.conf $HOME/.config/ghostty/config || {
+    echo -e "${RED}Failed to link ghostty.conf${NC}"
+    exit 1
+  }
+
+  mark_step "brew_install_ghostty"
+else
+  echo -e "${GREEN}Skipping ghostty installation, already completed.${NC}"
 fi
 
 if ! check_step "brew_install_tmux"; then
