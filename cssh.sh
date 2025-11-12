@@ -1,3 +1,5 @@
+# source /path/to/cssh.sh
+# alias ssh="cssh"
 cssh() {
   local original_bg_spec
   local old_stty
