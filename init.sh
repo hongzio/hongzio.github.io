@@ -248,7 +248,7 @@ if ! check_step "brew_install_ghostty"; then
     exit 1
   }
   mkdir -p $HOME/.config/ghostty
-  ln -s -f $HOME/.hongzio.github.io/ghostty.conf $HOME/.config/ghostty/config || {
+  ln -s -f $HOME/.hongzio.github.io/ghostty.config $HOME/.config/ghostty/config || {
     echo -e "${RED}Failed to link ghostty.conf${NC}"
     exit 1
   }
