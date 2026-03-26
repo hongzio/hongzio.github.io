@@ -102,7 +102,7 @@ if ! check_step "git"; then
   #   echo -e "${RED}Failed to set git url${NC}"
   #   exit 1
   # }
-  echo ".tool-versions
+  echo "mise.local.toml
   .direnv
   .envrc
   .idea
@@ -182,32 +182,16 @@ else
   echo -e "${GREEN}Skipping zoxide installation, already completed.${NC}"
 fi
 
-if ! check_step "brew_install_asdf"; then
-  echo -e "${RED}Installing asdf...${NC}"
-  $BREW_PATH install xz || {
-    echo -e "${RED}Failed to install xz${NC}"
+if ! check_step "brew_install_mise"; then
+  echo -e "${RED}Installing mise...${NC}"
+  $BREW_PATH install mise || {
+    echo -e "${RED}Failed to install mise${NC}"
     exit 1
   }
-  $BREW_PATH install asdf || {
-    echo -e "${RED}Failed to install asdf${NC}"
-    exit 1
-  }
-  echo -e "export PATH=\"\${ASDF_DATA_DIR:-\$HOME/.asdf}/shims:\$PATH\"" >>$HOME/.zshrc
-  mark_step "brew_install_asdf"
+  echo 'eval "$(mise activate zsh)"' >>$HOME/.zshrc
+  mark_step "brew_install_mise"
 else
-  echo -e "${GREEN}Skipping asdf installation, already completed.${NC}"
-fi
-
-if ! check_step "brew_install_direnv"; then
-  echo -e "${RED}Installing direnv...${NC}"
-  $BREW_PATH install direnv || {
-    echo -e "${RED}Failed to install direnv${NC}"
-    exit 1
-  }
-  echo "eval \"\$(direnv hook zsh)\"" >>$HOME/.zshrc
-  mark_step "brew_install_direnv"
-else
-  echo -e "${GREEN}Skipping direnv installation, already completed.${NC}"
+  echo -e "${GREEN}Skipping mise installation, already completed.${NC}"
 fi
 
 if ! check_step "brew_install_neovim"; then
@@ -327,7 +311,7 @@ if ! check_step "zshrc_setup"; then
   echo -e "${RED}Setting up zshrc...${NC}"
 
   # setup plugins
-  sed -i '' 's/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions fzf zoxide asdf direnv macos)/' $HOME/.zshrc
+  sed -i '' 's/plugins=(git zsh-syntax-highlighting zsh-autosuggestions)/plugins=(git zsh-syntax-highlighting zsh-autosuggestions fzf zoxide macos)/' $HOME/.zshrc
   mark_step "zshrc_setup"
 else
   echo -e "${GREEN}Skipping zshrc setup, already completed.${NC}"

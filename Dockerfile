@@ -17,32 +17,16 @@ RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -
 RUN git clone https://github.com/zsh-users/zsh-autosuggestions $HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 
-# direnv
-RUN apt install -y direnv && \
-    echo 'eval "$(direnv hook zsh)"' >> $HOME/.zshrc
+# mise
+RUN curl https://mise.run | sh && \
+    echo 'eval "$(mise activate zsh)"' >> $HOME/.zshrc
+ENV PATH="/root/.local/share/mise/shims:/root/.local/bin:$PATH"
 
-# asdf
-RUN git clone --depth 1 https://github.com/asdf-vm/asdf.git $HOME/.asdf --branch v0.14.1 && \
-    echo '. $HOME/.asdf/asdf.sh' >> $HOME/.zshrc;
-ENV PATH="$PATH:/root/.asdf/bin:/root/.asdf/shims"
-
-# asdf - golang
+# mise - golang, node, python
 # - DAP delve needs global golang
-RUN asdf plugin add golang && \
-    asdf install golang 1.23.1 && \
-    asdf global golang 1.23.1;
-
-# asdf - node
 # - lazyvim needs nodejs
-RUN asdf plugin add nodejs && \
-   asdf plugin add nodejs && \
-   asdf install nodejs 22.9.0 && \
-   asdf global nodejs 22.9.0
-
-# asdf - python
 RUN apt install -y zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev uuid-dev lzma-dev liblzma-dev checkinstall libncursesw5-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev && \
-    asdf plugin add python && \
-    asdf install python 3.11.10
+    mise use -g golang@1.23.1 node@22.9.0 python@3.11.10
 
 # zoxide
 RUN curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh && \
@@ -58,7 +42,7 @@ RUN pipx install poetry && \
     /root/.local/bin/poetry config virtualenvs.create false
 
 # zsh plugins
-RUN perl -pi -w -e 's/plugins=.*/plugins=(git ssh-agent zsh-autosuggestions zsh-syntax-highlighting asdf)/g;' $HOME/.zshrc
+RUN perl -pi -w -e 's/plugins=.*/plugins=(git ssh-agent zsh-autosuggestions zsh-syntax-highlighting mise)/g;' $HOME/.zshrc
 
 # lazyvim
 RUN git clone https://github.com/neovim/neovim --branch stable /tmp/neovim && \
