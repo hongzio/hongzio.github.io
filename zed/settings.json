@@ -7,6 +7,9 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "edit_predictions": {
+    "provider": "copilot"
+  },
   "buffer_font_fallbacks": ["D2Coding"],
   "buffer_font_family": "Hack Nerd Font Mono",
   "inlay_hints": {
@@ -40,6 +43,7 @@
     "show": false,
   },
   "agent": {
+    "enable_feedback": false,
     "enabled": true,
     "button": true,
     "favorite_models": [],
