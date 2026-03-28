@@ -9,56 +9,125 @@
   {
     "context": "Editor",
     "bindings": {
-      "alt-cmd-j": "editor::AddSelectionBelow",
-      "alt-cmd-k": "editor::AddSelectionAbove",
+      "alt-cmd-down": null,
+      "alt-cmd-up": null,
+      "ctrl-shift-n": null,
+      "ctrl-shift-b": "editor::ToggleBreakpoint",
+      "ctrl-shift-r": "debugger::Start",
+      "ctrl-shift-j": "editor::AddSelectionBelow",
+      "ctrl-shift-k": "editor::AddSelectionAbove",
       "ctrl-shift-l": "editor::SelectLargerSyntaxNode",
-      "ctrl-shift-h": "editor::SelectSmallerSyntaxNode"
-    }
+      "ctrl-cmd-shift-l": "editor::SelectLargerSyntaxNode",
+      "ctrl-shift-h": "editor::SelectSmallerSyntaxNode",
+      "ctrl-cmd-shift-h": "editor::SelectSmallerSyntaxNode",
+    },
+  },
+  {
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      "d": null,
+      "cmd-n": "project_panel::NewFile",
+      "cmd-shift-n": "project_panel::NewDirectory",
+    },
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-4": null,
+      "cmd-8": "workspace::ToggleRightDock",
+      "cmd-9": "workspace::ToggleBottomDock",
+      "shift-cmd-g": "git_panel::ToggleFocus",
+      "ctrl-cmd-1": "diagnostics::Deploy",
+      "ctrl-cmd-2": "terminal_panel::ToggleFocus",
+      "ctrl-cmd-3": "debug_panel::ToggleFocus",
+    },
   },
   {
     "context": "Terminal",
     "bindings": {
-      "ctrl-`": "terminal_panel::ToggleFocus"
-    }
+      "cmd-1": "editor::ToggleFocus",
+      "ctrl-`": "terminal_panel::ToggleFocus",
+    },
   },
   {
     "context": "Editor && VimControl && !menu",
     "bindings": {
+      "ctrl-o": null,
+      "ctrl-i": null,
+    },
+  },
+  {
+    "context": "Editor && VimControl && !menu",
+    "bindings": {
+      "ctrl-o": "pane::GoBack",
+      "ctrl-i": "pane::GoForward",
       "g i": "editor::GoToImplementation",
+      "g shift-i": "editor::GoToImplementationSplit",
       "cmd-shift-space": "editor::ShowSignatureHelp",
       "g r": "editor::FindAllReferences",
-      "g t": "editor::GoToTypeDefinition"
-    }
+      "g s": "outline_panel::ToggleFocus",
+      "g shift-s": "project_symbols::Toggle",
+      "g shift-d": "editor::GoToDefinitionSplit",
+      "g t": "editor::GoToTypeDefinition",
+      "g shift-t": "editor::GoToTypeDefinitionSplit",
+      "] c": "editor::GoToNextChange",
+      "[ c": "editor::GoToPreviousChange",
+      "] d": "editor::GoToDiagnostic",
+      "[ d": "editor::GoToPreviousDiagnostic",
+      "space d shift-d": "debugger::Start",
+      "space d l": "debugger::Start",
+      "space d r": "debugger::Rerun",
+      "space d s": "debugger::Stop",
+      "space r o": "editor::OrganizeImports",
+      "space r f": "editor::Format",
+      "space r n": "editor::Rename",
+      "space t l": "task::Spawn",
+      "space t r": "task::Rerun",
+      "space g r": "git::Restore",
+      "space g b": "editor::ToggleGitBlameInline",
+      "space g h": "git::FileHistory",
+      "space g d": "editor::ToggleSelectedDiffHunks",
+      "space g shift-d": "git::Diff",
+    },
   },
   {
     "context": "((vim_mode == normal || vim_mode == visual) || vim_mode == operator)",
     "bindings": {
       "ctrl-j": "vim::NextMethodStart",
-      "ctrl-k": "vim::PreviousMethodStart"
-    }
+      "ctrl-k": "vim::PreviousMethodStart",
+    },
   },
   {
     "context": "Editor && multibuffer",
     "bindings": {
       "ctrl-j": "editor::MoveToStartOfNextExcerpt",
       "ctrl-k": "editor::MoveToEndOfPreviousExcerpt",
-      "cmd-enter": "editor::OpenExcerpts"
-    }
+      "cmd-enter": "editor::OpenExcerpts",
+    },
   },
   {
     "context": "Editor",
     "bindings": {
-      "cmd-;": null,
-      "cmd-; r": "git::Restore",
-      "cmd-; d": "editor::ToggleSelectedDiffHunks"
-    }
+      "cmd-k r": "git::Restore",
+      "cmd-k d": "editor::GoToNextChange",
+    },
   },
   {
     "context": "debugger_stopped",
     "bindings": {
       "f11": "debugger::StepInto",
       "shift-f11": "debugger::StepOut",
-      "f10": "debugger::StepOver"
-    }
-  }
+      "f10": "debugger::StepOver",
+    },
+  },
+  {
+    "context": "debugger_stopped > Editor",
+    "bindings": {
+      "ctrl-shift-r": "debugger::Continue",
+      "ctrl-shift-n": "debugger::StepOver",
+      "ctrl-shift-i": "debugger::StepInto",
+      "ctrl-shift-o": "debugger::StepOut",
+      "ctrl-shift-c": "debugger::RunToCursor",
+    },
+  },
 ]
