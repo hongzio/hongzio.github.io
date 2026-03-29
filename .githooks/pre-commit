@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+profile_rel="vscode.code-profile"
+profile_path="$repo_root/$profile_rel"
+
+if ! git diff --cached --name-only --diff-filter=ACMR -- "$profile_rel" | grep -q .; then
+  exit 0
+fi
+
+python3 "$repo_root/scripts/sanitize_vscode_profile.py" "$profile_path"
+git add -- "$profile_path"
