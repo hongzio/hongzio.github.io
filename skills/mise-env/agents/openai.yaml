@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mise Env"
+  short_description: "Configure local env settings from tools declared in mise.toml"
+  default_prompt: "Use $mise-env to read mise.toml and configure Go paths, Python virtualenv settings, or both based on the tools declared there."
