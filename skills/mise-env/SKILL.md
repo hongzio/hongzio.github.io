@@ -27,18 +27,26 @@ _.path = "{{config_root}}/.mise/go/bin"
 _.python.venv = { path = ".mise/python/venv", create = true }
 ```
 
-5. If Node is configured, ensure `mise.toml` adds `node_modules/.bin` to `PATH` via `[env]`. Prefer an `_.path` value that includes `node_modules/.bin`, preserving any existing path entries. This should match `direnv layout node`, which only prepends `node_modules/.bin`.
-6. If Go, Python, and Node are configured together, apply all required entries in the same `[env]` table.
-7. If an `[env]` table already exists, add or update only the required keys and preserve unrelated settings.
-8. If `_.path` already exists, preserve existing entries and ensure required additions are present without dropping unrelated paths.
-9. If the task also sets or changes tool versions, run `mise use <tool>@<version>` from the project root as needed.
-10. If the configured toolchain or virtualenv should exist immediately, run `mise install` only when required, then verify the configured paths resolve under `.mise/go` and `.mise/python/venv`.
+5. If Python is configured and a `pyproject.toml` exists in the project root, also ensure `mise.toml` contains this exact `[env]` entry so `uv` uses the same environment by default:
+
+```toml
+[env]
+UV_PROJECT_ENVIRONMENT = ".mise/python/venv"
+```
+
+6. If Node is configured, ensure `mise.toml` adds `node_modules/.bin` to `PATH` via `[env]`. Prefer an `_.path` value that includes `node_modules/.bin`, preserving any existing path entries. This should match `direnv layout node`, which only prepends `node_modules/.bin`.
+7. If Go, Python, and Node are configured together, apply all required entries in the same `[env]` table.
+8. If an `[env]` table already exists, add or update only the required keys and preserve unrelated settings.
+9. If `_.path` already exists, preserve existing entries and ensure required additions are present without dropping unrelated paths.
+10. If the task also sets or changes tool versions, run `mise use <tool>@<version>` from the project root as needed.
+11. If the configured toolchain or virtualenv should exist immediately, run `mise install` only when required, then verify the configured paths resolve under `.mise/go` and `.mise/python/venv`.
 
 ## Defaults
 
 - Use `{{config_root}}/.mise/go` for `GOPATH`.
 - Use `{{config_root}}/.mise/go/bin` for both `GOBIN` and `_.path`.
 - Use `.mise/python/venv` for the Python virtualenv path.
+- If `pyproject.toml` exists, use `.mise/python/venv` for `UV_PROJECT_ENVIRONMENT` too.
 - Use `node_modules/.bin` as the Node path entry, matching `direnv layout node`.
 - Prefer these exact settings unless the repo already uses a different local layout:
 
@@ -46,6 +54,7 @@ _.python.venv = { path = ".mise/python/venv", create = true }
 GOPATH = "{{config_root}}/.mise/go"
 GOBIN = "{{config_root}}/.mise/go/bin"
 _.path = "{{config_root}}/.mise/go/bin"
+UV_PROJECT_ENVIRONMENT = ".mise/python/venv"
 _.python.venv = { path = ".mise/python/venv", create = true }
 ```
 
@@ -60,6 +69,7 @@ _.path = ["{{config_root}}/.mise/go/bin", "node_modules/.bin"]
 - Read `mise.toml` before deciding what to apply.
 - Apply Go settings only when Go is configured.
 - Apply Python settings only when Python is configured.
+- If `pyproject.toml` exists, add `UV_PROJECT_ENVIRONMENT = ".mise/python/venv"` alongside the Python venv setting.
 - Apply Node path settings only when Node is configured.
 - Apply all relevant settings when multiple tools are configured.
 - Preserve unrelated `mise.toml` settings.
