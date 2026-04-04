@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Staged Changes"
+  short_description: "Create a safe commit from the current staged changes"
+  default_prompt: "Use $commit-staged-changes to inspect the staged diff, write a Conventional Commits message, and create the commit safely."
