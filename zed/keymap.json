@@ -70,8 +70,8 @@
       "g shift-d": "editor::GoToDefinitionSplit",
       "g t": "editor::GoToTypeDefinition",
       "g shift-t": "editor::GoToTypeDefinitionSplit",
-      "] c": "editor::GoToNextChange",
-      "[ c": "editor::GoToPreviousChange",
+      "] c": "editor::GoToHunk",
+      "[ c": "editor::GoToPreviousHunk",
       "] d": "editor::GoToDiagnostic",
       "[ d": "editor::GoToPreviousDiagnostic",
       "space d shift-d": "debugger::Start",
@@ -100,16 +100,9 @@
   {
     "context": "Editor && multibuffer",
     "bindings": {
-      "ctrl-j": "editor::MoveToStartOfNextExcerpt",
-      "ctrl-k": "editor::MoveToEndOfPreviousExcerpt",
+      "ctrl-n": "editor::MoveToStartOfNextExcerpt",
+      "ctrl-p": "editor::MoveToEndOfPreviousExcerpt",
       "cmd-enter": "editor::OpenExcerpts",
-    },
-  },
-  {
-    "context": "Editor",
-    "bindings": {
-      "cmd-k r": "git::Restore",
-      "cmd-k d": "editor::GoToNextChange",
     },
   },
   {
