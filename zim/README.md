@@ -18,6 +18,7 @@ alias zim='NVIM_APPNAME=zim nvim'
 | Plugin manager  | builtin `vim.pack`                                |
 | LSP             | builtin `vim.lsp.config` / `enable` (no lspconfig) |
 | Completion      | `blink.cmp` (Rust fuzzy matcher)                  |
+| AI suggestions  | `copilot.lua` (inline ghost text)                 |
 | Fuzzy finder    | `fzf-lua` (`max-perf` profile)                    |
 | Syntax          | `nvim-treesitter` (`main`) + `nvim-treesitter-textobjects` |
 | Colorscheme     | `monokai-pro.nvim` (`pro` filter)                 |
@@ -126,6 +127,19 @@ Leader is `<Space>`.
 In an oil buffer: edit lines then `:w` to rename/create/delete/move files;
 `g?` shows all mappings.
 
+### Copilot (insert mode, inline ghost text)
+
+| Key | Action |
+|-----|--------|
+| `<Tab>` | Accept suggestion (else falls back to snippet jump / indent) |
+| `<C-l>` | Accept suggestion (alternative) |
+| `<C-;>` | Accept next word |
+| `<C-.>` / `<C-,>` | Next / previous suggestion |
+| `<C-]>` | Dismiss |
+
+Auth is reused from `~/.config/github-copilot`; run `:Copilot auth` once if
+needed and `:Copilot status` to check. Requires `node` on `PATH` (via mise).
+
 ### Diagnostics
 
 | Key | Action |
@@ -148,6 +162,7 @@ lua/plugins/
   init.lua            vim.pack.add + require order
   blink.lua           completion
   colorscheme.lua     monokai-pro (pro filter)
+  copilot.lua         Copilot inline suggestions
   fzf.lua             fuzzy finder + keymaps
   gitsigns.lua        git signs / blame / hunks
   icons.lua           mini.icons (+ devicons shim)

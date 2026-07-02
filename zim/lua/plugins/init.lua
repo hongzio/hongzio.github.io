@@ -32,6 +32,9 @@ vim.pack.add({
 
   -- File explorer: edit the filesystem as a buffer.
   { src = 'https://github.com/stevearc/oil.nvim' },
+
+  -- GitHub Copilot: inline AI suggestions (ghost text). Pure Lua client.
+  { src = 'https://github.com/zbirenbaum/copilot.lua' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
@@ -48,3 +51,4 @@ require('plugins.statusline')
 require('plugins.multicursor')
 require('plugins.gitsigns')
 require('plugins.oil')
+require('plugins.copilot')
