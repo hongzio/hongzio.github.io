@@ -55,6 +55,9 @@ the box:
 - `gopls` — `mise use -g "go:golang.org/x/tools/gopls@latest"` (a single gopls
   serves every project; per-project Go versions resolve via `GOTOOLCHAIN=auto`
   / mise)
+- `basedpyright` — `uv tool install basedpyright` (a single install serves every
+  project and Python version; `on_init` points it at the project venv
+  — `.mise/python/venv` or a plain `.venv` — so its packages resolve)
 
 Add a server: declare `vim.lsp.config('<name>', {...})` and add its name to
 `vim.lsp.enable({...})` in `lua/plugins/lsp.lua`.
