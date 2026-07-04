@@ -14,3 +14,11 @@ local map = vim.keymap.set
 map('n', ']]', function() Snacks.words.jump(1) end, { desc = 'Next reference' })
 map('n', '[[', function() Snacks.words.jump(-1) end, { desc = 'Prev reference' })
 map('n', '<leader>n', function() Snacks.notifier.show_history() end, { desc = 'Notifications' })
+
+-- Floating toggle terminal. Mapped in BOTH normal and terminal mode so the same
+-- key opens it and closes it from inside (no need to leave terminal mode first).
+-- Reuses the same instance, so it hides/restores. Inherits the shell env (mise).
+map({ 'n', 't' }, '<leader>tt', function()
+  Snacks.terminal.toggle(nil, { win = { position = 'float' } })
+end, { desc = 'Toggle terminal (float)' })
+-- snacks already maps <Esc><Esc> inside the terminal to reach normal mode.

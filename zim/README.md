@@ -89,7 +89,8 @@ Leader is `<Space>`.
 |-----|--------|
 | `<leader>ff` / `<leader><space>` | Files |
 | `<leader>fg` | Live grep |
-| `<leader>fb` / `<leader>fr` | Buffers / resume last picker |
+| `<leader>fb` / `<leader>fo` | Buffers / recent files |
+| `<leader>fr` | Resume last picker |
 | `<leader>fh` / `<leader>fd` | Help / diagnostics |
 | `<leader>fs` / `<leader>fS` | Document symbols / workspace symbols (live) |
 | `<leader>/` | Search in current buffer |
@@ -104,6 +105,7 @@ Leader is `<Space>`.
 | `<leader>hs` / `<leader>hS` / `<leader>hu` | Stage hunk / buffer / undo stage |
 | `<leader>hb` / `<leader>tb` | Blame line / toggle inline blame |
 | `<leader>hd` / `<leader>hD` | Diff vs index / last commit |
+| `<leader>fc` / `<leader>fC` | File history / project commits (fzf) |
 | `ih` | Hunk text object (`dih`, `vih`) |
 
 ### Multicursor
@@ -139,6 +141,13 @@ In an oil buffer: edit lines then `:w` to rename/create/delete/move files;
 
 Auth is reused from `~/.config/github-copilot`; run `:Copilot auth` once if
 needed and `:Copilot status` to check. Requires `node` on `PATH` (via mise).
+
+### Terminal
+
+| Key | Action |
+|-----|--------|
+| `<leader>tt` | Toggle floating terminal (works from inside too) |
+| `<Esc><Esc>` (terminal) | Go to normal mode (snacks) |
 
 ### Diagnostics
 

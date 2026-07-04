@@ -15,8 +15,8 @@ o.laststatus = 3              -- single global statusline
 
 -- Editing
 o.expandtab = true
-o.shiftwidth = 2
-o.tabstop = 2
+o.shiftwidth = 4
+o.tabstop = 4
 o.smartindent = true
 o.ignorecase = true
 o.smartcase = true
