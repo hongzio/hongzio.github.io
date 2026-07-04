@@ -17,6 +17,10 @@ vim.pack.add({
   -- branch to match nvim-treesitter's main branch.
   { src = 'https://github.com/nvim-treesitter/nvim-treesitter-textobjects', version = 'main' },
 
+  -- Sticky context header: shows the enclosing function/block at the top of
+  -- the window. Drives off vim.treesitter directly, so `main`-branch safe.
+  { src = 'https://github.com/nvim-treesitter/nvim-treesitter-context' },
+
   -- Completion (Rust fuzzy matcher). Pin to the 1.x release line so blink
   -- pulls its prebuilt fuzzy binary instead of needing a cargo build.
   { src = 'https://github.com/saghen/blink.cmp', version = vim.version.range('1') },
@@ -45,9 +49,11 @@ require('plugins.lsp')
 require('plugins.treesitter')
 require('plugins.treesitter-textobjects')
 require('plugins.treesitter-incremental')
+require('plugins.treesitter-context')
 require('plugins.fzf')
 require('plugins.snacks')
 require('plugins.statusline')
+require('plugins.surround')
 require('plugins.multicursor')
 require('plugins.gitsigns')
 require('plugins.oil')

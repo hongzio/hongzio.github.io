@@ -20,11 +20,12 @@ alias zap='NVIM_APPNAME=zap nvim'
 | Completion      | `blink.cmp` (Rust fuzzy matcher)                  |
 | AI suggestions  | `copilot.lua` (inline ghost text)                 |
 | Fuzzy finder    | `fzf-lua` (`max-perf` profile)                    |
-| Syntax          | `nvim-treesitter` (`main`) + `nvim-treesitter-textobjects` |
+| Syntax          | `nvim-treesitter` (`main`) + `-textobjects` + `-context` |
 | Colorscheme     | `monokai-pro.nvim` (`pro` filter)                 |
 | Git             | `gitsigns.nvim`                                   |
 | File explorer   | `oil.nvim`                                        |
 | Multicursor     | `multicursor.nvim`                                |
+| Surround        | `mini.surround` (`sa` / `sd` / `sr`)              |
 | QoL             | `snacks.nvim`                                     |
 | Icons / statusline | `mini.icons` / `mini.statusline`               |
 
@@ -181,7 +182,9 @@ lua/plugins/
   oil.lua             file explorer
   snacks.lua          QoL modules
   statusline.lua      mini.statusline
+  surround.lua        mini.surround (add/delete/replace pairs)
   treesitter.lua      parsers + highlight (auto-install on open)
   treesitter-textobjects.lua  named-function motions
   treesitter-incremental.lua  expand/shrink node selection
+  treesitter-context.lua      sticky function/block header
 ```
