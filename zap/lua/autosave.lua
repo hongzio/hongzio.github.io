@@ -1,7 +1,7 @@
 -- Auto-save: write named file buffers at natural pause points (leaving insert,
 -- losing focus) and shortly after any change. Skips special buffers (oil,
 -- terminals, help, ...), unnamed/readonly buffers, and anything unmodified.
-local group = vim.api.nvim_create_augroup('zim_autosave', { clear = true })
+local group = vim.api.nvim_create_augroup('zap_autosave', { clear = true })
 
 local function should_save(buf)
   return vim.api.nvim_buf_is_valid(buf)

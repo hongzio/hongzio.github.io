@@ -202,8 +202,8 @@ if ! check_step "brew_install_neovim"; then
   }
   echo "
 
-# neovim (use zim config by default via NVIM_APPNAME)
-export NVIM_APPNAME=zim
+# neovim (use zap config by default via NVIM_APPNAME)
+export NVIM_APPNAME=zap
 alias vim=\"nvim\"
 alias vi=\"nvim\"
 alias vimdiff=\"nvim -d\"

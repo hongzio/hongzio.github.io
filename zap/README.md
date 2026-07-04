@@ -1,14 +1,14 @@
-# zim
+# zap
 
 Minimal, high-performance Neovim config (Neovim 0.12+). Leans on builtins
 (`vim.pack`, native LSP, treesitter) and a small set of fast, pure-Lua plugins.
 
-Lives in `~/.config/zim`, so it runs isolated via `NVIM_APPNAME`:
+Lives in `~/.config/zap`, so it runs isolated via `NVIM_APPNAME`:
 
 ```sh
-NVIM_APPNAME=zim nvim
+NVIM_APPNAME=zap nvim
 # handy alias:
-alias zim='NVIM_APPNAME=zim nvim'
+alias zap='NVIM_APPNAME=zap nvim'
 ```
 
 ## Stack
@@ -90,6 +90,7 @@ Leader is `<Space>`.
 | `<leader>ff` / `<leader><space>` | Files |
 | `<leader>fg` | Live grep |
 | `<leader>fb` / `<leader>fo` | Buffers / recent files |
+| `<leader>fp` | Projects (recent git roots, snacks) |
 | `<leader>fr` | Resume last picker |
 | `<leader>fh` / `<leader>fd` | Help / diagnostics |
 | `<leader>fs` / `<leader>fS` | Document symbols / workspace symbols (live) |

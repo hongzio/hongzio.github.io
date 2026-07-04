@@ -15,6 +15,10 @@ map('n', ']]', function() Snacks.words.jump(1) end, { desc = 'Next reference' })
 map('n', '[[', function() Snacks.words.jump(-1) end, { desc = 'Prev reference' })
 map('n', '<leader>n', function() Snacks.notifier.show_history() end, { desc = 'Notifications' })
 
+-- Projects picker (recent git roots). Picks -> chdir + restore session if a
+-- session backend exists. Lazy-loads the picker module (kept off in setup).
+map('n', '<leader>fp', function() Snacks.picker.projects() end, { desc = 'Projects' })
+
 -- Floating toggle terminal. Mapped in BOTH normal and terminal mode so the same
 -- key opens it and closes it from inside (no need to leave terminal mode first).
 -- Reuses the same instance, so it hides/restores. Inherits the shell env (mise).

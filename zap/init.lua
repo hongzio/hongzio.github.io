@@ -1,4 +1,4 @@
--- zim :: minimal, high-performance Neovim (run with `NVIM_APPNAME=zim nvim`)
+-- zap :: minimal, high-performance Neovim (run with `NVIM_APPNAME=zap nvim`)
 -- Requires Neovim 0.12+ for vim.pack.
 
 -- [perf] Enable the experimental Lua module loader / bytecode cache. Must run
