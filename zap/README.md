@@ -26,6 +26,7 @@ alias zap='NVIM_APPNAME=zap nvim'
 | File explorer   | `oil.nvim`                                        |
 | Multicursor     | `multicursor.nvim`                                |
 | Surround        | `mini.surround` (`sa` / `sd` / `sr`)              |
+| Increment       | `dial.nvim` (`<C-a>` / `<C-x>`, per-filetype)     |
 | QoL             | `snacks.nvim`                                     |
 | Icons / statusline | `mini.icons` / `mini.statusline`               |
 
@@ -124,6 +125,16 @@ Leader is `<Space>`.
 | (while active) `<Esc>` | Disable, then clear cursors |
 | (while active) `<C-p>` / `<leader>x` | Delete current cursor |
 
+### Increment / decrement (dial)
+
+Rule group is chosen by filetype (numbers, hex, dates, booleans, logical /
+comparison operators, weekdays, months, semver, ...).
+
+| Key | Action |
+|-----|--------|
+| `<C-a>` / `<C-x>` | Increment / decrement under cursor (normal + visual) |
+| `g<C-a>` / `g<C-x>` | Visual: ramp values per line (1, 2, 3, ...) |
+
 ### File explorer (oil)
 
 | Key | Action |
@@ -186,6 +197,7 @@ lua/plugins/
   snacks.lua          QoL modules
   statusline.lua      mini.statusline
   surround.lua        mini.surround (add/delete/replace pairs)
+  dial.lua            smart increment/decrement (per-filetype)
   treesitter.lua      parsers + highlight (auto-install on open)
   treesitter-textobjects.lua  named-function motions
   treesitter-incremental.lua  expand/shrink node selection

@@ -39,6 +39,10 @@ vim.pack.add({
 
   -- GitHub Copilot: inline AI suggestions (ghost text). Pure Lua client.
   { src = 'https://github.com/zbirenbaum/copilot.lua' },
+
+  -- Smart <C-a>/<C-x>: increment/decrement numbers, dates, booleans, operators,
+  -- and more, with per-filetype rule groups.
+  { src = 'https://github.com/monaqa/dial.nvim' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
@@ -58,3 +62,4 @@ require('plugins.multicursor')
 require('plugins.gitsigns')
 require('plugins.oil')
 require('plugins.copilot')
+require('plugins.dial')
