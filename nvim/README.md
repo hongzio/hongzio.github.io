@@ -21,6 +21,7 @@ The default config: lives in `~/.config/nvim` and runs with plain `nvim` — no
 | File explorer   | `oil.nvim`                                        |
 | Multicursor     | `multicursor.nvim`                                |
 | Surround        | `mini.surround` (`sa` / `sd` / `sr`)              |
+| Autopairs       | `mini.pairs`                                      |
 | Increment       | `dial.nvim` (`<C-a>` / `<C-x>`, per-filetype)     |
 | QoL             | `snacks.nvim`                                     |
 | Icons / statusline | `mini.icons` / `mini.statusline`               |
@@ -218,6 +219,7 @@ lua/plugins/
   snacks.lua          QoL modules
   statusline.lua      mini.statusline
   surround.lua        mini.surround (add/delete/replace pairs)
+  pairs.lua           mini.pairs (autopairs)
   dial.lua            smart increment/decrement (per-filetype)
   treesitter.lua      parsers + highlight (auto-install on open)
   treesitter-textobjects.lua  named-function motions
