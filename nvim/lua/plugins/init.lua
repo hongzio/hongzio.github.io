@@ -43,6 +43,9 @@ vim.pack.add({
   -- Smart <C-a>/<C-x>: increment/decrement numbers, dates, booleans, operators,
   -- and more, with per-filetype rule groups.
   { src = 'https://github.com/monaqa/dial.nvim' },
+
+  -- Label-based motion: jump anywhere on screen in a few keystrokes (s / S).
+  { src = 'https://github.com/folke/flash.nvim' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
@@ -64,3 +67,4 @@ require('plugins.gitsigns')
 require('plugins.oil')
 require('plugins.copilot')
 require('plugins.dial')
+require('plugins.flash')

@@ -20,8 +20,9 @@ The default config: lives in `~/.config/nvim` and runs with plain `nvim` — no
 | Git             | `gitsigns.nvim`                                   |
 | File explorer   | `oil.nvim`                                        |
 | Multicursor     | `multicursor.nvim`                                |
-| Surround        | `mini.surround` (`sa` / `sd` / `sr`)              |
+| Surround        | `mini.surround` (`gsa` / `gsd` / `gsr`)           |
 | Autopairs       | `mini.pairs`                                      |
+| Motion          | `flash.nvim` (`s` jump, `S` treesitter)           |
 | Increment       | `dial.nvim` (`<C-a>` / `<C-x>`, per-filetype)     |
 | QoL             | `snacks.nvim`                                     |
 | Icons / statusline | `mini.icons` / `mini.statusline`               |
@@ -73,6 +74,8 @@ Leader is `<Space>`.
 | `]F` / `[F` | Next / prev function end |
 | `<C-l>` | Select treesitter node; repeat to expand to parent |
 | `<C-h>` (visual) | Shrink node selection |
+| `s` / `S` | Flash jump (label) / flash treesitter node |
+| `f` / `t` / `/` | Enhanced with flash labels |
 
 ### Text objects (treesitter)
 
@@ -218,8 +221,9 @@ lua/plugins/
   oil.lua             file explorer
   snacks.lua          QoL modules
   statusline.lua      mini.statusline
-  surround.lua        mini.surround (add/delete/replace pairs)
+  surround.lua        mini.surround (add/delete/replace pairs, gs prefix)
   pairs.lua           mini.pairs (autopairs)
+  flash.lua           label-based motion (s / S)
   dial.lua            smart increment/decrement (per-filetype)
   treesitter.lua      parsers + highlight (auto-install on open)
   treesitter-textobjects.lua  named-function motions
