@@ -73,6 +73,18 @@ Leader is `<Space>`.
 | `<C-l>` | Select treesitter node; repeat to expand to parent |
 | `<C-h>` (visual) | Shrink node selection |
 
+### Text objects (treesitter)
+
+Selection in visual / operator-pending mode (`lookahead`: jumps forward to the
+next match, so `cif` works from anywhere on the line).
+
+| Key | Object |
+|-----|--------|
+| `af` / `if` | a / inner function (`dif`, `cif`, `vaf`) |
+| `ac` / `ic` | a / inner class |
+| `aa` / `ia` | a / inner parameter (`daa`, `cia`) |
+| `<leader>a` / `<leader>A` | Swap parameter with next / previous |
+
 ### Windows (`<leader>w`)
 
 Directional moves stay on `<C-h>` / `<C-w>h/j/k/l`; `<C-w>` is untouched.

@@ -5,6 +5,7 @@
 -- field, which excludes anonymous functions (e.g. Go `func_literal`, Lua
 -- anonymous `function() end`).
 require('nvim-treesitter-textobjects').setup({
+  select = { lookahead = true }, -- jump forward onto the textobject if not on one
   move = { set_jumps = true },
 })
 
@@ -94,3 +95,22 @@ map(modes, '<C-k>', goto_named(-1, false), { desc = 'Prev named function' })
 -- Named function end.
 map(modes, ']F', goto_named(1, true), { desc = 'Next named function end' })
 map(modes, '[F', goto_named(-1, true), { desc = 'Prev named function end' })
+
+-- Text object SELECTION (visual + operator-pending): dif, cif, vaf, daa, vac...
+-- `lookahead` (setup above) jumps forward to the next textobject when the cursor
+-- isn't on one, so `cif` works from anywhere on the line.
+local select = require('nvim-treesitter-textobjects.select')
+local function sel(query)
+  return function() select.select_textobject(query, 'textobjects') end
+end
+map({ 'x', 'o' }, 'af', sel('@function.outer'), { desc = 'a function' })
+map({ 'x', 'o' }, 'if', sel('@function.inner'), { desc = 'inner function' })
+map({ 'x', 'o' }, 'ac', sel('@class.outer'), { desc = 'a class' })
+map({ 'x', 'o' }, 'ic', sel('@class.inner'), { desc = 'inner class' })
+map({ 'x', 'o' }, 'aa', sel('@parameter.outer'), { desc = 'a parameter/argument' })
+map({ 'x', 'o' }, 'ia', sel('@parameter.inner'), { desc = 'inner parameter/argument' })
+
+-- Swap the parameter/argument under the cursor with the next / previous one.
+local swap = require('nvim-treesitter-textobjects.swap')
+map('n', '<leader>a', function() swap.swap_next('@parameter.inner') end, { desc = 'Swap parameter next' })
+map('n', '<leader>A', function() swap.swap_previous('@parameter.inner') end, { desc = 'Swap parameter prev' })
