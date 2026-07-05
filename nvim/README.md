@@ -73,6 +73,20 @@ Leader is `<Space>`.
 | `<C-l>` | Select treesitter node; repeat to expand to parent |
 | `<C-h>` (visual) | Shrink node selection |
 
+### Windows (`<leader>w`)
+
+Directional moves stay on `<C-h>` / `<C-w>h/j/k/l`; `<C-w>` is untouched.
+
+| Key | Action |
+|-----|--------|
+| `<leader>ws` / `<leader>wv` | Split horizontal / vertical |
+| `<leader>wc` / `<leader>wq` / `<leader>wo` | Close / quit / only (close others) |
+| `<leader>ww` | Cycle to other window |
+| `<leader>w=` | Equalize sizes |
+| `<leader>wx` / `<leader>wr` | Exchange with next / rotate |
+| `<leader>wT` | Move window to new tab |
+| `<leader>wH/wJ/wK/wL` | Move window far left / down / up / right |
+
 ### LSP (buffer-local, fzf-lua pickers with preview)
 
 | Key | Action |
