@@ -46,6 +46,12 @@ vim.pack.add({
 
   -- Label-based motion: jump anywhere on screen in a few keystrokes (s / S).
   { src = 'https://github.com/folke/flash.nvim' },
+
+  -- Lua utility library (dependency of harpoon).
+  { src = 'https://github.com/nvim-lua/plenary.nvim' },
+
+  -- Harpoon: pin a handful of files and jump straight to them.
+  { src = 'https://github.com/ThePrimeagen/harpoon', version = 'harpoon2' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
@@ -68,3 +74,4 @@ require('plugins.oil')
 require('plugins.copilot')
 require('plugins.dial')
 require('plugins.flash')
+require('plugins.harpoon')

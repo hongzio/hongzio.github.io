@@ -23,6 +23,7 @@ The default config: lives in `~/.config/nvim` and runs with plain `nvim` — no
 | Surround        | `mini.surround` (`gsa` / `gsd` / `gsr`)           |
 | Autopairs       | `mini.pairs`                                      |
 | Motion          | `flash.nvim` (`s` jump, `S` treesitter)           |
+| Pinned files    | `harpoon` (harpoon2) (`<leader>1`..`4`)           |
 | Increment       | `dial.nvim` (`<C-a>` / `<C-x>`, per-filetype)     |
 | QoL             | `snacks.nvim`                                     |
 | Icons / statusline | `mini.icons` / `mini.statusline`               |
@@ -88,6 +89,15 @@ next match, so `cif` works from anywhere on the line).
 | `ac` / `ic` | a / inner class |
 | `aa` / `ia` | a / inner parameter (`daa`, `cia`) |
 | `<leader>a` / `<leader>A` | Swap parameter with next / previous |
+
+### Harpoon (pinned files)
+
+| Key | Action |
+|-----|--------|
+| `<leader>1` .. `<leader>4` | Jump to pinned file 1-4 |
+| `<leader>ja` | Add current file to the list |
+| `<leader>jj` | Toggle quick menu |
+| `<leader>jp` / `<leader>jn` | Prev / next in list |
 
 ### Windows (`<leader>w`)
 
@@ -224,6 +234,7 @@ lua/plugins/
   surround.lua        mini.surround (add/delete/replace pairs, gs prefix)
   pairs.lua           mini.pairs (autopairs)
   flash.lua           label-based motion (s / S)
+  harpoon.lua         pinned-file quick jump (<leader>1..4)
   dial.lua            smart increment/decrement (per-filetype)
   treesitter.lua      parsers + highlight (auto-install on open)
   treesitter-textobjects.lua  named-function motions
