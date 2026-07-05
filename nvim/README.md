@@ -1,15 +1,10 @@
-# zap
+# nvim
 
 Minimal, high-performance Neovim config (Neovim 0.12+). Leans on builtins
 (`vim.pack`, native LSP, treesitter) and a small set of fast, pure-Lua plugins.
 
-Lives in `~/.config/zap`, so it runs isolated via `NVIM_APPNAME`:
-
-```sh
-NVIM_APPNAME=zap nvim
-# handy alias:
-alias zap='NVIM_APPNAME=zap nvim'
-```
+The default config: lives in `~/.config/nvim` and runs with plain `nvim` — no
+`NVIM_APPNAME` needed.
 
 ## Stack
 

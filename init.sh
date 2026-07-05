@@ -202,8 +202,7 @@ if ! check_step "brew_install_neovim"; then
   }
   echo "
 
-# neovim (use zap config by default via NVIM_APPNAME)
-export NVIM_APPNAME=zap
+# neovim
 alias vim=\"nvim\"
 alias vi=\"nvim\"
 alias vimdiff=\"nvim -d\"
@@ -226,16 +225,16 @@ else
   echo -e "${GREEN}Skipping dotfiles setup, already completed.${NC}"
 fi
 
-if ! check_step "zim_config"; then
-  echo -e "${RED}Setting up zim (Neovim config)...${NC}"
+if ! check_step "nvim_config"; then
+  echo -e "${RED}Setting up Neovim config...${NC}"
   mkdir -p $HOME/.config
-  ln -s -f $HOME/.hongzio.github.io/zim $HOME/.config/zim || {
-    echo -e "${RED}Failed to link zim config${NC}"
+  ln -s -f $HOME/.hongzio.github.io/nvim $HOME/.config/nvim || {
+    echo -e "${RED}Failed to link nvim config${NC}"
     exit 1
   }
-  mark_step "zim_config"
+  mark_step "nvim_config"
 else
-  echo -e "${GREEN}Skipping zim config setup, already completed.${NC}"
+  echo -e "${GREEN}Skipping nvim config setup, already completed.${NC}"
 fi
 
 if ! check_step "brew_install_ghostty"; then
