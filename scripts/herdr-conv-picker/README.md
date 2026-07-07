@@ -15,6 +15,7 @@ Claude/Codex 대화 목록을 herdr 오버레이에서 골라 복구하는 herdr
   1. 이미 agent에서 활성 → 그 pane을 **focus**
   2. 대화의 working dir와 같은 루트 cwd의 space가 있으면 → 그 space에 **새 탭**으로 복구
   3. 같은 space가 없으면 → 그 cwd로 **새 space + 새 탭** 복구
+- **탭 이름**: 새로 만드는 탭은 대화 이름으로 라벨링 — 제목(custom-title/ai-title/`thread_name`) 우선, 없으면 첫 유저 메시지를 짧게(≤30자), 그것도 없으면 cwd 이름
 
 ## 요구사항
 

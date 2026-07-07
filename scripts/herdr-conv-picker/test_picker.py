@@ -19,6 +19,41 @@ class TokenCodec(unittest.TestCase):
         self.assertEqual((back.agent, back.session_id, back.path, back.cwd),
                          ("claude", "abc-123", "/p/x.jsonl", "/Users/me/proj"))
 
+    def test_carries_tab_name(self):
+        conv = Conversation(agent="claude", session_id="s", path="/p.jsonl",
+                            mtime=0.0, cwd="/Users/me/proj", title="Fix login bug")
+        back = picker.decode_token(picker.encode_token(conv))
+        self.assertEqual(back.name, "Fix login bug")
+
+
+class TabName(unittest.TestCase):
+    def _conv(self, **kw):
+        base = dict(agent="claude", session_id="s", path="/p", mtime=0.0)
+        base.update(kw)
+        return Conversation(**base)
+
+    def test_prefers_title_over_label(self):
+        c = self._conv(title="Refactor auth", label="please refactor the auth module ...")
+        self.assertEqual(picker.tab_name(c), "Refactor auth")
+
+    def test_falls_back_to_label_when_no_title(self):
+        c = self._conv(title="", label="add dark mode")
+        self.assertEqual(picker.tab_name(c), "add dark mode")
+
+    def test_truncates_long_names(self):
+        c = self._conv(title="x" * 100)
+        out = picker.tab_name(c)
+        self.assertLessEqual(len(out), picker.TAB_NAME_MAX)
+        self.assertTrue(out.endswith("…"))
+
+    def test_placeholder_falls_back_to_cwd_basename(self):
+        c = self._conv(title="", label="(claude)", cwd="/Users/me/proj")
+        self.assertEqual(picker.tab_name(c), "proj")
+
+    def test_empty_everything(self):
+        c = self._conv(title="", label="", cwd="")
+        self.assertEqual(picker.tab_name(c), "")
+
 
 class TextHelpers(unittest.TestCase):
     def test_message_text_string(self):
@@ -104,6 +139,7 @@ class ClaudeParsing(unittest.TestCase):
         picker.claude_enrich(conv)
         self.assertEqual(conv.cwd, "/tmp/proj")
         self.assertEqual(conv.label, "the real question")
+        self.assertEqual(conv.title, "")  # first-user fallback is not a title
 
     def _write(self, lines):
         path = os.path.join(tempfile.mkdtemp(), "s.jsonl")
@@ -120,6 +156,7 @@ class ClaudeParsing(unittest.TestCase):
         conv = Conversation("claude", "s", path, 0.0)
         picker.claude_enrich(conv)
         self.assertEqual(conv.label, "My Name")
+        self.assertEqual(conv.title, "My Name")  # tracked separately for the tab name
 
     def test_ai_title_when_no_custom(self):
         path = self._write([

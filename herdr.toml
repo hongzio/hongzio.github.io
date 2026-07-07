@@ -1,3 +1,4 @@
+onboarding = false
 [ui]
 # mouse on
 mouse_capture = true

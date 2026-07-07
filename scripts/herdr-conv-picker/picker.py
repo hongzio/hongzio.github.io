@@ -39,6 +39,7 @@ HERDR_SESSION_JSON = os.path.join(HOME, ".config", "herdr", "session.json")
 
 UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 LABEL_MAX = 72
+TAB_NAME_MAX = 30
 PREVIEW_MESSAGES = 20
 
 # ---------------------------------------------------------------------------
@@ -53,7 +54,9 @@ class Conversation:
     path: str           # transcript / rollout file
     mtime: float
     cwd: str = ""       # working dir (may be filled lazily)
-    label: str = ""     # first user message / thread name
+    label: str = ""     # display label: title or first user message / thread name
+    title: str = ""     # name-like title only (custom/ai title, thread_name); "" if none
+    name: str = ""      # short tab name, carried through the token to open time
 
 
 # ---------------------------------------------------------------------------
@@ -62,7 +65,8 @@ class Conversation:
 
 
 def encode_token(conv: Conversation) -> str:
-    payload = {"a": conv.agent, "s": conv.session_id, "p": conv.path, "c": conv.cwd}
+    payload = {"a": conv.agent, "s": conv.session_id, "p": conv.path,
+               "c": conv.cwd, "n": tab_name(conv)}
     raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
     return base64.urlsafe_b64encode(raw).decode("ascii")
 
@@ -70,7 +74,8 @@ def encode_token(conv: Conversation) -> str:
 def decode_token(token: str) -> Conversation:
     raw = base64.urlsafe_b64decode(token.encode("ascii"))
     d = json.loads(raw)
-    return Conversation(agent=d["a"], session_id=d["s"], path=d["p"], mtime=0.0, cwd=d.get("c", ""))
+    return Conversation(agent=d["a"], session_id=d["s"], path=d["p"], mtime=0.0,
+                        cwd=d.get("c", ""), name=d.get("n", ""))
 
 
 # ---------------------------------------------------------------------------
@@ -83,6 +88,21 @@ def clean_label(text: str) -> str:
     if len(text) > LABEL_MAX:
         text = text[: LABEL_MAX - 1] + "…"
     return text
+
+
+def tab_name(conv: "Conversation") -> str:
+    """Short, name-like label for a restored conversation's tab.
+
+    Prefer an explicit title (Claude custom/ai title, Codex thread_name); fall
+    back to the display label (first user message), then the cwd basename. Kept
+    short so it fits herdr's tab sidebar rather than the 72-char picker label.
+    """
+    base = " ".join((conv.title or conv.label or "").split())
+    if not base or base in ("(claude)", "(codex)"):
+        base = os.path.basename(conv.cwd.rstrip("/")) if conv.cwd else base
+    if len(base) > TAB_NAME_MAX:
+        base = base[: TAB_NAME_MAX - 1] + "…"
+    return base
 
 
 SYNTHETIC_PREFIXES = (
@@ -182,7 +202,8 @@ def claude_enrich(conv: Conversation) -> None:
     except OSError:
         pass
     conv.cwd = cwd
-    conv.label = clean_label(custom_title.strip() or ai_title.strip() or first_user or "(claude)")
+    conv.title = custom_title.strip() or ai_title.strip()
+    conv.label = clean_label(conv.title or first_user or "(claude)")
 
 
 def claude_messages(path: str) -> list[tuple[str, str]]:
@@ -290,12 +311,12 @@ def codex_first_user(path: str) -> str:
 def codex_enrich(conv: Conversation, index: dict[str, dict]) -> None:
     meta = codex_session_meta(conv.path)
     conv.cwd = meta.get("cwd", "") if isinstance(meta.get("cwd"), str) else ""
-    label = ""
     entry = index.get(conv.session_id)
+    thread_name = ""
     if entry and isinstance(entry.get("thread_name"), str):
-        label = entry["thread_name"]
-    if not label.strip():
-        label = codex_first_user(conv.path)
+        thread_name = entry["thread_name"].strip()
+    conv.title = thread_name
+    label = thread_name or codex_first_user(conv.path)
     conv.label = clean_label(label) if label.strip() else "(codex)"
 
 
@@ -428,8 +449,11 @@ def perform_action(action: dict, conv: Conversation) -> None:
         return
     cmd = resume_command(conv.agent, conv.session_id)
     if kind == "new_tab":
-        res = herdr("tab", "create", "--workspace", action["workspace_id"],
-                    "--cwd", action["cwd"], "--no-focus")
+        args = ["tab", "create", "--workspace", action["workspace_id"],
+                "--cwd", action["cwd"], "--no-focus"]
+        if conv.name:
+            args += ["--label", conv.name]
+        res = herdr(*args)
         pane = res["result"]["root_pane"]["pane_id"]
         tab = res["result"]["tab"]["tab_id"]
         _run_when_ready(pane, cmd)
@@ -444,6 +468,14 @@ def perform_action(action: dict, conv: Conversation) -> None:
         if not pane:  # fall back to the workspace's active tab pane
             pane = _first_pane_of_workspace(wid)
         _run_when_ready(pane, cmd)
+        # the space carries the cwd basename; name its tab after the conversation
+        if conv.name and wid:
+            tab = _first_tab_of_workspace(wid)
+            if tab:
+                try:
+                    herdr("tab", "rename", tab, conv.name)
+                except RuntimeError:
+                    pass
         if wid:
             herdr("workspace", "focus", wid)
 
@@ -454,6 +486,14 @@ def _first_pane_of_workspace(wid: str) -> str | None:
     except (RuntimeError, json.JSONDecodeError):
         return None
     return panes[0]["pane_id"] if panes else None
+
+
+def _first_tab_of_workspace(wid: str) -> str | None:
+    try:
+        tabs = herdr("tab", "list", "--workspace", wid).get("result", {}).get("tabs", [])
+    except (RuntimeError, json.JSONDecodeError):
+        return None
+    return tabs[0]["tab_id"] if tabs else None
 
 
 def _run_when_ready(pane_id: str | None, command: str, attempts: int = 20) -> None:
@@ -599,6 +639,7 @@ def cmd_open(token: str) -> int:
             claude_enrich(conv)
         else:
             codex_enrich(conv, codex_index())
+        conv.name = tab_name(conv)  # recompute now that title/label are filled
     action = decide_action(conv, active_session_map(), space_cwd_map())
     if action["kind"] == "focus":
         try:
