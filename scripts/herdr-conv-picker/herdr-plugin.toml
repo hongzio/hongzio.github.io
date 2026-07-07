@@ -1,0 +1,39 @@
+id = "conv-picker"
+name = "Conversations Picker"
+version = "0.1.0"
+description = "Pick and restore Claude/Codex conversations from a herdr overlay"
+min_herdr_version = "0.7.1"
+platforms = ["macos"]
+
+# The picker UI: an fzf-driven overlay that streams conversations and restores
+# the selected one. Runs with the plugin dir as cwd; wrapped in a login shell so
+# the mise-managed python3 is on PATH.
+[[panes]]
+id = "picker"
+title = "Conversations"
+placement = "overlay"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/picker.py\" ui"]
+
+# Actions open the overlay pane. Pick the mode by binding one of these in
+# herdr.toml (herdr does not read keybindings from plugin manifests):
+#   conv-picker.open         -> auto   (fzf if installed, else native curses)
+#   conv-picker.open-fzf     -> force fzf
+#   conv-picker.open-native  -> force native curses
+# The mode is passed to picker.py via the CONV_PICKER_MODE env var.
+[[actions]]
+id = "open"
+title = "Conversations picker (auto)"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin conv-picker --entrypoint picker --placement overlay --focus --env CONV_PICKER_MODE=auto"]
+
+[[actions]]
+id = "open-fzf"
+title = "Conversations picker (fzf)"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin conv-picker --entrypoint picker --placement overlay --focus --env CONV_PICKER_MODE=fzf"]
+
+[[actions]]
+id = "open-native"
+title = "Conversations picker (native)"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin conv-picker --entrypoint picker --placement overlay --focus --env CONV_PICKER_MODE=native"]

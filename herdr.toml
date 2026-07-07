@@ -131,6 +131,14 @@ type = "shell"
 command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*9[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
 description = "focus favorite 9"
 
+# conversations picker (conv-picker plugin) — opens the overlay.
+# mode = which action you bind: .open (auto) | .open-fzf | .open-native
+[[keys.command]]
+key = "prefix+c"
+type = "plugin_action"
+command = "conv-picker.open"
+description = "conversations picker"
+
 [theme]
 name = "terminal"
 auto_switch = false
