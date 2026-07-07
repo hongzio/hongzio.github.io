@@ -70,65 +70,68 @@ type = "pane"
 command = "sh -c 'printf \"agent name: \"; read n; \"$HERDR_BIN_PATH\" agent rename \"$HERDR_ACTIVE_PANE_ID\" \"$n\"'"
 description = "rename active agent"
 
-# favorites: edit the 9 slots in an editor pane
+# favorites (favorites plugin): open the overlay to pin the current tab to a slot.
+# The action forwards HERDR_TAB_ID (focused tab at trigger time) to the overlay;
+# the overlay can't tell which tab was active once it grabs focus. ctrl+1..9
+# below focus the pinned tabs.
 [[keys.command]]
 key = "prefix+ctrl+f"
-type = "pane"
-command = "sh -c 'd=\"$HOME/.config/herdr\"; f=\"$d/favorites.toml\"; mkdir -p \"$d\"; [ -f \"$f\" ] || printf \"%s\\n\" \"# herdr favorites - ctrl+1..9 focus these targets. Edit, save, done.\" \"# value: workspace w1 | tab w1:t1 | pane w1:p1 | agent name or terminal id. Empty = skip.\" \"1 = \\\"\\\"\" \"2 = \\\"\\\"\" \"3 = \\\"\\\"\" \"4 = \\\"\\\"\" \"5 = \\\"\\\"\" \"6 = \\\"\\\"\" \"7 = \\\"\\\"\" \"8 = \\\"\\\"\" \"9 = \\\"\\\"\" > \"$f\"; exec \"${EDITOR:-nvim}\" \"$f\"'"
-description = "edit favorites"
+type = "plugin_action"
+command = "favorites.open"
+description = "favorites"
 
 [[keys.command]]
 key = "ctrl+1"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*1[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-1"
 description = "focus favorite 1"
 
 [[keys.command]]
 key = "ctrl+2"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*2[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-2"
 description = "focus favorite 2"
 
 [[keys.command]]
 key = "ctrl+3"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*3[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-3"
 description = "focus favorite 3"
 
 [[keys.command]]
 key = "ctrl+4"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*4[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-4"
 description = "focus favorite 4"
 
 [[keys.command]]
 key = "ctrl+5"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*5[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-5"
 description = "focus favorite 5"
 
 [[keys.command]]
 key = "ctrl+6"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*6[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-6"
 description = "focus favorite 6"
 
 [[keys.command]]
 key = "ctrl+7"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*7[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-7"
 description = "focus favorite 7"
 
 [[keys.command]]
 key = "ctrl+8"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*8[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-8"
 description = "focus favorite 8"
 
 [[keys.command]]
 key = "ctrl+9"
-type = "shell"
-command = "sh -c 'f=\"$HOME/.config/herdr/favorites.toml\"; [ -f \"$f\" ] || exit 0; l=$(grep -E \"^[[:space:]]*9[[:space:]]*=\" \"$f\" | head -n1); t=${l#*=}; t=${t%%#*}; t=$(printf %s \"$t\" | xargs); [ -n \"$t\" ] || exit 0; h=\"${HERDR_BIN_PATH:-herdr}\"; case \"$t\" in w[0-9]*:t[0-9]*) exec \"$h\" tab focus \"$t\";; w[0-9]*:p[0-9]*) exec \"$h\" agent focus \"$t\";; w[0-9]*) exec \"$h\" workspace focus \"$t\";; *) exec \"$h\" agent focus \"$t\";; esac'"
+type = "plugin_action"
+command = "favorites.focus-9"
 description = "focus favorite 9"
 
 # conversations picker (conv-picker plugin) — opens the overlay.
