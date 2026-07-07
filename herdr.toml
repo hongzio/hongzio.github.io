@@ -1,0 +1,78 @@
+[ui]
+# mouse on
+mouse_capture = true
+
+# session persistence (built-in, no plugin needed unlike tmux-resurrect)
+show_agent_labels_on_pane_borders = true
+[session]
+# restart supported agent panes (Claude Code, Codex, etc.) in their native sessions
+resume_agents_on_restore = true
+
+[experimental]
+# also save pane terminal contents/scrollback across restarts
+# (off by default for security: pane output can contain secrets/tokens)
+pane_history = true
+
+[keys]
+prefix = "ctrl+a"
+
+# window (tmux window -> herdr tab)
+new_tab = "prefix+ctrl+c"       # new-window (C-c)
+next_tab = "prefix+ctrl+n"      # next-window (C-n)
+previous_tab = "prefix+ctrl+p"  # previous-window (C-p)
+rename_tab = "prefix+ctrl+,"    # rename-window (C-,)
+switch_tab = "prefix+ctrl+1..9" # select-window -t N (avoids clash w/ focus_agent on prefix+1..9)
+
+# session (tmux session -> herdr workspace)
+new_workspace = "prefix+shift+c"       # new-session (C)
+close_workspace = "prefix+shift+x"     # kill-session (X)
+next_workspace = "prefix+shift+n"      # switch-client -n (N)
+previous_workspace = "prefix+shift+p"  # switch-client -p (P)
+rename_workspace = "prefix+$"          # rename-session ($)
+workspace_picker = "prefix+ctrl+w"     # choose-tree (C-w)
+
+# pane
+close_pane = "prefix+ctrl+x"  # kill-pane (C-x)
+zoom = "prefix+ctrl+z"        # resize-pane -Z (C-z)
+
+## split
+split_vertical = "prefix+ctrl+v"    # split-window -v (C-v)
+split_horizontal = "prefix+ctrl+h"  # split-window -h (C-h)
+
+## select
+focus_pane_left = "prefix+ctrl+left"    # select-pane -L (C-Left)
+focus_pane_down = "prefix+ctrl+down"    # select-pane -D (C-Down)
+focus_pane_up = "prefix+ctrl+up"        # select-pane -U (C-Up)
+focus_pane_right = "prefix+ctrl+right"  # select-pane -R (C-Right)
+
+# agent navigation
+next_agent = "prefix+ctrl+j"      # cycle to next sidebar agent
+previous_agent = "prefix+ctrl+k"  # cycle to previous sidebar agent
+focus_agent = "prefix+1..9"       # jump to Nth agent (plain nums; Option+num is unreliable on macOS)
+goto = "prefix+ctrl+g"            # session navigator w/ agent-state filters
+
+# misc
+copy_mode = "prefix+ctrl+["  # copy-mode (C-[)
+detach = "prefix+ctrl+d"     # detach-client (C-d)
+
+# custom commands
+## spawn a new claude agent in a new pane (auto-detected by herdr)
+[[keys.command]]
+key = "prefix+a"
+type = "pane"
+command = "claude"
+description = "new claude agent"
+
+## rename the active agent: prompt for a name, then rename by active pane id
+[[keys.command]]
+key = "prefix+ctrl+r"
+type = "pane"
+command = "sh -c 'printf \"agent name: \"; read n; \"$HERDR_BIN_PATH\" agent rename \"$HERDR_ACTIVE_PANE_ID\" \"$n\"'"
+description = "rename active agent"
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[ui.toast]
+delivery = "herdr"
