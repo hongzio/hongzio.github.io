@@ -1,0 +1,33 @@
+id = "tab-history"
+name = "Tab History"
+version = "0.1.0"
+description = "Browser-style back/forward over recently focused tabs (prefix+ctrl+o/i)"
+min_herdr_version = "0.7.1"
+platforms = ["macos"]
+
+# Capture every tab focus event-driven: herdr fires tab.focused on each tab
+# switch and runs this command with HERDR_PLUGIN_EVENT_JSON set. tabhist.py
+# record appends the tab to the history (no-op if it's already the current
+# entry, which is how back/forward moves avoid re-recording themselves).
+# Wrapped in a login shell so the mise-managed python3 is on PATH.
+[[events]]
+on = "tab.focused"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" record"]
+
+# Step the history cursor back to the previous still-live tab and focus it.
+# Bound in the user herdr.toml as:
+#   key = "prefix+ctrl+o"; type = "plugin_action"; command = "tab-history.back"
+[[actions]]
+id = "back"
+title = "Tab history: back"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" back"]
+
+# Step the history cursor forward to the next still-live tab and focus it.
+# Bound in the user herdr.toml as:
+#   key = "prefix+ctrl+i"; type = "plugin_action"; command = "tab-history.forward"
+[[actions]]
+id = "forward"
+title = "Tab history: forward"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" forward"]

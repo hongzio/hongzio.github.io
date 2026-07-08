@@ -152,6 +152,22 @@ type = "plugin_action"
 command = "recent-agent.focus"
 description = "focus most recent completed agent"
 
+# tab-history plugin: browser-style back/forward over recently focused tabs.
+# The plugin records every tab.focused event into a history list + cursor;
+# back/forward step the cursor (skipping closed tabs) and focus that tab.
+# o = older, i = newer (vim jumplist mnemonic). Moving does not record.
+[[keys.command]]
+key = "prefix+ctrl+o"
+type = "plugin_action"
+command = "tab-history.back"
+description = "tab history: back"
+
+[[keys.command]]
+key = "prefix+ctrl+i"
+type = "plugin_action"
+command = "tab-history.forward"
+description = "tab history: forward"
+
 [theme]
 name = "terminal"
 auto_switch = false
