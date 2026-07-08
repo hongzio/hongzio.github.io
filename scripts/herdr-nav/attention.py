@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""herdr recent-agent plugin.
+"""herdr attention plugin.
 
 Focus the most recently "completed" agent — one that entered idle/done/blocked,
 i.e. stopped working and now needs attention. Completion is tracked event-driven
@@ -45,7 +45,7 @@ def state_dir() -> str:
     d = os.environ.get("HERDR_PLUGIN_STATE_DIR")
     if not d:
         d = os.path.join(
-            os.path.expanduser("~"), ".config", "herdr", "plugins", "state", "recent-agent"
+            os.path.expanduser("~"), ".local", "state", "herdr", "plugins", "nav"
         )
     return d
 
@@ -237,7 +237,7 @@ def main(argv: list[str]) -> int:
         return cmd_record()
     if cmd == "focus":
         return cmd_focus()
-    sys.stderr.write("usage: recent.py <record|focus>\n")
+    sys.stderr.write("usage: attention.py <record|focus>\n")
     return 2
 
 

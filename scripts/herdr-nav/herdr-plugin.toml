@@ -1,0 +1,170 @@
+id = "nav"
+name = "Navigation"
+version = "0.1.0"
+description = "Workspace navigation bundle: favorites, conversation picker, attention focus, tab back/forward"
+min_herdr_version = "0.7.1"
+platforms = ["macos"]
+
+# This plugin bundles four independent navigation helpers under one id so they
+# link/manage as a unit. Each helper keeps its own Python module; they share
+# nothing at runtime except the per-plugin state dir (distinct filenames, no
+# collision: tabhist -> tab-history.json, attention -> recents.log). Action ids
+# are feature-prefixed (fav-/conv-/attention-/tab-) so nothing clashes and the
+# herdr.toml keybindings read clearly. All commands run wrapped in a login
+# shell so the mise-managed python3 is on PATH.
+
+# ===========================================================================
+# events
+# ===========================================================================
+
+# attention: herdr fires pane.agent_status_changed on every agent status
+# transition; attention.py record logs the pane when it enters idle/done/blocked.
+[[events]]
+on = "pane.agent_status_changed"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/attention.py\" record"]
+
+# tab-history: herdr fires tab.focused on each tab switch; tabhist.py record
+# appends it to the history (no-op if it's already current, which is how
+# back/forward moves avoid re-recording themselves).
+[[events]]
+on = "tab.focused"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" record"]
+
+# ===========================================================================
+# panes (overlays)
+# ===========================================================================
+
+# favorites overlay: a curses grid of 9 slots. The tab focused when the overlay
+# opens is passed in via FAV_ACTIVE_TAB (see the fav-open action).
+[[panes]]
+id = "fav-picker"
+title = "Favorites"
+placement = "overlay"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" ui"]
+
+# conversations overlay: fzf-driven picker that streams conversations and
+# restores the selected one. Mode passed via CONV_PICKER_MODE (see conv-open*).
+[[panes]]
+id = "conversations"
+title = "Conversations"
+placement = "overlay"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/conversations.py\" ui"]
+
+# ===========================================================================
+# actions
+# ===========================================================================
+
+# --- favorites ---
+# Open the overlay. plugin_action commands receive HERDR_TAB_ID = the tab
+# focused at trigger time; forward it as FAV_ACTIVE_TAB (the overlay itself sees
+# only its own pane's context once it grabs focus).
+[[actions]]
+id = "fav-open"
+title = "Favorites"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint fav-picker --placement overlay --focus --env FAV_ACTIVE_TAB=\"$HERDR_TAB_ID\""]
+
+# Focus a pinned tab. Each reads ~/.config/herdr/favorites.toml and
+# `herdr tab focus`es slot N (no-op if empty or the tab is gone).
+[[actions]]
+id = "fav-1"
+title = "Focus favorite 1"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 1"]
+
+[[actions]]
+id = "fav-2"
+title = "Focus favorite 2"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 2"]
+
+[[actions]]
+id = "fav-3"
+title = "Focus favorite 3"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 3"]
+
+[[actions]]
+id = "fav-4"
+title = "Focus favorite 4"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 4"]
+
+[[actions]]
+id = "fav-5"
+title = "Focus favorite 5"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 5"]
+
+[[actions]]
+id = "fav-6"
+title = "Focus favorite 6"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 6"]
+
+[[actions]]
+id = "fav-7"
+title = "Focus favorite 7"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 7"]
+
+[[actions]]
+id = "fav-8"
+title = "Focus favorite 8"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 8"]
+
+[[actions]]
+id = "fav-9"
+title = "Focus favorite 9"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 9"]
+
+# --- conversations picker ---
+# Bind one of these; the mode is passed to conversations.py via CONV_PICKER_MODE:
+#   nav.conv-open         -> auto   (fzf if installed, else native curses)
+#   nav.conv-open-fzf     -> force fzf
+#   nav.conv-open-native  -> force native curses
+[[actions]]
+id = "conv-open"
+title = "Conversations picker (auto)"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=auto"]
+
+[[actions]]
+id = "conv-open-fzf"
+title = "Conversations picker (fzf)"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=fzf"]
+
+[[actions]]
+id = "conv-open-native"
+title = "Conversations picker (native)"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=native"]
+
+# --- attention ---
+# Focus the most-recent still-waiting agent. attention.py focus reads the log
+# newest-first and `herdr agent focus`es the first agent still in an attention
+# state (skipping any that resumed working).
+[[actions]]
+id = "attention-focus"
+title = "Focus most recent completed agent"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/attention.py\" focus"]
+
+# --- tab-history ---
+# Step the history cursor back/forward to the nearest still-live tab and focus
+# it. Saving the cursor before focusing makes the resulting tab.focused echo a
+# no-op, so the move isn't re-recorded.
+[[actions]]
+id = "tab-back"
+title = "Tab history: back"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" back"]
+
+[[actions]]
+id = "tab-forward"
+title = "Tab history: forward"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" forward"]

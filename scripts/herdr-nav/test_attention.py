@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Unit tests for the pure helpers in recent.py (event parse / select / trim)."""
+"""Unit tests for the pure helpers in attention.py (event parse / select / trim)."""
 import unittest
 
-import recent
+import attention as recent
 
 
 class ExtractEventTest(unittest.TestCase):

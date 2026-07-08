@@ -22,12 +22,12 @@ import sys
 import unicodedata
 
 HOME = os.path.expanduser("~")
-FAV_FILE = os.path.join(HOME, ".config", "herdr", "favorites.toml")
 SLOT_COUNT = 9
 
 FILE_HEADER = (
-    "# herdr favorites — ctrl+1..9 focus these tabs.\n"
-    "# Managed by the favorites plugin (prefix+ctrl+f). Values are herdr tab_ids.\n"
+    "# herdr nav — favorites pins (ctrl+1..9 focus these tabs).\n"
+    "# Machine-managed state written by the prefix+ctrl+f overlay; values are\n"
+    "# herdr tab_ids. Safe to delete; it is regenerated when you pin a tab.\n"
 )
 
 
@@ -68,20 +68,33 @@ def render_favorites(slots: dict[int, str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def state_dir() -> str:
+    """Per-plugin state dir (herdr sets HERDR_PLUGIN_STATE_DIR); fall back sanely."""
+    d = os.environ.get("HERDR_PLUGIN_STATE_DIR")
+    if not d:
+        d = os.path.join(HOME, ".local", "state", "herdr", "plugins", "nav")
+    return d
+
+
+def fav_path() -> str:
+    return os.path.join(state_dir(), "favorites.toml")
+
+
 def load_favorites() -> dict[int, str]:
     try:
-        with open(FAV_FILE, encoding="utf-8") as fh:
+        with open(fav_path(), encoding="utf-8") as fh:
             return parse_favorites(fh.read())
     except OSError:
         return {}
 
 
 def save_favorites(slots: dict[int, str]) -> None:
-    os.makedirs(os.path.dirname(FAV_FILE), exist_ok=True)
-    tmp = FAV_FILE + ".tmp"
+    path = fav_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         fh.write(render_favorites(slots))
-    os.replace(tmp, FAV_FILE)
+    os.replace(tmp, path)
 
 
 # ---------------------------------------------------------------------------
@@ -277,7 +290,7 @@ def cmd_focus(slot_arg: str) -> int:
     return 0
 
 
-USAGE = "usage: picker.py {ui|focus <slot>}"
+USAGE = "usage: favorites.py {ui|focus <slot>}"
 
 
 def main(argv: list[str]) -> int:

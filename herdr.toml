@@ -78,61 +78,61 @@ description = "rename active agent"
 [[keys.command]]
 key = "prefix+ctrl+f"
 type = "plugin_action"
-command = "favorites.open"
+command = "nav.fav-open"
 description = "favorites"
 
 [[keys.command]]
 key = "ctrl+1"
 type = "plugin_action"
-command = "favorites.focus-1"
+command = "nav.fav-1"
 description = "focus favorite 1"
 
 [[keys.command]]
 key = "ctrl+2"
 type = "plugin_action"
-command = "favorites.focus-2"
+command = "nav.fav-2"
 description = "focus favorite 2"
 
 [[keys.command]]
 key = "ctrl+3"
 type = "plugin_action"
-command = "favorites.focus-3"
+command = "nav.fav-3"
 description = "focus favorite 3"
 
 [[keys.command]]
 key = "ctrl+4"
 type = "plugin_action"
-command = "favorites.focus-4"
+command = "nav.fav-4"
 description = "focus favorite 4"
 
 [[keys.command]]
 key = "ctrl+5"
 type = "plugin_action"
-command = "favorites.focus-5"
+command = "nav.fav-5"
 description = "focus favorite 5"
 
 [[keys.command]]
 key = "ctrl+6"
 type = "plugin_action"
-command = "favorites.focus-6"
+command = "nav.fav-6"
 description = "focus favorite 6"
 
 [[keys.command]]
 key = "ctrl+7"
 type = "plugin_action"
-command = "favorites.focus-7"
+command = "nav.fav-7"
 description = "focus favorite 7"
 
 [[keys.command]]
 key = "ctrl+8"
 type = "plugin_action"
-command = "favorites.focus-8"
+command = "nav.fav-8"
 description = "focus favorite 8"
 
 [[keys.command]]
 key = "ctrl+9"
 type = "plugin_action"
-command = "favorites.focus-9"
+command = "nav.fav-9"
 description = "focus favorite 9"
 
 # conversations picker (conv-picker plugin) — opens the overlay.
@@ -140,16 +140,16 @@ description = "focus favorite 9"
 [[keys.command]]
 key = "prefix+c"
 type = "plugin_action"
-command = "conv-picker.open"
+command = "nav.conv-open"
 description = "conversations picker"
 
-# recent-agent plugin: focus the most recently completed agent (one that entered
+# attention plugin: focus the most recently completed agent (one that entered
 # idle/done/blocked and is still waiting). The plugin tracks completions via the
 # pane.agent_status_changed event; this action jumps to the newest still-waiting.
 [[keys.command]]
 key = "prefix+ctrl+l"
 type = "plugin_action"
-command = "recent-agent.focus"
+command = "nav.attention-focus"
 description = "focus most recent completed agent"
 
 # tab-history plugin: browser-style back/forward over recently focused tabs.
@@ -159,13 +159,13 @@ description = "focus most recent completed agent"
 [[keys.command]]
 key = "prefix+ctrl+o"
 type = "plugin_action"
-command = "tab-history.back"
+command = "nav.tab-back"
 description = "tab history: back"
 
 [[keys.command]]
 key = "prefix+ctrl+i"
 type = "plugin_action"
-command = "tab-history.forward"
+command = "nav.tab-forward"
 description = "tab history: forward"
 
 [theme]

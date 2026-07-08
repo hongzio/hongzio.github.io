@@ -789,7 +789,7 @@ def _picker_loop(stdscr, rows):
             query, sel = query + ch, 0
 
 
-USAGE = "usage: picker.py {list|preview <token>|open <token>|ui}"
+USAGE = "usage: conversations.py {list|preview <token>|open <token>|ui}"
 
 
 def main(argv: list[str]) -> int:

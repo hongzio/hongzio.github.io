@@ -2,7 +2,7 @@
 """Unit tests for the pure helpers in picker.py (file parse/render + display)."""
 import unittest
 
-import picker
+import favorites as picker
 
 
 class ParseFavoritesTest(unittest.TestCase):

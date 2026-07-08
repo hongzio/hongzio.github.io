@@ -7,8 +7,8 @@ import os
 import tempfile
 import unittest
 
-import picker
-from picker import Conversation
+import conversations as picker
+from conversations import Conversation
 
 
 class TokenCodec(unittest.TestCase):

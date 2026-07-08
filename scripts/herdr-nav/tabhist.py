@@ -38,10 +38,11 @@ DEFAULT_MAX = 100   # history entries kept (oldest dropped past this)
 MIN_MAX = 2         # a 1-entry history has nothing to navigate to
 
 HOME = os.path.expanduser("~")
-CONFIG_FILE = os.path.join(HOME, ".config", "herdr", "tab-history.toml")
 
 CONFIG_TEMPLATE = (
-    "# herdr tab-history plugin config.\n"
+    "# herdr nav — tab-history config.\n"
+    "\n"
+    "[tab-history]\n"
     "# max = how many recently-visited tabs to remember for back/forward.\n"
     "max = {max}\n"
 )
@@ -56,12 +57,28 @@ def state_dir() -> str:
     """Per-plugin state dir (herdr sets HERDR_PLUGIN_STATE_DIR); fall back sanely."""
     d = os.environ.get("HERDR_PLUGIN_STATE_DIR")
     if not d:
-        d = os.path.join(HOME, ".config", "herdr", "plugins", "state", "tab-history")
+        d = os.path.join(HOME, ".local", "state", "herdr", "plugins", "nav")
     return d
 
 
 def state_path() -> str:
-    return os.path.join(state_dir(), "state.json")
+    return os.path.join(state_dir(), "tab-history.json")
+
+
+def config_dir() -> str:
+    """Per-plugin config dir (herdr sets HERDR_PLUGIN_CONFIG_DIR); fall back sanely.
+
+    Using herdr's provided dir means the config follows a custom config location
+    (herdr's HERDR_CONFIG_PATH) instead of assuming ~/.config/herdr.
+    """
+    d = os.environ.get("HERDR_PLUGIN_CONFIG_DIR")
+    if not d:
+        d = os.path.join(HOME, ".config", "herdr", "plugins", "config", "nav")
+    return d
+
+
+def config_path() -> str:
+    return os.path.join(config_dir(), "config.toml")
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +176,7 @@ def step_forward(entries: list[str], cursor: int, live: set[str]) -> int | None:
 
 def read_max() -> int:
     try:
-        with open(CONFIG_FILE, encoding="utf-8") as fh:
+        with open(config_path(), encoding="utf-8") as fh:
             return parse_max(fh.read())
     except OSError:
         return DEFAULT_MAX
@@ -167,14 +184,15 @@ def read_max() -> int:
 
 def ensure_config() -> None:
     """Write a default config file the first time so the user can discover it."""
-    if os.path.exists(CONFIG_FILE):
+    path = config_path()
+    if os.path.exists(path):
         return
     try:
-        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
-        tmp = CONFIG_FILE + ".tmp"
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as fh:
             fh.write(CONFIG_TEMPLATE.format(max=DEFAULT_MAX))
-        os.replace(tmp, CONFIG_FILE)
+        os.replace(tmp, path)
     except OSError:
         pass
 
