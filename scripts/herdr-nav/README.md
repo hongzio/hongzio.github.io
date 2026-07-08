@@ -39,12 +39,13 @@ pane id(`fav-picker`, `conversations`)는 매니페스트 내부에서 action의
 | 섹션 | 키 | 성격 |
 |---|---|---|
 | `[tab-history]` | `max` | back/forward로 되짚을 최근 탭 개수 (첫 record 때 기본 100으로 자동 생성) |
+| `[tab-history]` | `min_dwell_seconds` | 탭에 이 시간(초) 이상 머물러야 히스토리에 기록 (기본 5, `0`=끄고 즉시 기록). 빠르게 지나친 탭은 무시 |
 
 **state** — 기계가 write, 언제든 삭제 가능. `HERDR_PLUGIN_STATE_DIR`(기본 `~/.local/state/herdr/plugins/nav/`)을 공유하되 파일명이 안 겹친다:
 
 | 모듈 | 파일 | 성격 |
 |---|---|---|
-| tabhist | `tab-history.json` | 탭 히스토리(entries+cursor) |
+| tabhist | `tab-history.json` | 탭 히스토리(entries+cursor+pending) |
 | attention | `recents.log` | 완료 에이전트 append 로그 |
 | favorites | `favorites.toml` | 핀 슬롯 1..9 → tab_id |
 | conversations | (영속 상태 없음) | `~/.claude/projects`, `~/.codex/sessions` 등을 읽기만 |

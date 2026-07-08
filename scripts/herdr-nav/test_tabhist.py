@@ -23,6 +23,35 @@ class ParseMaxTest(unittest.TestCase):
         self.assertEqual(tabhist.parse_max("max = lots\n"), tabhist.DEFAULT_MAX)
 
 
+class ParseMinDwellTest(unittest.TestCase):
+    def test_reads_value(self):
+        self.assertEqual(tabhist.parse_min_dwell("min_dwell_seconds = 3\n"), 3.0)
+
+    def test_reads_float(self):
+        self.assertEqual(tabhist.parse_min_dwell("min_dwell_seconds = 2.5\n"), 2.5)
+
+    def test_default_when_absent(self):
+        self.assertEqual(tabhist.parse_min_dwell("max = 10\n"), tabhist.DEFAULT_MIN_DWELL)
+
+    def test_zero_allowed(self):
+        self.assertEqual(tabhist.parse_min_dwell("min_dwell_seconds = 0\n"), 0.0)
+
+    def test_negative_falls_back(self):
+        self.assertEqual(
+            tabhist.parse_min_dwell("min_dwell_seconds = -1\n"), tabhist.DEFAULT_MIN_DWELL
+        )
+
+    def test_non_numeric_falls_back(self):
+        self.assertEqual(
+            tabhist.parse_min_dwell("min_dwell_seconds = soon\n"),
+            tabhist.DEFAULT_MIN_DWELL,
+        )
+
+    def test_ignores_comment(self):
+        text = "# min_dwell_seconds = 99\nmin_dwell_seconds = 4\n"
+        self.assertEqual(tabhist.parse_min_dwell(text), 4.0)
+
+
 class ExtractTabTest(unittest.TestCase):
     def test_real_payload(self):
         obj = {
@@ -74,6 +103,67 @@ class RecordFocusTest(unittest.TestCase):
         self.assertEqual(
             tabhist.record_focus(["A", "B"], 99, "C", 100), (["A", "B", "C"], 2)
         )
+
+
+class SettleTest(unittest.TestCase):
+    def test_no_pending(self):
+        self.assertEqual(
+            tabhist.settle(["A", "B"], 1, None, 100.0, 5, 100), (["A", "B"], 1, False)
+        )
+
+    def test_commits_when_held(self):
+        # pending C held 10s, anchor is B -> committed, off_anchor False
+        self.assertEqual(
+            tabhist.settle(["A", "B"], 1, ("C", 0.0), 10.0, 5, 100),
+            (["A", "B", "C"], 2, False),
+        )
+
+    def test_drops_flyby(self):
+        # pending C held 2s (< 5) -> dropped, off_anchor True (physically on C)
+        self.assertEqual(
+            tabhist.settle(["A", "B"], 1, ("C", 0.0), 2.0, 5, 100),
+            (["A", "B"], 1, True),
+        )
+
+    def test_echo_is_noop(self):
+        # pending equals the anchor (a back/forward echo) -> no commit regardless
+        self.assertEqual(
+            tabhist.settle(["A", "B"], 1, ("B", 0.0), 100.0, 5, 100),
+            (["A", "B"], 1, False),
+        )
+
+    def test_commit_truncates_forward_branch(self):
+        # anchor B (cursor 1) with forward branch C; commit held D -> A-B-D
+        self.assertEqual(
+            tabhist.settle(["A", "B", "C"], 1, ("D", 0.0), 10.0, 5, 100),
+            (["A", "B", "D"], 2, False),
+        )
+
+    def test_empty_history_flyby(self):
+        self.assertEqual(tabhist.settle([], -1, ("A", 0.0), 1.0, 5, 100), ([], -1, True))
+
+    def test_empty_history_commit(self):
+        self.assertEqual(
+            tabhist.settle([], -1, ("A", 0.0), 10.0, 5, 100), (["A"], 0, False)
+        )
+
+
+class DwellScenarioTest(unittest.TestCase):
+    """Fly-bys dropped, held tabs kept, driven through settle()."""
+
+    def test_flyby_sequence(self):
+        limit, thr = 100, 5
+        entries, cursor = ["Z"], 0  # Z already committed and the anchor
+        # Focus A (staged). settle with pending None is a no-op.
+        entries, cursor, _ = tabhist.settle(entries, cursor, None, 30.0, thr, limit)
+        pending = ("A", 30.0)
+        # Fly A -> B -> C -> E at 1s intervals (each < threshold): all dropped.
+        for tab, t in (("B", 31.0), ("C", 32.0), ("E", 33.0)):
+            entries, cursor, _ = tabhist.settle(entries, cursor, pending, t, thr, limit)
+            pending = (tab, t)
+        # Sit on E for 20s, then a further focus resolves it -> E committed.
+        entries, cursor, _ = tabhist.settle(entries, cursor, pending, 53.0, thr, limit)
+        self.assertEqual((entries, cursor), (["Z", "E"], 1))
 
 
 class StepTest(unittest.TestCase):
