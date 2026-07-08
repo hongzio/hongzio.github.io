@@ -168,3 +168,11 @@ id = "tab-forward"
 title = "Tab history: forward"
 contexts = ["workspace"]
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" forward"]
+
+# Bounce between the two newest history entries (a "last tab" flip): from the
+# top go to the second newest, from anywhere else go to the top.
+[[actions]]
+id = "tab-toggle"
+title = "Tab history: toggle top two"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" toggle"]

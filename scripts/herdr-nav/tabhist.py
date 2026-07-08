@@ -13,6 +13,8 @@ Subcommands:
             enough (run from the [[events]] hook)
   back      move the cursor to the previous live tab and focus it
   forward   move the cursor to the next live tab and focus it
+  toggle    bounce between the two newest history entries (top <-> second),
+            a "last tab" style flip
 
 Dwell gate — the event model has no timer, so we can't know at focus time
 whether a tab will be held. Instead each focus is STAGED as `pending` (tab +
@@ -246,6 +248,26 @@ def step_forward(entries: list[str], cursor: int, live: set[str]) -> int | None:
     return None
 
 
+def step_toggle(entries: list[str], cursor: int, live: set[str]) -> int | None:
+    """Index for the top<->second toggle (a two-way "last tab" bounce). Pure.
+
+    From the newest entry (cursor at the last index) go to the second newest;
+    from anywhere else go to the newest. This makes the first press from deep in
+    the history return to the top, and subsequent presses flip between the top
+    two. Unlike back/forward it does NOT skip closed tabs: the target is exactly
+    one of the top two, so a dead target yields None (no-op) rather than sliding
+    onto a third tab and breaking the two-way semantic.
+    """
+    n = len(entries)
+    if n == 0:
+        return None
+    last = n - 1
+    target = last - 1 if cursor == last else last
+    if target < 0:
+        return None
+    return target if entries[target] in live else None
+
+
 # ---------------------------------------------------------------------------
 # config I/O
 # ---------------------------------------------------------------------------
@@ -442,6 +464,10 @@ def cmd_forward() -> int:
     return _navigate(step_forward, time.time())
 
 
+def cmd_toggle() -> int:
+    return _navigate(step_toggle, time.time())
+
+
 def main(argv: list[str]) -> int:
     cmd = argv[1] if len(argv) > 1 else ""
     if cmd == "record":
@@ -450,7 +476,9 @@ def main(argv: list[str]) -> int:
         return cmd_back()
     if cmd == "forward":
         return cmd_forward()
-    sys.stderr.write("usage: tabhist.py <record|back|forward>\n")
+    if cmd == "toggle":
+        return cmd_toggle()
+    sys.stderr.write("usage: tabhist.py <record|back|forward|toggle>\n")
     return 2
 
 

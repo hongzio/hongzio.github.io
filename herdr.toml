@@ -161,6 +161,13 @@ type = "plugin_action"
 command = "nav.tab-forward"
 description = "tab history: forward"
 
+# toggle between the two most recently focused tabs (top <-> second)
+[[keys.command]]
+key = "prefix+ctrl+;"
+type = "plugin_action"
+command = "nav.tab-toggle"
+description = "tab history: toggle top two"
+
 [theme]
 name = "terminal"
 auto_switch = false

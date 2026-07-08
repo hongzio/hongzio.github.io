@@ -190,6 +190,34 @@ class StepTest(unittest.TestCase):
         self.assertIsNone(tabhist.step_forward(["A", "B"], 1, {"A", "B"}))
 
 
+class StepToggleTest(unittest.TestCase):
+    def test_top_goes_to_second(self):
+        # cursor at the last index (top) -> second newest
+        self.assertEqual(tabhist.step_toggle(["A", "B", "C"], 2, {"A", "B", "C"}), 1)
+
+    def test_second_goes_to_top(self):
+        self.assertEqual(tabhist.step_toggle(["A", "B", "C"], 1, {"A", "B", "C"}), 2)
+
+    def test_middle_goes_to_top(self):
+        # from deep in the history the first press returns to the top
+        self.assertEqual(tabhist.step_toggle(["A", "B", "C"], 0, {"A", "B", "C"}), 2)
+
+    def test_empty_history(self):
+        self.assertIsNone(tabhist.step_toggle([], -1, set()))
+
+    def test_single_entry(self):
+        # only one entry -> nothing to toggle to
+        self.assertIsNone(tabhist.step_toggle(["A"], 0, {"A"}))
+
+    def test_dead_target_is_noop(self):
+        # second newest tab was closed -> no-op, does not slide to a third
+        self.assertIsNone(tabhist.step_toggle(["A", "B", "C"], 2, {"A", "C"}))
+
+    def test_dead_top_from_middle_is_noop(self):
+        # newest tab closed while cursor is in the middle -> no-op
+        self.assertIsNone(tabhist.step_toggle(["A", "B", "C"], 0, {"A", "B"}))
+
+
 class ScenarioTest(unittest.TestCase):
     """The end-to-end semantic from the spec, driven through the pure core."""
 
