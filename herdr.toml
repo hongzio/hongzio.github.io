@@ -143,6 +143,15 @@ type = "plugin_action"
 command = "conv-picker.open"
 description = "conversations picker"
 
+# recent-agent plugin: focus the most recently completed agent (one that entered
+# idle/done/blocked and is still waiting). The plugin tracks completions via the
+# pane.agent_status_changed event; this action jumps to the newest still-waiting.
+[[keys.command]]
+key = "prefix+ctrl+l"
+type = "plugin_action"
+command = "recent-agent.focus"
+description = "focus most recent completed agent"
+
 [theme]
 name = "terminal"
 auto_switch = false
