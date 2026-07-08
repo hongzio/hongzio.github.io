@@ -98,8 +98,9 @@ vim.lsp.enable({ 'lua_ls', 'gopls', 'basedpyright' })
 
 -- Extra keymaps on attach. Neovim 0.11 already provides defaults: K (hover),
 -- grn (rename), <C-s> (signature help in insert). We override the navigation /
--- list actions with fzf-lua pickers (preview window with surrounding code).
--- Buffer-local maps take precedence over Neovim's global gr* defaults.
+-- list actions with fzf-lua pickers (preview window with surrounding code), and
+-- add grh/grs so hover and signature help live in the gr* family in normal mode
+-- (K still works). Buffer-local maps take precedence over Neovim's gr* defaults.
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     local buf = args.buf
@@ -113,6 +114,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('gri', fzf.lsp_implementations, 'Implementations')
     map('grt', fzf.lsp_typedefs, 'Type definitions')
     map('gra', fzf.lsp_code_actions, 'Code actions')
+    map('grh', vim.lsp.buf.hover, 'Hover')
+    map('grs', vim.lsp.buf.signature_help, 'Signature help')
     map('<leader>f', function() vim.lsp.buf.format({ async = true }) end, 'Format buffer')
 
     -- [perf] Enable inlay hints if the server supports them.
