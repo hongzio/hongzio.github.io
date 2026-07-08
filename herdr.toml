@@ -19,16 +19,16 @@ prefix = "ctrl+a"
 
 # window (tmux window -> herdr tab)
 new_tab = "prefix+ctrl+c"       # new-window (C-c)
-next_tab = "prefix+ctrl+n"      # next-window (C-n)
-previous_tab = "prefix+ctrl+p"  # previous-window (C-p)
+next_tab = "prefix+ctrl+l"      # next-window (vim l = right)
+previous_tab = "prefix+ctrl+h"  # previous-window (vim h = left)
 rename_tab = "prefix+ctrl+,"    # rename-window (C-,)
 switch_tab = "prefix+ctrl+1..9" # select-window -t N (avoids clash w/ focus_agent on prefix+1..9)
 
 # session (tmux session -> herdr workspace)
 new_workspace = "prefix+shift+c"       # new-session (C)
 close_workspace = "prefix+shift+x"     # kill-session (X)
-next_workspace = "prefix+shift+n"      # switch-client -n (N)
-previous_workspace = "prefix+shift+p"  # switch-client -p (P)
+next_workspace = "prefix+ctrl+n"       # next space (C-n)
+previous_workspace = "prefix+ctrl+p"   # previous space (C-p)
 rename_workspace = "prefix+$"          # rename-session ($)
 workspace_picker = "prefix+ctrl+w"     # choose-tree (C-w)
 
@@ -36,9 +36,9 @@ workspace_picker = "prefix+ctrl+w"     # choose-tree (C-w)
 close_pane = "prefix+ctrl+x"  # kill-pane (C-x)
 zoom = "prefix+ctrl+z"        # resize-pane -Z (C-z)
 
-## split
-split_vertical = "prefix+ctrl+v"    # split-window -v (C-v)
-split_horizontal = "prefix+ctrl+h"  # split-window -h (C-h)
+## split (herdr names splits by their divider glyph, not tmux's -h/-v)
+split_vertical = "prefix+|"        # left/right (right), a vertical | divider
+split_horizontal = "prefix+minus"  # top/bottom (down), a horizontal - divider
 
 ## select
 focus_pane_left = "prefix+ctrl+left"    # select-pane -L (C-Left)
@@ -63,13 +63,6 @@ key = "prefix+a"
 type = "pane"
 command = "claude"
 description = "new claude agent"
-
-## rename the active agent: prompt for a name, then rename by active pane id
-[[keys.command]]
-key = "prefix+ctrl+r"
-type = "pane"
-command = "sh -c 'printf \"agent name: \"; read n; \"$HERDR_BIN_PATH\" agent rename \"$HERDR_ACTIVE_PANE_ID\" \"$n\"'"
-description = "rename active agent"
 
 # favorites (favorites plugin): open the overlay to pin the current tab to a slot.
 # The action forwards HERDR_TAB_ID (focused tab at trigger time) to the overlay;
@@ -147,7 +140,7 @@ description = "conversations picker"
 # idle/done/blocked and is still waiting). The plugin tracks completions via the
 # pane.agent_status_changed event; this action jumps to the newest still-waiting.
 [[keys.command]]
-key = "prefix+ctrl+l"
+key = "prefix+ctrl+r"
 type = "plugin_action"
 command = "nav.attention-focus"
 description = "focus most recent completed agent"
