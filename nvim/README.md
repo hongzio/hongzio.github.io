@@ -105,7 +105,7 @@ Directional moves stay on `<C-h>` / `<C-w>h/j/k/l`; `<C-w>` is untouched.
 
 | Key | Action |
 |-----|--------|
-| `<leader>ws` / `<leader>wv` | Split horizontal / vertical |
+| `<leader>w-` / `<leader>w\|` | Split horizontal / vertical |
 | `<leader>wc` / `<leader>wq` / `<leader>wo` | Close / quit / only (close others) |
 | `<leader>ww` | Cycle to other window |
 | `<leader>w=` | Equalize sizes |

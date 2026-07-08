@@ -10,8 +10,8 @@ map('n', '<C-h>', '<C-w>h')
 
 -- Window ops under <leader>w (directional moves stay on <C-w>/<C-h> to avoid
 -- duplication). <C-w> itself is untouched, so nothing is lost.
-map('n', '<leader>ws', '<C-w>s', { desc = 'Split window (horizontal)' })
-map('n', '<leader>wv', '<C-w>v', { desc = 'Split window (vertical)' })
+map('n', '<leader>w-', '<C-w>s', { desc = 'Split window (horizontal)' })
+map('n', '<leader>w|', '<C-w>v', { desc = 'Split window (vertical)' })
 map('n', '<leader>wc', '<C-w>c', { desc = 'Close window' })
 map('n', '<leader>wq', '<C-w>q', { desc = 'Quit window' })
 map('n', '<leader>wo', '<C-w>o', { desc = 'Only (close others)' })
