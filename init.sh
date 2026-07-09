@@ -254,29 +254,32 @@ else
   echo -e "${GREEN}Skipping ghostty installation, already completed.${NC}"
 fi
 
-if ! check_step "brew_install_tmux"; then
-  echo -e "${RED}Installing Tmux...${NC}"
-  $BREW_PATH install tmux || {
-    echo -e "${RED}Failed to install tmux${NC}"
+if ! check_step "brew_install_herdr"; then
+  echo -e "${RED}Installing Herdr...${NC}"
+  $BREW_PATH install herdr || {
+    echo -e "${RED}Failed to install herdr${NC}"
     exit 1
   }
-  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm || {
-    echo -e "${RED}Failed to install tpm${NC}"
+  mkdir -p $HOME/.config/herdr
+  ln -s -f $HOME/.hongzio.github.io/herdr.toml $HOME/.config/herdr/config.toml || {
+    echo -e "${RED}Failed to link herdr config${NC}"
     exit 1
   }
-  ln -s -f $HOME/.hongzio.github.io/tmux.conf $HOME/.tmux.conf || {
-    echo -e "${RED}Failed to link tmux.conf${NC}"
+  herdr plugin link $HOME/.hongzio.github.io/scripts/herdr-nav || {
+    echo -e "${RED}Failed to link herdr nav plugin${NC}"
     exit 1
   }
-  mark_step "brew_install_tmux"
+  herdr server reload-config || {
+    echo -e "${GREEN}Herdr config is linked. Start or restart herdr to load it.${NC}"
+  }
+  mark_step "brew_install_herdr"
 else
-  echo -e "${GREEN}Skipping Tmux installation, already completed.${NC}"
+  echo -e "${GREEN}Skipping Herdr installation, already completed.${NC}"
 fi
 
 apps=(
   "obsidian"
   "pronotes"
-  "1password"
   "firefox"
   "raycast"
   "mas"
@@ -286,6 +289,8 @@ apps=(
   "surfshark"
   "font-hack-nerd-font"
   "font-d2coding-nerd-font"
+  "gureumkim"
+  "bitwarden"
   "lazygit"
 )
 
