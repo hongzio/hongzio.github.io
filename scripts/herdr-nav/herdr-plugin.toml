@@ -18,7 +18,7 @@ platforms = ["macos"]
 # ===========================================================================
 
 # attention: herdr fires pane.agent_status_changed on every agent status
-# transition; attention.py record logs the pane when it enters idle/done/blocked.
+# transition; attention.py record logs the pane when it enters done/blocked.
 [[events]]
 on = "pane.agent_status_changed"
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/attention.py\" record"]
@@ -144,12 +144,12 @@ contexts = ["workspace"]
 command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=native"]
 
 # --- attention ---
-# Focus the most-recent still-waiting agent. attention.py focus reads the log
-# newest-first and `herdr agent focus`es the first agent still in an attention
-# state (skipping any that resumed working).
+# Cycle focus through the waiting agents. attention.py focus reads the log
+# newest-first and `herdr agent focus`es the NEXT agent in a done/blocked state,
+# advancing a persisted cursor each press (wrapping at the end).
 [[actions]]
 id = "attention-focus"
-title = "Focus most recent completed agent"
+title = "Cycle focus through waiting agents"
 contexts = ["workspace"]
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/attention.py\" focus"]
 

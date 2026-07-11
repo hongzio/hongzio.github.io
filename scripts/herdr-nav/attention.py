@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 """herdr attention plugin.
 
-Focus the most recently "completed" agent — one that entered idle/done/blocked,
-i.e. stopped working and now needs attention. Completion is tracked event-driven
-via herdr's `pane.agent_status_changed` plugin event (no daemon, no polling).
+Cycle focus through the agents that need attention — the ones that entered
+done/blocked, i.e. finished a turn or are waiting on input. Completions are
+tracked event-driven via herdr's `pane.agent_status_changed` plugin event
+(no daemon, no polling).
 
 Subcommands:
   record   append a completion to the recents log (run from the [[events]] hook)
-  focus    focus the most-recent still-waiting agent (run from the [[actions]] hook)
+  focus    focus the NEXT waiting agent, rotating (run from the [[actions]] hook)
 
-Behaviour: `focus` walks completions newest-first and focuses the first agent
-that is STILL waiting (idle/done/blocked). Agents that have gone back to working
-are skipped (fall-through to the next most-recent). Repeated presses are
-idempotent — the same target while nothing has changed.
+Behaviour: `focus` builds the newest-first list of agents still in an attention
+state (done/blocked) and rotates through it. A persisted cursor remembers the
+last agent we focused; each press advances to the one after it, wrapping at the
+end. If the cursor is gone or resumed working, we restart at the newest. With a
+single waiting agent this collapses to the old idempotent behaviour.
 
 The parse/select helpers are pure (no I/O) so they can be unit-tested; the herdr
-CLI and the recents log are the only external dependencies and are reached
-through thin wrappers.
+CLI, the recents log, and the cursor file are the only external dependencies and
+are reached through thin wrappers.
 """
 from __future__ import annotations
 
@@ -27,9 +29,10 @@ import sys
 import time
 
 # Statuses that mean "stopped working, needs my attention". herdr reports `done`
-# the instant an agent finishes a turn; it settles to `idle` while it sits
-# waiting; `blocked` means it is waiting on input/permission.
-ATTENTION_STATES = frozenset({"idle", "done", "blocked"})
+# the instant an agent finishes a turn; `blocked` means it is waiting on
+# input/permission. (`idle` — a done turn that has since settled — is
+# deliberately excluded so the cycle holds only freshly-done or blocked agents.)
+ATTENTION_STATES = frozenset({"done", "blocked"})
 
 KEEP_LINES = 100   # lines retained when the log is trimmed
 TRIM_AT = 400      # trim once the log grows past this many lines
@@ -52,6 +55,10 @@ def state_dir() -> str:
 
 def recents_path() -> str:
     return os.path.join(state_dir(), "recents.log")
+
+
+def cursor_path() -> str:
+    return os.path.join(state_dir(), "attention-cursor")
 
 
 # ---------------------------------------------------------------------------
@@ -109,12 +116,26 @@ def newest_unique(pane_ids: list[str]) -> list[str]:
     return out
 
 
-def pick_target(order: list[str], live: dict[str, str]) -> str | None:
-    """First pane (newest-first) that still exists and is in an attention state."""
-    for pane in order:
-        if live.get(pane) in ATTENTION_STATES:
-            return pane
-    return None
+def waiting_panes(order: list[str], live: dict[str, str]) -> list[str]:
+    """Panes from `order` (newest-first) that still exist and need attention."""
+    return [pane for pane in order if live.get(pane) in ATTENTION_STATES]
+
+
+def next_in_cycle(
+    order: list[str], live: dict[str, str], cursor: str | None
+) -> str | None:
+    """Next attention pane after `cursor`, rotating over the newest-first list.
+
+    Advances one step past `cursor` and wraps at the end. If `cursor` is not
+    among the currently-waiting panes (never set, gone, or resumed working),
+    starts at the newest. Returns None when nothing is waiting.
+    """
+    panes = waiting_panes(order, live)
+    if not panes:
+        return None
+    if cursor in panes:
+        return panes[(panes.index(cursor) + 1) % len(panes)]
+    return panes[0]
 
 
 def trim_text(text: str, keep: int) -> str:
@@ -201,6 +222,25 @@ def load_order() -> list[str]:
     return newest_unique(parse_recents(text))
 
 
+def load_cursor() -> str | None:
+    """Last-focused pane for the rotation (None if unset)."""
+    try:
+        with open(cursor_path(), encoding="utf-8") as fh:
+            val = fh.read().strip()
+    except OSError:
+        return None
+    return val or None
+
+
+def save_cursor(pane: str) -> None:
+    directory = state_dir()
+    os.makedirs(directory, exist_ok=True)
+    tmp = cursor_path() + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write(pane + "\n")
+    os.replace(tmp, cursor_path())
+
+
 # ---------------------------------------------------------------------------
 # commands
 # ---------------------------------------------------------------------------
@@ -225,9 +265,10 @@ def cmd_focus() -> int:
     order = load_order()
     if not order:
         return 0
-    target = pick_target(order, live_status_map())
+    target = next_in_cycle(order, live_status_map(), load_cursor())
     if target:
         focus_pane(target)
+        save_cursor(target)
     return 0
 
 

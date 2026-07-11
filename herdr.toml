@@ -136,14 +136,15 @@ type = "plugin_action"
 command = "nav.conv-open"
 description = "conversations picker"
 
-# attention plugin: focus the most recently completed agent (one that entered
-# idle/done/blocked and is still waiting). The plugin tracks completions via the
-# pane.agent_status_changed event; this action jumps to the newest still-waiting.
+# attention plugin: cycle focus through the agents that need attention (done or
+# blocked). The plugin tracks completions via the pane.agent_status_changed
+# event; each press advances a cursor to the next still-waiting agent, newest
+# first, wrapping at the end.
 [[keys.command]]
-key = "prefix+ctrl+r"
+key = "prefix+ctrl+."
 type = "plugin_action"
 command = "nav.attention-focus"
-description = "focus most recent completed agent"
+description = "cycle focus through waiting agents"
 
 # tab-history plugin: browser-style back/forward over recently focused tabs.
 # The plugin records every tab.focused event into a history list + cursor;

@@ -63,30 +63,66 @@ class NewestUniqueTest(unittest.TestCase):
         self.assertEqual(recent.newest_unique([]), [])
 
 
-class PickTargetTest(unittest.TestCase):
-    def test_picks_most_recent_waiting(self):
+class WaitingPanesTest(unittest.TestCase):
+    def test_keeps_only_attention_states_in_order(self):
         order = ["w5:p1", "w2:p5", "w1:p1"]  # newest-first
-        live = {"w5:p1": "idle", "w2:p5": "idle", "w1:p1": "working"}
-        self.assertEqual(recent.pick_target(order, live), "w5:p1")
+        live = {"w5:p1": "done", "w2:p5": "working", "w1:p1": "blocked"}
+        self.assertEqual(recent.waiting_panes(order, live), ["w5:p1", "w1:p1"])
 
-    def test_falls_through_working(self):
-        # newest went back to working -> skip to next most recent still waiting
-        order = ["w5:p1", "w2:p5", "w1:p1"]
-        live = {"w5:p1": "working", "w2:p5": "blocked", "w1:p1": "idle"}
-        self.assertEqual(recent.pick_target(order, live), "w2:p5")
+    def test_idle_is_not_an_attention_state(self):
+        order = ["w5:p1", "w2:p5"]
+        live = {"w5:p1": "idle", "w2:p5": "done"}
+        self.assertEqual(recent.waiting_panes(order, live), ["w2:p5"])
 
     def test_skips_gone_panes(self):
         order = ["w9:p9", "w2:p5"]  # w9:p9 no longer exists
         live = {"w2:p5": "done"}
-        self.assertEqual(recent.pick_target(order, live), "w2:p5")
+        self.assertEqual(recent.waiting_panes(order, live), ["w2:p5"])
 
-    def test_none_when_all_working_or_gone(self):
+
+class NextInCycleTest(unittest.TestCase):
+    def test_no_cursor_starts_at_newest(self):
+        order = ["w5:p1", "w2:p5", "w1:p1"]
+        live = {"w5:p1": "done", "w2:p5": "blocked", "w1:p1": "done"}
+        self.assertEqual(recent.next_in_cycle(order, live, None), "w5:p1")
+
+    def test_advances_past_cursor(self):
+        order = ["w5:p1", "w2:p5", "w1:p1"]
+        live = {"w5:p1": "done", "w2:p5": "blocked", "w1:p1": "done"}
+        self.assertEqual(recent.next_in_cycle(order, live, "w5:p1"), "w2:p5")
+        self.assertEqual(recent.next_in_cycle(order, live, "w2:p5"), "w1:p1")
+
+    def test_wraps_at_end(self):
+        order = ["w5:p1", "w2:p5", "w1:p1"]
+        live = {"w5:p1": "done", "w2:p5": "blocked", "w1:p1": "done"}
+        self.assertEqual(recent.next_in_cycle(order, live, "w1:p1"), "w5:p1")
+
+    def test_skips_non_waiting_when_advancing(self):
+        # cursor's neighbour resumed working -> land on the next waiting one
+        order = ["w5:p1", "w2:p5", "w1:p1"]
+        live = {"w5:p1": "done", "w2:p5": "working", "w1:p1": "blocked"}
+        self.assertEqual(recent.next_in_cycle(order, live, "w5:p1"), "w1:p1")
+
+    def test_stale_cursor_restarts_at_newest(self):
+        # cursor pane resumed working (no longer waiting) -> restart at newest
+        order = ["w5:p1", "w2:p5", "w1:p1"]
+        live = {"w5:p1": "done", "w2:p5": "working", "w1:p1": "blocked"}
+        self.assertEqual(recent.next_in_cycle(order, live, "w2:p5"), "w5:p1")
+        # cursor pane no longer exists at all -> restart at newest
+        self.assertEqual(recent.next_in_cycle(order, live, "w9:p9"), "w5:p1")
+
+    def test_single_waiting_is_idempotent(self):
         order = ["w5:p1", "w2:p5"]
-        live = {"w5:p1": "working", "w2:p5": "unknown"}
-        self.assertIsNone(recent.pick_target(order, live))
+        live = {"w5:p1": "working", "w2:p5": "done"}
+        self.assertEqual(recent.next_in_cycle(order, live, "w2:p5"), "w2:p5")
+
+    def test_none_when_nothing_waiting(self):
+        order = ["w5:p1", "w2:p5"]
+        live = {"w5:p1": "working", "w2:p5": "idle"}
+        self.assertIsNone(recent.next_in_cycle(order, live, None))
 
     def test_none_when_empty(self):
-        self.assertIsNone(recent.pick_target([], {"w1:p1": "idle"}))
+        self.assertIsNone(recent.next_in_cycle([], {"w1:p1": "done"}, None))
 
 
 class TrimTextTest(unittest.TestCase):
