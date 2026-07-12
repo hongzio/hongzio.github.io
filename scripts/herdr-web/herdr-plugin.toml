@@ -1,0 +1,44 @@
+id = "web"
+name = "Web Terminal"
+version = "0.1.0"
+description = "Expose the herdr session as a browser web terminal (optional cloudflared tunnel)"
+min_herdr_version = "0.7.1"
+platforms = ["macos"]
+
+# Auto-start: pane.created is the earliest always-firing lifecycle event.
+# serve.py ensure is idempotent (pidfile liveness check), so repeated fires are no-ops.
+[[events]]
+on = "pane.created"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
+
+# connection panel: curses overlay showing the URLs (read-only) and live-editable
+# username/password. Edits apply to new connections immediately (dynamic auth).
+[[panes]]
+id = "panel"
+title = "Web Terminal"
+placement = "overlay"
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/panel.py\" ui"]
+
+[[actions]]
+id = "panel"
+title = "Web terminal: connection panel"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin web --entrypoint panel --placement overlay --focus"]
+
+[[actions]]
+id = "status"
+title = "Web terminal: show URL / credentials"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" status"]
+
+[[actions]]
+id = "stop"
+title = "Web terminal: stop server"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" stop"]
+
+[[actions]]
+id = "restart"
+title = "Web terminal: restart server"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" restart"]
