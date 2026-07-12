@@ -169,6 +169,14 @@ type = "plugin_action"
 command = "nav.tab-toggle"
 description = "tab history: toggle top two"
 
+# web terminal connection panel (web plugin): overlay showing the local/public
+# URLs (read-only) and live-editable username/password.
+[[keys.command]]
+key = "prefix+ctrl+b"
+type = "plugin_action"
+command = "web.panel"
+description = "web terminal panel"
+
 [theme]
 name = "terminal"
 auto_switch = false

@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>herdr</title>
+  <link rel="stylesheet" href="/static/xterm.css" />
+  <style>
+    /* overscroll-behavior: none kills mobile pull-to-refresh and the overscroll
+       bounce; overflow: hidden stops the page itself from scrolling so touch
+       gestures go to the terminal, not the browser chrome. */
+    html, body { margin: 0; height: 100%; background: #000; overscroll-behavior: none; overflow: hidden; }
+    /* touch-action: none hands every touch event to our JS continuously instead
+       of letting the browser hijack a long swipe as a native pan/fling gesture.
+       It must cover xterm's descendant elements too (touch-action isn't inherited,
+       and the real touch target is a child like .xterm-viewport). */
+    #term { position: absolute; inset: 0; touch-action: none; }
+    #term * { touch-action: none; }
+  </style>
+</head>
+<body>
+  <div id="term"></div>
+  <script src="/static/xterm.js"></script>
+  <script src="/static/addon-fit.js"></script>
+  <script>
+    var term = new Terminal({ cursorBlink: true, fontSize: 14 });
+    var fit = new FitAddon.FitAddon();
+    term.loadAddon(fit);
+    term.open(document.getElementById("term"));
+    fit.fit();
+
+    var proto = location.protocol === "https:" ? "wss" : "ws";
+    var sock = new WebSocket(proto + "://" + location.host + "/ws");
+    sock.binaryType = "arraybuffer";
+
+    function sendResize() {
+      if (sock.readyState !== WebSocket.OPEN) return;
+      sock.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+    }
+
+    sock.onopen = function () { fit.fit(); sendResize(); term.focus(); };
+    sock.onmessage = function (ev) { term.write(new Uint8Array(ev.data)); };
+    sock.onclose = function () { term.write("\r\n[connection closed]\r\n"); };
+
+    // keystrokes -> server (utf-8 bytes, binary frame)
+    var enc = new TextEncoder();
+    function sendBytes(data) {
+      if (sock.readyState === WebSocket.OPEN) sock.send(enc.encode(data));
+    }
+    term.onData(sendBytes);
+
+    // Escape: browsers act on it specially (blur/cancel) and can swallow it
+    // before xterm forwards it. Intercept at the capture phase, send ESC to the
+    // pty ourselves, and stop both the browser default and xterm double-handling.
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        sendBytes("\x1b");
+        term.focus();
+      }
+    }, true);
+
+    window.addEventListener("resize", function () { fit.fit(); sendResize(); });
+
+    // Mobile: one vertical swipe = one PageUp/PageDown, exactly like pressing the
+    // keyboard PgUp/PgDn key once. Fires once when the swipe passes a small
+    // threshold; preventDefault + touch-action keep the browser from hijacking it.
+    var startTouchY = null, swipeFired = false;
+    var SWIPE_MIN = 30; // px before a movement counts as a swipe
+
+    document.addEventListener("touchstart", function (e) {
+      if (e.touches.length !== 1) { startTouchY = null; return; }
+      startTouchY = e.touches[0].clientY;
+      swipeFired = false;
+    }, { passive: true });
+
+    document.addEventListener("touchmove", function (e) {
+      if (startTouchY === null || e.touches.length !== 1) return;
+      e.preventDefault(); // own the gesture; stop the browser hijacking the swipe
+      if (swipeFired) return;
+      var delta = e.touches[0].clientY - startTouchY;
+      if (Math.abs(delta) >= SWIPE_MIN) {
+        sendBytes(delta > 0 ? "\x1b[5~" : "\x1b[6~"); // finger down -> PageUp
+        swipeFired = true;
+      }
+    }, { passive: false });
+
+    function endTouch() { startTouchY = null; }
+    document.addEventListener("touchend", endTouch, { passive: true });
+    document.addEventListener("touchcancel", endTouch, { passive: true });
+  </script>
+</body>
+</html>
