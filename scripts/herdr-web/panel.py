@@ -110,6 +110,12 @@ def _draw(stdscr, local_url, public_disp, local_on, pid, tunnel_txt, fields, foc
 def _ui(stdscr):
     curses.curs_set(1)
     stdscr.keypad(True)
+    # keypad mode makes curses wait ESCDELAY (default ~1s) after a bare ESC to see if
+    # it's an escape sequence (arrow keys start with ESC); shrink it so Esc closes fast.
+    try:
+        curses.set_escdelay(25)
+    except (AttributeError, curses.error):
+        pass
     stdscr.timeout(1000)  # getch returns -1 each second so we refresh live state
     config_dir = config.config_dir_default()
     state_dir = config.state_dir_default()
