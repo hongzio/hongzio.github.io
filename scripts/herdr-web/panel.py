@@ -6,6 +6,7 @@ The daemon reads credentials and [tunnel] enabled fresh, so panel changes take e
 without restarting it — the local URL stays fixed while the daemon stays up.
 """
 import curses
+import fcntl
 import os
 import subprocess
 import sys
@@ -170,12 +171,49 @@ def _ui(stdscr):
             msg = ""
 
 
+def _focus_existing(rt):
+    """A panel is already open — focus its pane instead of opening a duplicate."""
+    try:
+        with open(os.path.join(rt, "panel.pane"), encoding="utf-8") as fh:
+            pane = fh.read().strip()
+    except OSError:
+        pane = ""
+    if pane:
+        herdr = os.environ.get("HERDR_BIN_PATH") or "herdr"
+        try:
+            subprocess.run([herdr, "plugin", "pane", "focus", pane],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        except Exception:
+            pass
+
+
 def main(argv):
-    if len(argv) > 1 and argv[1] == "ui":
-        curses.wrapper(_ui)
-    else:
+    if not (len(argv) > 1 and argv[1] == "ui"):
         sys.stderr.write("usage: panel.py ui\n")
         sys.exit(2)
+    rt = config.instance_state_dir(config.state_dir_default())
+    os.makedirs(rt, exist_ok=True)
+    # single-instance: if a panel is already open for this herdr instance, focus it
+    # and exit so re-invoking web.panel doesn't stack duplicate overlays.
+    lockfd = os.open(os.path.join(rt, "panel.lock"), os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        _focus_existing(rt)
+        os.close(lockfd)
+        return
+    pane_file = os.path.join(rt, "panel.pane")
+    try:
+        with open(pane_file, "w", encoding="utf-8") as fh:
+            fh.write(os.environ.get("HERDR_PANE_ID", ""))  # this overlay's pane id
+        curses.wrapper(_ui)
+    finally:
+        try:
+            os.remove(pane_file)
+        except OSError:
+            pass
+        fcntl.flock(lockfd, fcntl.LOCK_UN)
+        os.close(lockfd)
 
 
 if __name__ == "__main__":
