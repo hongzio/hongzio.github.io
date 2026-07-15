@@ -9,6 +9,7 @@ ts.setup()
 local ensure = {
   'lua', 'luadoc', 'vim', 'vimdoc', 'query',
   'bash', 'markdown', 'markdown_inline',
+  'html', 'latex', -- injected langs markview renders inside markdown
   'json', 'yaml', 'toml',
 }
 

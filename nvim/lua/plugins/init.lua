@@ -52,6 +52,9 @@ vim.pack.add({
 
   -- Harpoon: pin a handful of files and jump straight to them.
   { src = 'https://github.com/ThePrimeagen/harpoon', version = 'harpoon2' },
+
+  -- Markdown: in-buffer rendering (headings, code blocks, tables, LaTeX, ...).
+  { src = 'https://github.com/OXY2DEV/markview.nvim' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
@@ -75,3 +78,4 @@ require('plugins.copilot')
 require('plugins.dial')
 require('plugins.flash')
 require('plugins.harpoon')
+require('plugins.markview')
