@@ -177,6 +177,19 @@ type = "plugin_action"
 command = "web.panel"
 description = "web terminal panel"
 
+# stop the whole server (tmux kill-server). herdr has no built-in kill/confirm
+# action, so open a modal popup that y/N-gates `herdr server stop`. Distinct from
+# detach (prefix+ctrl+d), which leaves the server + agents running.
+[[keys.command]]
+key = "prefix+ctrl+q"
+type = "popup"
+# y/N-gate `herdr server stop`. Inline sh -c (TOML literal '''...''' so no escaping);
+# only "y"/"Y" stops the server, anything else cancels and closes the popup.
+command = '''sh -c 'printf "Stop the herdr SERVER? Tears down EVERY workspace. [y/N] "; read -r a; case "$a" in [yY]) exec herdr server stop;; *) printf "\ncancelled\n"; sleep 0.5;; esac' '''
+width = "60%"
+height = "20%"
+description = "stop herdr server (confirm)"
+
 [theme]
 name = "terminal"
 auto_switch = false
