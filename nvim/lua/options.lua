@@ -20,6 +20,7 @@ o.tabstop = 4
 o.smartindent = true
 o.ignorecase = true
 o.smartcase = true
+o.inccommand = 'split'        -- live preview for :s, with a scratch split
 o.undofile = true             -- persistent undo
 o.swapfile = false
 o.clipboard = 'unnamedplus'
