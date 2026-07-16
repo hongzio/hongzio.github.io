@@ -43,6 +43,34 @@ vim.diagnostic.config({
   underline = true,
 })
 
+-- Color the diagnostic *text* itself, not just the underline. By default the
+-- DiagnosticUnderline* groups only set the undercurl color (`sp`) and leave the
+-- text on its syntax fg, so an error reads in normal text with a faint squiggle.
+-- Pull the fg from each severity's Diagnostic* group and apply it (bold on
+-- errors) so errors go red-bold, warnings yellow, etc. Re-run on ColorScheme so
+-- it survives scheme reloads.
+local function style_diagnostic_text()
+  local specs = {
+    { under = 'DiagnosticUnderlineError', from = 'DiagnosticError', bold = true },
+    { under = 'DiagnosticUnderlineWarn', from = 'DiagnosticWarn', bold = false },
+    { under = 'DiagnosticUnderlineInfo', from = 'DiagnosticInfo', bold = false },
+    { under = 'DiagnosticUnderlineHint', from = 'DiagnosticHint', bold = false },
+  }
+  for _, s in ipairs(specs) do
+    local src = vim.api.nvim_get_hl(0, { name = s.from, link = false })
+    local cur = vim.api.nvim_get_hl(0, { name = s.under, link = false })
+    cur.fg = src.fg
+    cur.bold = s.bold
+    vim.api.nvim_set_hl(0, s.under, cur)
+  end
+end
+
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = vim.api.nvim_create_augroup('DiagnosticTextColor', { clear = true }),
+  callback = style_diagnostic_text,
+})
+style_diagnostic_text()
+
 -- [perf] Disable language providers we don't use. Skips runtime probing at
 -- startup for python/ruby/perl/node remote plugins.
 vim.g.loaded_python3_provider = 0
