@@ -71,6 +71,16 @@ def _run_serve(cmd):
         pass
 
 
+def _copy(text):
+    """Copy text to the macOS clipboard via pbcopy. Returns True on success.
+    web is macOS-only (platforms=["macos"]), so pbcopy is always present."""
+    try:
+        p = subprocess.run(["pbcopy"], input=text.encode(), timeout=5)
+        return p.returncode == 0
+    except Exception:
+        return False
+
+
 def _draw(stdscr, local_url, public_disp, local_on, pid, tunnel_txt, fields, focus, msg):
     stdscr.erase()
     h, w = stdscr.getmaxyx()
@@ -96,7 +106,7 @@ def _draw(stdscr, local_url, public_disp, local_on, pid, tunnel_txt, fields, foc
                        curses.A_BOLD if i == focus else 0)
         stdscr.addnstr(base + i, _VALUE_COL, val, max(1, w - _VALUE_COL - 1))
     stdscr.addnstr(base + 5, 0,
-                   "Tab/↑↓ move   Space toggle   Ctrl-G rand pw   Enter save creds   Esc close",
+                   "Tab/↑↓ move   Space toggle   Ctrl-Y copy   Ctrl-G rand pw   Enter save creds   Esc close",
                    w - 1, curses.A_DIM)
     if msg:
         stdscr.addnstr(base + 7, 0, msg, w - 1, curses.A_BOLD)
@@ -146,6 +156,23 @@ def _ui(stdscr):
             focus = (focus + 1) % 4
         elif ch == curses.KEY_UP:
             focus = (focus - 1) % 4
+        elif ch == 25:  # Ctrl-Y: copy the focused row's text to the clipboard.
+            # Handled before the focus-specific branches so it works on every row:
+            # toggle rows copy their associated URL, cred rows copy the field value.
+            if focus == 0:
+                label, text = "local URL", local_url
+            elif focus == 1:
+                label, text = "public URL", (public_url or "")
+            elif focus == 2:
+                label, text = "username", fields[0].value
+            else:
+                label, text = "password", fields[1].value
+            if not text:
+                msg = "nothing to copy"
+            elif _copy(text):
+                msg = "copied %s to clipboard" % label
+            else:
+                msg = "copy failed"
         elif focus == 0:  # Local toggle
             if ch == ord(" "):
                 # persist the preference so auto-start events respect it across

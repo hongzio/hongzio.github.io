@@ -1,5 +1,26 @@
 import unittest
+from unittest import mock
+
 import panel
+
+
+class TestCopy(unittest.TestCase):
+    def test_pipes_text_to_pbcopy_and_reports_success(self):
+        with mock.patch.object(panel.subprocess, "run",
+                               return_value=mock.Mock(returncode=0)) as run:
+            self.assertTrue(panel._copy("hunter2"))
+        run.assert_called_once()
+        self.assertEqual(run.call_args.args[0], ["pbcopy"])
+        self.assertEqual(run.call_args.kwargs["input"], b"hunter2")
+
+    def test_nonzero_exit_is_failure(self):
+        with mock.patch.object(panel.subprocess, "run",
+                               return_value=mock.Mock(returncode=1)):
+            self.assertFalse(panel._copy("x"))
+
+    def test_pbcopy_missing_is_failure_not_raise(self):
+        with mock.patch.object(panel.subprocess, "run", side_effect=FileNotFoundError):
+            self.assertFalse(panel._copy("x"))
 
 
 class TestTunnelState(unittest.TestCase):
