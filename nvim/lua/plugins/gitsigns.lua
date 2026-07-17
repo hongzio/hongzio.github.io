@@ -38,12 +38,12 @@ require('gitsigns').setup({
     map('n', '<leader>hu', gs.undo_stage_hunk, 'Undo stage hunk')
 
     -- Blame.
-    map('n', '<leader>hb', function() gs.blame_line({ full = true }) end, 'Blame line (full)')
+    map('n', '<leader>gb', function() gs.blame_line({ full = true }) end, 'Blame line (full)')
     map('n', '<leader>tb', gs.toggle_current_line_blame, 'Toggle inline blame')
 
     -- Diff whole file against index / last commit.
-    map('n', '<leader>hd', gs.diffthis, 'Diff against index')
-    map('n', '<leader>hD', function() gs.diffthis('~') end, 'Diff against last commit')
+    map('n', '<leader>gd', gs.diffthis, 'Diff against index')
+    map('n', '<leader>gD', function() gs.diffthis('~') end, 'Diff against last commit')
 
     -- Hunk text object: dih (delete hunk), vih (select hunk), etc.
     map({ 'o', 'x' }, 'ih', gs.select_hunk, 'Select hunk')

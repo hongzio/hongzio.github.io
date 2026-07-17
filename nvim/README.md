@@ -146,9 +146,9 @@ Directional moves stay on `<C-h>` / `<C-w>h/j/k/l`; `<C-w>` is untouched.
 | `<leader>hp` / `<leader>hi` | Preview hunk (popup / inline) |
 | `<leader>hr` / `<leader>hR` | Reset hunk / buffer |
 | `<leader>hs` / `<leader>hS` / `<leader>hu` | Stage hunk / buffer / undo stage |
-| `<leader>hb` / `<leader>tb` | Blame line / toggle inline blame |
-| `<leader>hd` / `<leader>hD` | Diff vs index / last commit |
-| `<leader>fc` / `<leader>fC` | File history / project commits (fzf) |
+| `<leader>gb` / `<leader>tb` | Blame line / toggle inline blame |
+| `<leader>gd` / `<leader>gD` | Diff vs index / last commit |
+| `<leader>gh` / `<leader>gH` | File history / project commits (fzf) |
 | `ih` | Hunk text object (`dih`, `vih`) |
 
 ### Multicursor
