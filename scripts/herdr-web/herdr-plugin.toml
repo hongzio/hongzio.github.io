@@ -2,7 +2,7 @@ id = "web"
 name = "Web Terminal"
 version = "0.1.0"
 description = "Expose the herdr session as a browser web terminal (optional cloudflared tunnel)"
-min_herdr_version = "0.7.1"
+min_herdr_version = "0.7.4"  # connection panel uses popup placement (0.7.4)
 platforms = ["macos"]
 
 # Auto-start the daemon. serve.py ensure is idempotent (pidfile liveness check), so
@@ -24,19 +24,26 @@ command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
 on = "tab.focused"
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
 
-# connection panel: curses overlay showing the URLs (read-only) and live-editable
-# username/password. Edits apply to new connections immediately (dynamic auth).
+# connection panel: curses popup (session-modal floating box) showing the URLs
+# (read-only) and live-editable username/password. Edits apply to new connections
+# immediately (dynamic auth). It's a small settings form (~13 rows: 2 URLs + 4
+# fields + hint/msg), so a framed popup reads as a proper modal dialog rather than
+# a full-tab takeover. height is fixed cells to clear the last drawn row (panel.py
+# addnstr is not vertically guarded); width is 80% so a long cloudflared public URL
+# stays readable instead of truncating.
 [[panes]]
 id = "panel"
 title = "Web Terminal"
-placement = "overlay"
+placement = "popup"
+width = "80%"
+height = 16
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/panel.py\" ui"]
 
 [[actions]]
 id = "panel"
 title = "Web terminal: connection panel"
 contexts = ["workspace"]
-command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin web --entrypoint panel --placement overlay --focus"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin web --entrypoint panel --placement popup --width 80% --height 16 --focus"]
 
 [[actions]]
 id = "status"

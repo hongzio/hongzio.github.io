@@ -2,7 +2,7 @@ id = "nav"
 name = "Navigation"
 version = "0.1.0"
 description = "Workspace navigation bundle: favorites, conversation picker, attention focus, tab back/forward"
-min_herdr_version = "0.7.1"
+min_herdr_version = "0.7.4"  # favorites uses popup placement (0.7.4)
 platforms = ["macos"]
 
 # This plugin bundles four independent navigation helpers under one id so they
@@ -34,12 +34,18 @@ command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/tabhist.py\" record"]
 # panes (overlays)
 # ===========================================================================
 
-# favorites overlay: a curses grid of 9 slots. The tab focused when the overlay
-# opens is passed in via FAV_ACTIVE_TAB (see the fav-open action).
+# favorites popup: a curses list of 9 slots in a session-modal floating box. The
+# tab focused when it opens is passed in via FAV_ACTIVE_TAB (see the fav-open
+# action). Small content (title + 9 slots + hint ~14 rows), so a framed popup
+# fits better than a full-tab overlay; width is a % since tab labels vary, height
+# is fixed cells to guarantee all slots + hint show. addstr is clip-safe, so an
+# undersized popup degrades gracefully instead of erroring.
 [[panes]]
 id = "fav-picker"
 title = "Favorites"
-placement = "overlay"
+placement = "popup"
+width = "62%"
+height = 16
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" ui"]
 
 # conversations overlay: fzf-driven picker that streams conversations and
@@ -62,7 +68,7 @@ command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/conversations.py\" ui
 id = "fav-open"
 title = "Favorites"
 contexts = ["workspace"]
-command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint fav-picker --placement overlay --focus --env FAV_ACTIVE_TAB=\"$HERDR_TAB_ID\""]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint fav-picker --placement popup --width 62% --height 16 --focus --env FAV_ACTIVE_TAB=\"$HERDR_TAB_ID\""]
 
 # Focus a pinned tab. Each reads ~/.config/herdr/favorites.toml and
 # `herdr tab focus`es slot N (no-op if empty or the tab is gone).
