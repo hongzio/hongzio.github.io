@@ -57,13 +57,6 @@ copy_mode = "prefix+ctrl+["  # copy-mode (C-[)
 detach = "prefix+ctrl+d"     # detach-client (C-d)
 
 # custom commands
-## spawn a new claude agent in a new pane (auto-detected by herdr)
-[[keys.command]]
-key = "prefix+a"
-type = "pane"
-command = "claude"
-description = "new claude agent"
-
 # favorites (favorites plugin): open the overlay to pin the current tab to a slot.
 # The action forwards HERDR_TAB_ID (focused tab at trigger time) to the overlay;
 # the overlay can't tell which tab was active once it grabs focus. ctrl+1..9
