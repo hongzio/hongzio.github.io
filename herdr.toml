@@ -5,6 +5,16 @@ mouse_capture = true
 
 # session persistence (built-in, no plugin needed unlike tmux-resurrect)
 show_agent_labels_on_pane_borders = true
+
+# expanded agent rows: row 1 = state/space/"time since last activity", row 2 = task.
+# $task and $ago are custom metadata tokens fed by the `titles` plugin
+# (scripts/herdr-titles): $task is the live task title (Claude rolling summary /
+# transcript title), $ago is "Nm/Nh/Nd ago" from the transcript mtime. Built-in
+# tokens: state_icon, state_text, workspace, tab, pane, agent, terminal_title,
+# terminal_title_stripped.
+[ui.sidebar.agents]
+rows = [["state_icon", "workspace", "$ago"], ["$task"]]
+
 [session]
 # restart supported agent panes (Claude Code, Codex, etc.) in their native sessions
 resume_agents_on_restore = true
@@ -182,6 +192,15 @@ command = '''sh -c 'printf "Stop the herdr SERVER? Tears down EVERY workspace. [
 width = "60%"
 height = "20%"
 description = "stop herdr server (confirm)"
+
+# sidebar titles (titles plugin): force-refresh every agent pane's $task token and
+# tab name now. Useful right after /rename, which fires no herdr event so the
+# sidebar/tab otherwise wait for the next agent turn to update.
+[[keys.command]]
+key = "prefix+ctrl+u"
+type = "plugin_action"
+command = "titles.refresh"
+description = "refresh sidebar task titles"
 
 [theme]
 name = "terminal"
