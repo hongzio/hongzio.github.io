@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest import mock
 
@@ -97,6 +98,86 @@ class TestHumanizeAgo(unittest.TestCase):
         self.assertEqual(titles.humanize_ago(23 * 3600 + 59 * 60), "1d ago")    # ~24h -> 1d
 
 
+class TestSecondsToNextAgoChange(unittest.TestCase):
+    def _flips_at(self, age):
+        """The string humanize_ago renders at `age` differs from at `age + dt`."""
+        dt = titles.seconds_to_next_ago_change(age)
+        before = titles.humanize_ago(age)
+        # just below the boundary the string still matches; at/above it differs
+        self.assertEqual(titles.humanize_ago(age + dt - 0.5), before)
+        self.assertNotEqual(titles.humanize_ago(age + dt + 0.5), before)
+        return dt
+
+    def test_just_now_flips_to_1m_at_30s(self):
+        self.assertAlmostEqual(titles.seconds_to_next_ago_change(0), 30.0)
+
+    def test_minute_bucket_ticks_about_once_a_minute(self):
+        dt = self._flips_at(5 * 60)          # "5m ago"
+        self.assertLessEqual(dt, 60.0)
+
+    def test_hour_bucket_ticks_about_once_an_hour(self):
+        dt = self._flips_at(3 * 3600)        # "3h ago" -> "4h ago" at 3.5h
+        self.assertAlmostEqual(dt, 1800.0)
+
+    def test_day_bucket_ticks_about_once_a_day(self):
+        dt = self._flips_at(2 * 86400)       # "2d ago"
+        self.assertGreater(dt, 3600.0)
+
+    def test_never_returns_nonpositive(self):
+        for age in (0, 29, 30, 59, 3599, 3600, 86399, 700000):
+            self.assertGreaterEqual(titles.seconds_to_next_ago_change(age), 1.0)
+
+    def test_across_unit_rollover(self):
+        # ~59.7m renders as "1h"; next flip is at 1.5h, not a minute away
+        self._flips_at(59 * 60 + 40)
+
+
+class TestLastActivityTs(unittest.TestCase):
+    def _write(self, records):
+        import tempfile
+        fh = tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False, encoding="utf-8")
+        for r in records:
+            fh.write(json.dumps(r) + "\n")
+        fh.close()
+        self.addCleanup(lambda: __import__("os").remove(fh.name))
+        return fh.name
+
+    def test_uses_last_real_turn_not_metadata(self):
+        # a real turn yesterday, then rename/restore metadata writes with no/newer stamp
+        path = self._write([
+            {"type": "assistant", "timestamp": "2026-07-18T13:39:02.000Z"},
+            {"type": "custom-title", "customTitle": "New SMO PR"},          # /rename, no ts
+            {"type": "agent-name"},
+            {"type": "system", "timestamp": "2026-07-19T09:00:00.000Z"},    # restore, not a turn
+            {"type": "user", "timestamp": "2026-07-19T09:00:00.000Z",
+             "message": {"content": "<system-reminder>named session"}},     # synthetic user
+        ])
+        ts = titles.last_activity_ts(path)
+        self.assertEqual(ts, titles._parse_iso("2026-07-18T13:39:02.000Z"))
+
+    def test_real_user_message_counts(self):
+        path = self._write([
+            {"type": "assistant", "timestamp": "2026-07-18T10:00:00.000Z"},
+            {"type": "user", "timestamp": "2026-07-18T12:00:00.000Z",
+             "message": {"content": "do the thing"}},
+        ])
+        self.assertEqual(titles.last_activity_ts(path),
+                         titles._parse_iso("2026-07-18T12:00:00.000Z"))
+
+    def test_no_turns_returns_zero(self):
+        path = self._write([{"type": "custom-title", "customTitle": "x"}])
+        self.assertEqual(titles.last_activity_ts(path), 0.0)
+
+
+class TestParseIso(unittest.TestCase):
+    def test_z_suffix(self):
+        self.assertGreater(titles._parse_iso("2026-07-18T13:39:02.000Z"), 0)
+
+    def test_garbage_is_zero(self):
+        self.assertEqual(titles._parse_iso("not-a-date"), 0.0)
+        self.assertEqual(titles._parse_iso(""), 0.0)
+
+
 class TestIsShellTitle(unittest.TestCase):
     def test_shell_prompt_is_shell(self):
         self.assertTrue(titles.is_shell_title("hongzio@host:~/Projects/x"))
@@ -156,6 +237,77 @@ class TestCodexTitles(unittest.TestCase):
             {"type": "response_item", "payload": {"role": "user", "content": "actual"}},
         ]
         self.assertEqual(titles.codex_titles(recs, ""), ("", "actual"))
+
+
+class TestPickCodexSession(unittest.TestCase):
+    def test_newest_matching_cwd_wins(self):
+        entries = [
+            {"id": "old", "cwd": "/repo", "updated_at": "2026-07-18T10:00:00Z"},
+            {"id": "new", "cwd": "/repo", "updated_at": "2026-07-19T10:00:00Z"},
+            {"id": "other", "cwd": "/elsewhere", "updated_at": "2026-07-20T10:00:00Z"},
+        ]
+        self.assertEqual(titles.pick_codex_session(entries, "/repo"), "new")
+
+    def test_no_match_returns_none(self):
+        entries = [{"id": "x", "cwd": "/a", "updated_at": "1"}]
+        self.assertIsNone(titles.pick_codex_session(entries, "/b"))
+        self.assertIsNone(titles.pick_codex_session([], "/a"))
+
+    def test_empty_cwd_never_matches(self):
+        self.assertIsNone(titles.pick_codex_session([{"id": "x", "cwd": "", "updated_at": "1"}], ""))
+
+
+class TestCodexThreadName(unittest.TestCase):
+    def _index(self, lines):
+        import tempfile
+        fh = tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False, encoding="utf-8")
+        for r in lines:
+            fh.write(json.dumps(r) + "\n")
+        fh.close()
+        self.addCleanup(lambda: __import__("os").remove(fh.name))
+        return fh.name
+
+    def test_latest_rename_wins(self):
+        # append-only index: two renames of the same session, newest updated_at wins
+        path = self._index([
+            {"id": "s1", "thread_name": "ttt123", "updated_at": "2026-07-18T22:30:46Z"},
+            {"id": "s1", "thread_name": "ttt234", "updated_at": "2026-07-18T22:45:45Z"},
+            {"id": "other", "thread_name": "nope", "updated_at": "2026-07-19T00:00:00Z"},
+        ])
+        with mock.patch.object(titles, "CODEX_INDEX", path):
+            self.assertEqual(titles.codex_thread_name("s1"), "ttt234")
+
+    def test_missing_session_is_empty(self):
+        path = self._index([{"id": "s1", "thread_name": "x", "updated_at": "1"}])
+        with mock.patch.object(titles, "CODEX_INDEX", path):
+            self.assertEqual(titles.codex_thread_name("s2"), "")
+
+
+class TestResolveSession(unittest.TestCase):
+    def test_agent_session_value_used_directly(self):
+        pane = {"agent": "claude", "agent_session": {"value": "sid1"}}
+        self.assertEqual(titles.resolve_session(pane), ("claude", "sid1"))
+
+    def test_codex_falls_back_to_cwd_when_unbound(self):
+        pane = {"agent": "codex", "cwd": "/repo"}  # herdr never bound a session
+        with mock.patch.object(titles, "codex_session_for_cwd", return_value="cx-sid") as m:
+            self.assertEqual(titles.resolve_session(pane), ("codex", "cx-sid"))
+            m.assert_called_once_with("/repo")
+
+    def test_claude_without_session_does_not_fall_back(self):
+        pane = {"agent": "claude", "cwd": "/repo"}
+        with mock.patch.object(titles, "codex_session_for_cwd") as m:
+            self.assertEqual(titles.resolve_session(pane), ("claude", None))
+            m.assert_not_called()
+
+
+class TestTitleForPaneWithSess(unittest.TestCase):
+    def test_precomputed_sess_skips_lookup(self):
+        pane = {"agent": "codex", "terminal_title_stripped": "hongzio.github.io"}
+        with mock.patch.object(titles, "session_titles") as m:
+            # explicit thread_name passed in beats the cwd-basename terminal title
+            self.assertEqual(titles.title_for_pane(pane, ("ttt123", "")), "ttt123")
+            m.assert_not_called()
 
 
 class TestEventPaneId(unittest.TestCase):

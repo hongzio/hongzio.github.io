@@ -5,13 +5,14 @@ description = "Report each agent pane's live task title to the sidebar as $task,
 min_herdr_version = "0.7.4"   # pane metadata reporting + custom sidebar $tokens land in 0.7.4
 platforms = ["macos"]
 
-# herdr emits NO plugin event when a pane's terminal title changes, and /rename is
-# exactly that (a local slash command, no idle<->working flip). agent_status_changed
-# therefore can't catch /rename. So a small poll daemon (titles.py watch) does the
-# work; these hooks just `ensure` it is running. ensure is idempotent (pidfile-guarded)
-# and near-instant, so firing it on several events is harmless. Between them they bring
-# the daemon up on a fresh agent, a status change, and a new pane — covering startup,
-# session restore, and newly spawned agents.
+# The plugin [[events]] hook surface carries no title-change event (agent_status_changed
+# only flips on idle<->working), but the socket API's events.subscribe does: pane.updated
+# fires on every terminal-title change, and /rename emits an OSC title so it shows there
+# too. So a small push daemon (titles.py watch) holds that subscription and does the work;
+# these hooks just `ensure` it is running. ensure is idempotent (pidfile-guarded) and
+# near-instant, so firing it on several events is harmless. Between them they bring the
+# daemon up on a fresh agent, a status change, and a new pane — covering startup, session
+# restore, and newly spawned agents.
 
 [[events]]
 on = "pane.agent_status_changed"
