@@ -24,16 +24,18 @@
        touch devices and positions it against the visual viewport so it rides above
        the keyboard. Buttons must not steal focus (that closes the keyboard) —
        handlers preventDefault, and user-select:none avoids selecting on tap. */
-    #bar { display: none; position: absolute; left: 0; right: 0; height: 44px;
+    #bar { display: none; position: absolute; left: 0; right: 0; height: 88px;
            box-sizing: border-box; background: #111; border-top: 1px solid #333;
-           z-index: 10; align-items: stretch;
+           z-index: 10; flex-direction: column;
            user-select: none; -webkit-user-select: none; }
+    #bar .row { display: flex; flex: 1 1 0; align-items: stretch; }
     #bar button {
-      flex: 1 1 0; min-width: 0; margin: 6px; border: 1px solid #444;
+      flex: 1 1 0; min-width: 0; margin: 4px; border: 1px solid #444;
       border-radius: 6px; background: #222; color: #ddd;
-      font: 600 16px/1 ui-monospace, Menlo, monospace; -webkit-appearance: none;
+      font: 600 14px/1 ui-monospace, Menlo, monospace; -webkit-appearance: none;
       touch-action: manipulation;
     }
+    #bar .row + .row button { margin-top: 0; }  /* rows share the gap between them */
     #bar button:active { background: #333; }
     #bar button.active { background: #2b6; color: #041; border-color: #2b6; }
   </style>
@@ -41,10 +43,18 @@
 <body>
   <div id="term"></div>
   <div id="bar">
-    <button data-act="prefix">prefix</button>
-    <button data-act="ctrl">Ctrl</button>
-    <button data-act="pageup">PgUp</button>
-    <button data-act="pagedown">PgDn</button>
+    <div class="row">
+      <button data-act="esc">esc</button>
+      <button data-act="tab">tab</button>
+      <button data-act="ctrl">Ctrl</button>
+      <button data-act="shift">Shift</button>
+      <button data-act="prefix">prefix</button>
+    </div>
+    <div class="row">
+      <button data-act="kbd">⌨</button>
+      <button data-act="pageup">PgUp</button>
+      <button data-act="pagedown">PgDn</button>
+    </div>
   </div>
   <script src="/static/xterm.js"></script>
   <script src="/static/addon-fit.js"></script>
@@ -86,7 +96,18 @@
       else return data;                       // no control code for this key
       return String.fromCharCode(c);
     }
-    term.onData(function (data) { sendBytes(toCtrl(data)); });
+    // shiftMode (mobile Shift button): the soft keyboard has its own shift, so this
+    // only uppercases typed letters (layout-dependent symbols are left alone) and,
+    // combined with the Tab button, sends Shift+Tab. Sticky like Ctrl. Ctrl takes
+    // precedence — Ctrl+Shift+letter is the same control code as Ctrl+letter.
+    var shiftMode = false;
+    function toShift(data) {
+      if (!shiftMode || data.length !== 1) return data;
+      var c = data.charCodeAt(0);
+      if (c >= 97 && c <= 122) return String.fromCharCode(c - 32); // a-z -> A-Z
+      return data;
+    }
+    term.onData(function (data) { sendBytes(toShift(toCtrl(data))); });
 
     // Escape: browsers act on it specially (blur/cancel) and can swallow it
     // before xterm forwards it. Intercept at the capture phase, send ESC to the
@@ -109,8 +130,28 @@
     // reserves BAR_H at the bottom so terminal rows clear both bar and keyboard.
     var bar = document.getElementById("bar");
     var isTouch = window.matchMedia("(pointer: coarse)").matches;
-    var BAR_H = isTouch ? 44 : 0;
+    var BAR_H = isTouch ? 88 : 0;  // two rows: keys + kbd/scroll
     if (isTouch) bar.style.display = "flex";
+
+    // Keyboard control. xterm focuses its hidden textarea on every tap of the
+    // terminal, which on mobile pops the soft keyboard even when the tap was just
+    // to click into herdr's UI (switch agents, focus a pane). Default the textarea
+    // to inputmode=none so taps still focus + forward the mouse event to herdr but
+    // the keyboard stays down; the ⌨ button raises it on demand, and prefix/Ctrl
+    // raise it too (a keyboard key follows). Only on touch — desktop uses hardware.
+    var ta = term.textarea || document.querySelector(".xterm-helper-textarea");
+    var kbdOn = false;
+    if (isTouch && ta) ta.inputMode = "none";
+    function setKbd(on) {
+      if (on === kbdOn) { if (on && ta) ta.focus(); return; }
+      kbdOn = on;
+      if (ta) ta.inputMode = on ? "text" : "none";
+      var kb = bar.querySelector('[data-act="kbd"]');
+      if (kb) kb.classList.toggle("active", on);
+      if (!ta) return;
+      // re-focus so the browser re-reads inputmode and (un)shows the soft keyboard
+      if (on) { ta.blur(); ta.focus(); } else { ta.blur(); }
+    }
 
     // herdr's prefix key, injected by serve.py from herdr's config ([keys] prefix,
     // default ctrl+b). Empty when the spec can't be represented as bytes (e.g. a
@@ -147,26 +188,34 @@
     }
     refit(); // initial sizing + bar placement (bar has no CSS top otherwise)
 
-    // Control-bar actions. Handlers fire on touchstart (preventDefault keeps the
-    // hidden textarea focused so the keyboard stays up) and on click for non-touch
-    // testing; touchstart's preventDefault suppresses the synthesized click, so
-    // touch taps never double-fire. PgUp/PgDn send the page keys to herdr, which
-    // scrolls its scrollback (there's no swipe-scroll gesture — that would fight
-    // the native long-press text selection).
+    // Control-bar actions. Handlers fire on touchstart (preventDefault stops the
+    // button from stealing focus, preserving the terminal's focus/keyboard state)
+    // and on click for non-touch testing; touchstart's preventDefault suppresses
+    // the synthesized click, so touch taps never double-fire. PgUp/PgDn send the
+    // page keys to herdr, which scrolls its scrollback (there's no swipe-scroll
+    // gesture — that would fight the native long-press text selection).
     function setCtrl(on) {
       ctrlMode = on;
       bar.querySelector('[data-act="ctrl"]').classList.toggle("active", on);
     }
+    function setShift(on) {
+      shiftMode = on;
+      bar.querySelector('[data-act="shift"]').classList.toggle("active", on);
+    }
     function doAction(act) {
-      // PgUp/PgDn are pure scroll — don't touch input focus, so the keyboard's
-      // current state (up or down) is left unchanged. onBar's preventDefault
-      // already keeps whatever was focused focused.
+      // esc/tab/PgUp/PgDn send a key without needing a follow-up, and the ⌨/Shift
+      // toggles manage their own state — none of them should force the keyboard, so
+      // they return before the setKbd(true) below (leaving the keyboard state as-is).
+      if (act === "esc") { sendBytes("\x1b"); return; }
+      if (act === "tab") { sendBytes(shiftMode ? "\x1b[Z" : "\t"); return; } // Shift+Tab = CSI Z
       if (act === "pageup") { sendBytes("\x1b[5~"); return; }
       if (act === "pagedown") { sendBytes("\x1b[6~"); return; }
-      // prefix/Ctrl focus the terminal: the user types a follow-up key next.
+      if (act === "kbd") { setKbd(!kbdOn); return; }
+      if (act === "shift") { setShift(!shiftMode); return; }
+      // prefix/Ctrl: raise the keyboard, since the user types a follow-up key next.
       if (act === "prefix") sendBytes(PREFIX);          // herdr prefix (from config)
       else if (act === "ctrl") setCtrl(!ctrlMode);
-      term.focus();
+      setKbd(true);
     }
     function onBar(e) {
       var btn = e.target.closest("button");
