@@ -77,5 +77,20 @@ class TestStartTunnel(unittest.TestCase):
             self.assertIn("cloudflared", status)
 
 
+class TestCookieAndForm(unittest.TestCase):
+    def test_cookie_value_extracts_named_cookie(self):
+        header = "foo=1; %s=abc.def; bar=2" % serve.totp.COOKIE_NAME
+        self.assertEqual(serve._cookie_value(header, serve.totp.COOKIE_NAME), "abc.def")
+
+    def test_cookie_value_missing(self):
+        self.assertIsNone(serve._cookie_value("foo=1", serve.totp.COOKIE_NAME))
+        self.assertIsNone(serve._cookie_value(None, serve.totp.COOKIE_NAME))
+
+    def test_form_field(self):
+        self.assertEqual(serve._form_field(b"code=123456", "code"), "123456")
+        self.assertEqual(serve._form_field(b"other=x", "code"), "")
+        self.assertEqual(serve._form_field(b"", "code"), "")
+
+
 if __name__ == "__main__":
     unittest.main()

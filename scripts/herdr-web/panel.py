@@ -12,6 +12,7 @@ one level (or closes from main).
 import curses
 import fcntl
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -19,6 +20,7 @@ import threading
 import authstate
 import config
 import notify
+import totp
 
 SERVE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "serve.py")
 
@@ -112,9 +114,9 @@ def _main_screen(stdscr, ctx):
     """Returns the next screen: None to close, 'notify' to open the messenger list."""
     config_dir, rt, pidfile = ctx["config_dir"], ctx["rt"], ctx["pidfile"]
     fields = ctx["cred_fields"]          # [username, password] — persist across screens
-    focus = ctx.get("main_focus", 0)     # 0=Local 1=Tunnel 2=User 3=Pass 4=Notifications
+    focus = ctx.get("main_focus", 0)     # 0=Local 1=Tunnel 2=User 3=Pass 4=TOTP 5=Notifications
     msg = ""
-    N = 5
+    N = 6
     while True:
         pid = authstate.is_running(pidfile)
         local_on = pid is not None
@@ -140,11 +142,13 @@ def _main_screen(stdscr, ctx):
         for y, (text, attr) in enumerate(header):
             stdscr.addnstr(y, 0, text, w - 1, attr)
         base = len(header)
+        totp_secret = config.load_totp_secret(config_dir)
         rows = [
             ("Local (serve.py)", ("ON  (pid %s)" % pid) if local_on else "OFF"),
             ("Tunnel", tunnel_txt),
             ("Username", fields[0].value),
             ("Password", fields[1].value),
+            ("TOTP (2FA)", ("ON  %s" % totp_secret) if totp_secret else "OFF"),
             ("Notifications", _notif_summary(config_dir)),
         ]
         for i, (label, val) in enumerate(rows):
@@ -179,6 +183,9 @@ def _main_screen(stdscr, ctx):
                 label, text = "username", fields[0].value
             elif focus == 3:
                 label, text = "password", fields[1].value
+            elif focus == 4 and totp_secret:
+                account = "%s@%s" % (fields[0].value or "herdr", socket.gethostname())
+                label, text = "otpauth URI", totp.provisioning_uri(totp_secret, account)
             else:
                 label, text = "", ""
             if not text:
@@ -201,9 +208,18 @@ def _main_screen(stdscr, ctx):
                 else:
                     config.set_tunnel_enabled(config_dir, not tunnel_enabled)
                     msg = "turning tunnel off..." if tunnel_enabled else "turning tunnel on..."
+            elif focus == 4:  # TOTP toggle (a new secret invalidates live sessions)
+                if totp_secret:
+                    config.disable_totp(config_dir)
+                    msg = "TOTP disabled"
+                else:
+                    secret = config.enable_totp(config_dir)
+                    msg = "TOTP on — secret %s  (Ctrl-Y copies otpauth URI)" % secret
         elif ch in (10, 13, curses.KEY_ENTER):
-            if focus == 4:  # open the notifications list
+            if focus == 5:  # open the notifications list
                 return "notify"
+            if focus not in (2, 3):
+                continue  # Local/Tunnel/TOTP rows have no Enter action
             user = fields[0].value.strip()  # save creds
             pw = fields[1].value
             if not user or not pw:

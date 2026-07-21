@@ -245,5 +245,32 @@ class TestInstance(unittest.TestCase):
                 else:
                     os.environ["HERDR_SOCKET_PATH"] = old
 
+class TestTotpSecret(unittest.TestCase):
+    def test_disabled_by_default(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertIsNone(config.load_totp_secret(d))
+            self.assertFalse(config.is_totp_enabled(d))
+
+    def test_enable_persists_0600_and_is_readable(self):
+        with tempfile.TemporaryDirectory() as d:
+            secret = config.enable_totp(d)
+            self.assertTrue(secret)
+            self.assertEqual(config.load_totp_secret(d), secret)
+            self.assertTrue(config.is_totp_enabled(d))
+            mode = stat.S_IMODE(os.stat(config.totp_secret_path(d)).st_mode)
+            self.assertEqual(mode, 0o600)
+
+    def test_enable_regenerates_a_new_secret(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertNotEqual(config.enable_totp(d), config.enable_totp(d))
+
+    def test_disable_removes_secret(self):
+        with tempfile.TemporaryDirectory() as d:
+            config.enable_totp(d)
+            config.disable_totp(d)
+            self.assertIsNone(config.load_totp_secret(d))
+            config.disable_totp(d)  # idempotent, no raise
+
+
 if __name__ == "__main__":
     unittest.main()

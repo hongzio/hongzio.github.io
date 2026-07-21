@@ -371,6 +371,42 @@ def current_creds(config_dir, state_dir):
     """(username, password) read fresh — used by the daemon's per-request auth."""
     return load_settings(config_dir).username, load_or_create_password(state_dir)
 
+# --- TOTP second factor --------------------------------------------------------
+# The TOTP secret is a one-time enrollment (you scan/enter it into an authenticator
+# app once), so unlike the per-session-rotating password it lives in the shared
+# config_dir and stays stable across restarts and instances. Its presence is the
+# single source of truth for whether TOTP is required — no separate enabled flag.
+
+def totp_secret_path(config_dir):
+    return os.path.join(config_dir, "totp_secret")
+
+def load_totp_secret(config_dir):
+    """The shared TOTP secret, or None when TOTP is off (file absent/empty). Read
+    fresh by the daemon each request so panel toggles apply without a restart."""
+    try:
+        with open(totp_secret_path(config_dir), encoding="utf-8") as fh:
+            s = fh.read().strip()
+        return s or None
+    except OSError:
+        return None
+
+def is_totp_enabled(config_dir):
+    return load_totp_secret(config_dir) is not None
+
+def enable_totp(config_dir):
+    """Generate + persist a fresh TOTP secret (0600, shared) and return it. Called
+    to enable, or to regenerate — a new secret invalidates outstanding sessions."""
+    import totp
+    secret = totp.generate_secret()
+    _atomic_write(totp_secret_path(config_dir), secret, 0o600)
+    return secret
+
+def disable_totp(config_dir):
+    try:
+        os.remove(totp_secret_path(config_dir))
+    except OSError:
+        pass
+
 # --- notification (messenger) config -------------------------------------------
 # Shared like username (lives in config_dir, applies to every herdr instance), but
 # stored as JSON rather than in config.toml: the messenger list is a multi-record,
