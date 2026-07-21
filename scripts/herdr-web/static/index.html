@@ -2,7 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- interactive-widget=resizes-content: on Chromium the virtual keyboard
+       shrinks the layout viewport so #term (inset:0) follows automatically.
+       iOS Safari ignores this; the visualViewport handler below covers it. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <title>herdr</title>
   <link rel="stylesheet" href="/static/xterm.css" />
   <style>
@@ -61,7 +64,35 @@
       }
     }, true);
 
-    window.addEventListener("resize", function () { fit.fit(); sendResize(); });
+    // Mobile keyboards (esp. iOS Safari) shrink the *visual* viewport without
+    // touching the layout viewport, so #term's inset:0 stays full-height and the
+    // bottom rows (prompt/cursor) hide behind the keyboard. Size #term to the
+    // visual viewport instead, and refit so xterm reports the smaller row count
+    // to the pty. rAF coalesces the burst of events during the keyboard
+    // open/close animation into one refit per frame.
+    var refitQueued = false;
+    function refit() {
+      if (refitQueued) return;
+      refitQueued = true;
+      requestAnimationFrame(function () {
+        refitQueued = false;
+        var vv = window.visualViewport;
+        var el = document.getElementById("term");
+        if (vv) {
+          el.style.top = vv.offsetTop + "px";
+          el.style.height = vv.height + "px";
+          el.style.bottom = "auto";
+        }
+        fit.fit();
+        sendResize();
+      });
+    }
+
+    window.addEventListener("resize", refit);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", refit);
+      window.visualViewport.addEventListener("scroll", refit);
+    }
 
     // Mobile: one vertical swipe = one PageUp/PageDown, exactly like pressing the
     // keyboard PgUp/PgDn key once. Fires once when the swipe passes a small
