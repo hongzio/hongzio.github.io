@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import authstate
 import config
+import notify
 import ptybridge
 import ws
 
@@ -316,6 +317,17 @@ def _start_tunnel(port, rt):
                 if m:
                     config.save_tunnel_url(rt, m.group(0))
                     toast("herdr-web tunnel: %s" % m.group(0))
+                    # push the new public URL to enabled messengers (once per URL,
+                    # guarded by `announced`). Off-thread so a slow/hung messenger
+                    # send (up to _TIMEOUT each) can't stall this loop, whose job is
+                    # to keep draining cloudflared's stdout; and wrapped so a notify
+                    # error can't kill the watcher.
+                    def _notify(url=m.group(0)):
+                        try:
+                            notify.on_public_url(url, config.config_dir_default(), rt)
+                        except Exception:
+                            pass
+                    threading.Thread(target=_notify, daemon=True).start()
                     announced = True
     threading.Thread(target=watch, daemon=True).start()
     return proc

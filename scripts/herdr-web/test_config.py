@@ -136,6 +136,25 @@ class TestLiveEdits(unittest.TestCase):
             config.clear_port(d)
             self.assertIsNone(config.load_port(d))
 
+class TestNotify(unittest.TestCase):
+    def test_missing_is_empty(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(config.load_notify(d), {})
+
+    def test_roundtrip_and_0600(self):
+        with tempfile.TemporaryDirectory() as d:
+            config.save_notify(d, {"options": {"include_password": True}})
+            self.assertEqual(config.load_notify(d), {"options": {"include_password": True}})
+            mode = stat.S_IMODE(os.stat(config.notify_path(d)).st_mode)
+            self.assertEqual(mode, 0o600)  # holds bot tokens
+
+    def test_corrupt_is_empty(self):
+        with tempfile.TemporaryDirectory() as d:
+            with open(config.notify_path(d), "w") as fh:
+                fh.write("{not json")
+            self.assertEqual(config.load_notify(d), {})
+
+
 class TestInstance(unittest.TestCase):
     def test_keyed_by_socket_path(self):
         old = os.environ.get("HERDR_SOCKET_PATH")

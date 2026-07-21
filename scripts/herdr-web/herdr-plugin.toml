@@ -25,25 +25,25 @@ on = "tab.focused"
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
 
 # connection panel: curses popup (session-modal floating box) showing the URLs
-# (read-only) and live-editable username/password. Edits apply to new connections
-# immediately (dynamic auth). It's a small settings form (~13 rows: 2 URLs + 4
-# fields + hint/msg), so a framed popup reads as a proper modal dialog rather than
-# a full-tab takeover. height is fixed cells to clear the last drawn row (panel.py
-# addnstr is not vertically guarded); width is 80% so a long cloudflared public URL
-# stays readable instead of truncating.
+# (read-only), live-editable username/password, and a notifications sub-screen for
+# messenger config. Edits apply to new connections immediately (dynamic auth).
+# height is fixed cells to clear the last drawn row across all screens (panel.py
+# addnstr is not vertically guarded) — the tallest is the messenger detail form
+# (~11 rows: header + enabled + fields + fetch/test + hint/msg). width is 80% so a
+# long cloudflared public URL stays readable instead of truncating.
 [[panes]]
 id = "panel"
 title = "Web Terminal"
 placement = "popup"
 width = "80%"
-height = 16
+height = 18
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/panel.py\" ui"]
 
 [[actions]]
 id = "panel"
 title = "Web terminal: connection panel"
 contexts = ["workspace"]
-command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin web --entrypoint panel --placement popup --width 80% --height 16 --focus"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin web --entrypoint panel --placement popup --width 80% --height 18 --focus"]
 
 [[actions]]
 id = "status"

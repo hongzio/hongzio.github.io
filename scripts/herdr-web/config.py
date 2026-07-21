@@ -1,5 +1,6 @@
 """Config + secret provisioning for herdr-web. Pure stdlib (py3.9, no tomllib)."""
 import hashlib
+import json
 import os
 import re
 import secrets
@@ -279,3 +280,26 @@ def clear_port(state_dir):
 def current_creds(config_dir, state_dir):
     """(username, password) read fresh — used by the daemon's per-request auth."""
     return load_settings(config_dir).username, load_or_create_password(state_dir)
+
+# --- notification (messenger) config -------------------------------------------
+# Shared like username (lives in config_dir, applies to every herdr instance), but
+# stored as JSON rather than in config.toml: the messenger list is a multi-record,
+# multi-field structure that the flat TOML parser/regex-setters can't represent
+# cleanly. notify.py owns the schema; this layer just reads/writes the whole blob.
+
+def notify_path(config_dir):
+    return os.path.join(config_dir, "notify.json")
+
+def load_notify(config_dir):
+    """Return the raw notify config dict, or {} when missing/corrupt (notify.py
+    normalizes it against its type registry)."""
+    try:
+        with open(notify_path(config_dir), encoding="utf-8") as fh:
+            data = json.load(fh)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+def save_notify(config_dir, data):
+    """Atomically persist the whole notify config (0600 — it holds bot tokens)."""
+    _atomic_write(notify_path(config_dir), json.dumps(data, indent=2), 0o600)

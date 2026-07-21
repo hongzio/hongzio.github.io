@@ -49,5 +49,53 @@ class TestTunnelState(unittest.TestCase):
         self.assertEqual(disp, url)
 
 
+class _SyncThread:
+    """Stand-in for threading.Thread that runs the target inline on start(), so the
+    worker body is exercised deterministically (no join races) in tests."""
+
+    def __init__(self, target=None, daemon=None):
+        self._target = target
+
+    def start(self):
+        self._target()
+
+
+class TestSpawnWorkers(unittest.TestCase):
+    def test_test_send_success(self):
+        state = {"busy": True, "msg": ""}
+        with mock.patch.object(panel.threading, "Thread", _SyncThread), \
+             mock.patch.object(panel.notify, "send", return_value=(True, "sent")):
+            panel._spawn_test(state, "telegram", {"bot_token": "T"}, "hi")
+        self.assertFalse(state["busy"])
+        self.assertIn("sent", state["msg"])
+
+    def test_test_send_exception_is_isolated(self):
+        state = {"busy": True, "msg": ""}
+        with mock.patch.object(panel.threading, "Thread", _SyncThread), \
+             mock.patch.object(panel.notify, "send", side_effect=RuntimeError("boom")):
+            panel._spawn_test(state, "telegram", {}, "hi")  # must not raise
+        self.assertFalse(state["busy"])          # thread still cleared busy
+        self.assertIn("boom", state["msg"])
+
+    def test_fetch_success_stashes_fields(self):
+        state = {"busy": True, "msg": "", "fetched": None}
+        with mock.patch.object(panel.threading, "Thread", _SyncThread), \
+             mock.patch.object(panel.notify, "fetch",
+                               return_value=(True, {"chat_id": "5", "topic_id": "9"}, "G")):
+            panel._spawn_fetch(state, "telegram", {"bot_token": "T"})
+        self.assertEqual(state["fetched"], {"chat_id": "5", "topic_id": "9"})
+        self.assertFalse(state["busy"])
+        self.assertIn("chat_id 5", state["msg"])
+
+    def test_fetch_exception_is_isolated(self):
+        state = {"busy": True, "msg": "", "fetched": None}
+        with mock.patch.object(panel.threading, "Thread", _SyncThread), \
+             mock.patch.object(panel.notify, "fetch", side_effect=RuntimeError("boom")):
+            panel._spawn_fetch(state, "telegram", {})  # must not raise
+        self.assertFalse(state["busy"])
+        self.assertIsNone(state["fetched"])          # nothing to apply on failure
+        self.assertIn("boom", state["msg"])
+
+
 if __name__ == "__main__":
     unittest.main()
