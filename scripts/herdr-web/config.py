@@ -241,6 +241,32 @@ def clear_tunnel_url(state_dir):
     except OSError:
         pass
 
+# --- tunnel error state --------------------------------------------------------
+# When the tunnel is enabled but can't come up (e.g. cloudflared not installed),
+# the supervisor records a short reason here so the panel can show it instead of
+# a permanent "starting..." that never resolves.
+
+def tunnel_status_path(state_dir):
+    return os.path.join(state_dir, "tunnel_status")
+
+def save_tunnel_status(state_dir, msg):
+    os.makedirs(state_dir, exist_ok=True)
+    _atomic_write(tunnel_status_path(state_dir), msg, 0o600)
+
+def load_tunnel_status(state_dir):
+    try:
+        with open(tunnel_status_path(state_dir), encoding="utf-8") as fh:
+            m = fh.read().strip()
+        return m or None
+    except OSError:
+        return None
+
+def clear_tunnel_status(state_dir):
+    try:
+        os.remove(tunnel_status_path(state_dir))
+    except OSError:
+        pass
+
 def instance_key():
     """Stable key for the herdr instance this daemon belongs to, from its server
     socket path, so each instance gets its own runtime state (pidfile/port/tunnel).

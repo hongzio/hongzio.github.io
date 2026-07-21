@@ -224,6 +224,7 @@ def run():
             return  # another daemon already started for this herdr instance
         password = config.startup_password(rt)  # rotate unless the user pinned one
         config.clear_tunnel_url(rt)  # drop stale state from a prior run
+        config.clear_tunnel_status(rt)
         config.clear_port(rt)
         handler = _make_handler(settings)
         httpd, port = _bind(settings.bind, settings.port, handler)
@@ -263,6 +264,7 @@ def run():
         httpd.serve_forever()
     finally:
         config.clear_tunnel_url(rt)
+        config.clear_tunnel_status(rt)
         config.clear_port(rt)
         config.clear_tunnel_pid(rt)
         if tunnel["proc"]:
@@ -285,15 +287,20 @@ def _tunnel_supervisor(port, rt, config_dir, state, poll=3.0):
             if running:
                 proc.terminate()
                 state["proc"] = None
-                config.clear_tunnel_url(rt)
-                config.clear_tunnel_pid(rt)
+            config.clear_tunnel_url(rt)
+            config.clear_tunnel_pid(rt)
+            config.clear_tunnel_status(rt)
         time.sleep(poll)
 
 def _start_tunnel(port, rt):
     from shutil import which
     if not which("cloudflared"):
+        # Record the reason so the panel shows it instead of a forever "starting..."
+        # (the supervisor gives up, so nothing else will ever clear this state).
+        config.save_tunnel_status(rt, "cloudflared not found — brew install cloudflared")
         toast("herdr-web: cloudflared not found; local-only")
         return None
+    config.clear_tunnel_status(rt)  # started OK; drop any stale error from a prior try
     proc = subprocess.Popen(
         ["cloudflared", "tunnel", "--url", "http://127.0.0.1:%d" % port],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -373,6 +380,7 @@ def stop():
             pass
     rt = _rt()
     config.clear_tunnel_url(rt)
+    config.clear_tunnel_status(rt)
     config.clear_port(rt)
     config.clear_tunnel_pid(rt)
     toast("herdr-web stopped")

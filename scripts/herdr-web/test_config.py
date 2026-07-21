@@ -105,6 +105,14 @@ class TestLiveEdits(unittest.TestCase):
             config.clear_tunnel_url(d)
             self.assertIsNone(config.load_tunnel_url(d))
 
+    def test_tunnel_status_roundtrip(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertIsNone(config.load_tunnel_status(d))
+            config.save_tunnel_status(d, "cloudflared not found")
+            self.assertEqual(config.load_tunnel_status(d), "cloudflared not found")
+            config.clear_tunnel_status(d)
+            self.assertIsNone(config.load_tunnel_status(d))
+
     def test_tunnel_pid_roundtrip(self):
         with tempfile.TemporaryDirectory() as d:
             self.assertFalse(os.path.exists(config.tunnel_pid_path(d)))

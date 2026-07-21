@@ -57,14 +57,17 @@ class Field:
 _VALUE_COL = 20  # ">" + " " + "%-16s" label + ": "
 
 
-def _tunnel_state(local_on, tunnel_enabled, public_url, tpid):
+def _tunnel_state(local_on, tunnel_enabled, public_url, tpid, status=None):
     """(tunnel row text, public-URL display) from live state. While the tunnel is
     coming up — enabled but no URL published yet — show 'starting...'; once the URL
-    is up that indicator disappears."""
+    is up that indicator disappears. If the supervisor recorded a failure reason
+    (e.g. cloudflared missing), show that instead of a stuck 'starting...'."""
     if not local_on or not tunnel_enabled:
         return "OFF", "(tunnel off)"
     if public_url:                       # URL published -> fully up
         return (("ON  (pid %s)" % tpid) if tpid else "ON"), public_url
+    if status and not tpid:              # enabled but the tunnel couldn't start
+        return "unavailable", "(%s)" % status
     return (("starting...  (pid %s)" % tpid) if tpid else "starting..."), "(coming up...)"
 
 
@@ -121,7 +124,9 @@ def _main_screen(stdscr, ctx):
         local_url = "http://%s:%d" % (settings.bind, port)
         public_url = config.load_tunnel_url(rt) if local_on else None
         tpid = authstate.is_running(config.tunnel_pid_path(rt)) if local_on else None
-        tunnel_txt, public_disp = _tunnel_state(local_on, tunnel_enabled, public_url, tpid)
+        tunnel_status = config.load_tunnel_status(rt) if local_on else None
+        tunnel_txt, public_disp = _tunnel_state(
+            local_on, tunnel_enabled, public_url, tpid, tunnel_status)
 
         stdscr.erase()
         h, w = stdscr.getmaxyx()

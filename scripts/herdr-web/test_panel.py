@@ -48,6 +48,22 @@ class TestTunnelState(unittest.TestCase):
         self.assertEqual(txt, "ON  (pid 555)")
         self.assertEqual(disp, url)
 
+    def test_failure_status_replaces_stuck_starting(self):
+        txt, disp = panel._tunnel_state(
+            True, True, None, None, "cloudflared not found — brew install cloudflared")
+        self.assertEqual(txt, "unavailable")
+        self.assertIn("cloudflared not found", disp)
+
+    def test_status_ignored_while_process_alive(self):
+        # A stale status shouldn't override a genuinely coming-up tunnel (pid alive).
+        txt, disp = panel._tunnel_state(True, True, None, 555, "stale error")
+        self.assertIn("starting...", txt)
+
+    def test_status_ignored_once_url_is_up(self):
+        url = "https://x.trycloudflare.com"
+        txt, disp = panel._tunnel_state(True, True, url, 555, "stale error")
+        self.assertEqual(disp, url)
+
 
 class _SyncThread:
     """Stand-in for threading.Thread that runs the target inline on start(), so the

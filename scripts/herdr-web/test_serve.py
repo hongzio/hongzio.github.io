@@ -1,4 +1,5 @@
-import getpass, socket, unittest
+import getpass, socket, tempfile, unittest
+from unittest import mock
 import config, serve
 
 def _s(**kw):
@@ -63,6 +64,18 @@ class TestHerdrWatch(unittest.TestCase):
         finally:
             srv.close()
             os.remove(path)
+
+class TestStartTunnel(unittest.TestCase):
+    def test_missing_cloudflared_records_status(self):
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch.object(serve, "toast"), \
+                 mock.patch("shutil.which", return_value=None):
+                proc = serve._start_tunnel(8022, d)
+            self.assertIsNone(proc)
+            status = config.load_tunnel_status(d)
+            self.assertIsNotNone(status)
+            self.assertIn("cloudflared", status)
+
 
 if __name__ == "__main__":
     unittest.main()
