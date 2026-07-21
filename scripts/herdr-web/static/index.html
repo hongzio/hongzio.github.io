@@ -54,6 +54,10 @@
       <button data-act="kbd">⌨</button>
       <button data-act="pageup">PgUp</button>
       <button data-act="pagedown">PgDn</button>
+      <button data-act="left">←</button>
+      <button data-act="up">↑</button>
+      <button data-act="down">↓</button>
+      <button data-act="right">→</button>
     </div>
   </div>
   <script src="/static/xterm.js"></script>
@@ -210,6 +214,10 @@
       if (act === "tab") { sendBytes(shiftMode ? "\x1b[Z" : "\t"); return; } // Shift+Tab = CSI Z
       if (act === "pageup") { sendBytes("\x1b[5~"); return; }
       if (act === "pagedown") { sendBytes("\x1b[6~"); return; }
+      if (act === "up") { sendBytes("\x1b[A"); return; }
+      if (act === "down") { sendBytes("\x1b[B"); return; }
+      if (act === "right") { sendBytes("\x1b[C"); return; }
+      if (act === "left") { sendBytes("\x1b[D"); return; }
       if (act === "kbd") { setKbd(!kbdOn); return; }
       if (act === "shift") { setShift(!shiftMode); return; }
       // prefix/Ctrl: raise the keyboard, since the user types a follow-up key next.
