@@ -72,6 +72,70 @@ def state_dir_default():
         os.path.join(HOME, ".local", "state", "herdr", "plugins", "web"),
     )
 
+# --- herdr prefix key (for the mobile web control bar) -----------------------
+# The mobile UI's "prefix" button must send whatever herdr's prefix key is bound
+# to, which is user-configurable ([keys] prefix in herdr's *own* config.toml) and
+# differs per setup. herdr exposes no query for the resolved value, so we read and
+# parse its config.toml directly; when unset, herdr's built-in default is ctrl+b.
+HERDR_DEFAULT_PREFIX = "ctrl+b"
+
+def herdr_config_path():
+    """Path to herdr's own config.toml (not herdr-web's). Derived from the plugin
+    config dir (…/herdr/plugins/config/web) by trimming everything from /plugins/
+    on, so it tracks a non-standard herdr root; falls back to the XDG default."""
+    marker = os.sep + "plugins" + os.sep
+    base = config_dir_default()
+    root = base.split(marker, 1)[0] if marker in base else os.path.join(HOME, ".config", "herdr")
+    return os.path.join(root, "config.toml")
+
+def _herdr_key(name, default, path=None):
+    """A single [keys] value from herdr's config.toml, or default when the file is
+    missing/unreadable or the key is unset."""
+    path = path or herdr_config_path()
+    try:
+        with open(path, encoding="utf-8") as fh:
+            cfg = parse_config(fh.read())
+    except OSError:
+        return default
+    return cfg.get("keys", {}).get(name) or default
+
+def load_prefix_spec(path=None):
+    """The configured herdr prefix key spec (e.g. 'ctrl+a'), or herdr's default."""
+    return _herdr_key("prefix", HERDR_DEFAULT_PREFIX, path)
+
+_NAMED_KEYS = {"esc": b"\x1b", "escape": b"\x1b", "space": b" ",
+               "tab": b"\t", "enter": b"\r", "return": b"\r"}
+
+def prefix_spec_to_bytes(spec):
+    """Convert a herdr prefix key spec (e.g. 'ctrl+a', 'esc', '-') into the raw
+    bytes for that keypress. Covers the realistic cases; returns b'' for specs we
+    can't represent (e.g. function keys) so the UI can hide the button rather than
+    send something wrong."""
+    parts = [p for p in (spec or "").strip().lower().split("+") if p]
+    if not parts:
+        return b""
+    mods, key = parts[:-1], parts[-1]
+    if "ctrl" in mods:
+        base = _NAMED_KEYS.get(key) or (key.encode("utf-8") if len(key) == 1 else b"")
+        if len(base) != 1:
+            return b""
+        c = base[0]
+        if 97 <= c <= 122:   # a-z  -> 0x01..0x1a
+            return bytes([c - 96])
+        if 64 <= c <= 95:    # @A-Z[\]^_ -> 0x00..0x1f
+            return bytes([c - 64])
+        if c == 32:          # space -> NUL
+            return b"\x00"
+        return b""
+    # no ctrl modifier: a named key or a bare single character (shift/alt ignored)
+    if key in _NAMED_KEYS:
+        return _NAMED_KEYS[key]
+    return key.encode("utf-8") if len(key) == 1 else b""
+
+def resolve_prefix_bytes():
+    """Bytes the mobile prefix button should send, read live from herdr's config."""
+    return prefix_spec_to_bytes(load_prefix_spec())
+
 def load_settings(config_dir):
     os.makedirs(config_dir, exist_ok=True)
     path = os.path.join(config_dir, "config.toml")

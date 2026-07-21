@@ -163,6 +163,46 @@ class TestNotify(unittest.TestCase):
             self.assertEqual(config.load_notify(d), {})
 
 
+class TestPrefix(unittest.TestCase):
+    def test_ctrl_letter_to_control_code(self):
+        self.assertEqual(config.prefix_spec_to_bytes("ctrl+a"), b"\x01")
+        self.assertEqual(config.prefix_spec_to_bytes("ctrl+b"), b"\x02")  # herdr default
+        self.assertEqual(config.prefix_spec_to_bytes("CTRL+A"), b"\x01")  # case-insensitive
+
+    def test_ctrl_special_codes(self):
+        self.assertEqual(config.prefix_spec_to_bytes("ctrl+space"), b"\x00")
+        self.assertEqual(config.prefix_spec_to_bytes("ctrl+["), b"\x1b")
+
+    def test_named_and_bare_keys(self):
+        self.assertEqual(config.prefix_spec_to_bytes("esc"), b"\x1b")
+        self.assertEqual(config.prefix_spec_to_bytes("-"), b"-")
+        self.assertEqual(config.prefix_spec_to_bytes("`"), b"`")
+
+    def test_unrepresentable_is_empty(self):
+        self.assertEqual(config.prefix_spec_to_bytes("f12"), b"")       # function key
+        self.assertEqual(config.prefix_spec_to_bytes("ctrl+f12"), b"")
+        self.assertEqual(config.prefix_spec_to_bytes(""), b"")
+        self.assertEqual(config.prefix_spec_to_bytes(None), b"")
+
+    def test_load_spec_from_config(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "config.toml")
+            with open(path, "w") as fh:
+                fh.write("[keys]\nprefix = \"ctrl+g\"\n")
+            self.assertEqual(config.load_prefix_spec(path), "ctrl+g")
+
+    def test_load_spec_defaults_when_missing(self):
+        with tempfile.TemporaryDirectory() as d:
+            # file absent -> herdr default
+            self.assertEqual(config.load_prefix_spec(os.path.join(d, "nope.toml")),
+                             config.HERDR_DEFAULT_PREFIX)
+            # file present but no [keys] prefix -> herdr default
+            path = os.path.join(d, "config.toml")
+            with open(path, "w") as fh:
+                fh.write("[server]\nport = 8022\n")
+            self.assertEqual(config.load_prefix_spec(path), config.HERDR_DEFAULT_PREFIX)
+
+
 class TestInstance(unittest.TestCase):
     def test_keyed_by_socket_path(self):
         old = os.environ.get("HERDR_SOCKET_PATH")

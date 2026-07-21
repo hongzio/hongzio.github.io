@@ -64,6 +64,21 @@ def _make_handler(settings):
             self.end_headers()
             return False
 
+        def _send_index(self):
+            """Serve index.html with the mobile prefix button wired to herdr's
+            configured prefix key (read live, so config edits apply on reload)."""
+            with open(os.path.join(STATIC, "index.html"), encoding="utf-8") as fh:
+                html = fh.read()
+            esc = lambda bs: "".join("\\x%02x" % b for b in bs)
+            html = html.replace("__HERDR_PREFIX__", esc(config.resolve_prefix_bytes()))
+            body = html.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
         def _send_file(self, path, ctype):
             with open(path, "rb") as fh:
                 body = fh.read()
@@ -80,7 +95,7 @@ def _make_handler(settings):
             if not self._authed():
                 return
             if self.path == "/" or self.path == "/index.html":
-                return self._send_file(os.path.join(STATIC, "index.html"), "text/html; charset=utf-8")
+                return self._send_index()
             if self.path.startswith("/static/"):
                 name = os.path.basename(self.path)
                 ctype = "text/css" if name.endswith(".css") else "application/javascript"

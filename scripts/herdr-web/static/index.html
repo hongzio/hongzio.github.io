@@ -10,19 +10,42 @@
   <link rel="stylesheet" href="/static/xterm.css" />
   <style>
     /* overscroll-behavior: none kills mobile pull-to-refresh and the overscroll
-       bounce; overflow: hidden stops the page itself from scrolling so touch
-       gestures go to the terminal, not the browser chrome. */
+       bounce; overflow: hidden stops the page itself from scrolling. */
     html, body { margin: 0; height: 100%; background: #000; overscroll-behavior: none; overflow: hidden; }
-    /* touch-action: none hands every touch event to our JS continuously instead
-       of letting the browser hijack a long swipe as a native pan/fling gesture.
-       It must cover xterm's descendant elements too (touch-action isn't inherited,
-       and the real touch target is a child like .xterm-viewport). */
-    #term { position: absolute; inset: 0; touch-action: none; }
-    #term * { touch-action: none; }
+    #term { position: absolute; inset: 0; }
+    /* Terminal text is always natively selectable: long-press to select, then copy
+       via the OS menu to the device clipboard. xterm.css sets user-select:none (it
+       renders its own mouse selection); override it so the browser's native
+       selection/copy works on mobile. */
+    .xterm, .xterm .xterm-screen, .xterm .xterm-rows, .xterm .xterm-rows * {
+      user-select: text; -webkit-user-select: text; -ms-user-select: text;
+    }
+    /* Mobile control bar. Hidden by default; JS shows it (display:flex) only on
+       touch devices and positions it against the visual viewport so it rides above
+       the keyboard. Buttons must not steal focus (that closes the keyboard) —
+       handlers preventDefault, and user-select:none avoids selecting on tap. */
+    #bar { display: none; position: absolute; left: 0; right: 0; height: 44px;
+           box-sizing: border-box; background: #111; border-top: 1px solid #333;
+           z-index: 10; align-items: stretch;
+           user-select: none; -webkit-user-select: none; }
+    #bar button {
+      flex: 1 1 0; min-width: 0; margin: 6px; border: 1px solid #444;
+      border-radius: 6px; background: #222; color: #ddd;
+      font: 600 16px/1 ui-monospace, Menlo, monospace; -webkit-appearance: none;
+      touch-action: manipulation;
+    }
+    #bar button:active { background: #333; }
+    #bar button.active { background: #2b6; color: #041; border-color: #2b6; }
   </style>
 </head>
 <body>
   <div id="term"></div>
+  <div id="bar">
+    <button data-act="prefix">prefix</button>
+    <button data-act="ctrl">Ctrl</button>
+    <button data-act="pageup">PgUp</button>
+    <button data-act="pagedown">PgDn</button>
+  </div>
   <script src="/static/xterm.js"></script>
   <script src="/static/addon-fit.js"></script>
   <script>
@@ -50,7 +73,20 @@
     function sendBytes(data) {
       if (sock.readyState === WebSocket.OPEN) sock.send(enc.encode(data));
     }
-    term.onData(sendBytes);
+    // ctrlMode (toggled by the mobile Ctrl button) rewrites the next typed
+    // characters into control codes: 'a' -> Ctrl+A (0x01), 'c' -> Ctrl+C, etc.
+    // It stays on (sticky lock) until the button is tapped again.
+    var ctrlMode = false;
+    function toCtrl(data) {
+      if (!ctrlMode || data.length !== 1) return data;
+      var c = data.charCodeAt(0);
+      if (c >= 97 && c <= 122) c -= 96;       // a-z -> 0x01..0x1a
+      else if (c >= 64 && c <= 95) c -= 64;   // @A-Z[\]^_ -> 0x00..0x1f
+      else if (c === 32) c = 0;               // space -> NUL
+      else return data;                       // no control code for this key
+      return String.fromCharCode(c);
+    }
+    term.onData(function (data) { sendBytes(toCtrl(data)); });
 
     // Escape: browsers act on it specially (blur/cancel) and can swallow it
     // before xterm forwards it. Intercept at the capture phase, send ESC to the
@@ -67,9 +103,24 @@
     // Mobile keyboards (esp. iOS Safari) shrink the *visual* viewport without
     // touching the layout viewport, so #term's inset:0 stays full-height and the
     // bottom rows (prompt/cursor) hide behind the keyboard. Size #term to the
-    // visual viewport instead, and refit so xterm reports the smaller row count
-    // to the pty. rAF coalesces the burst of events during the keyboard
-    // open/close animation into one refit per frame.
+    // visual viewport instead, and refit so xterm reports the smaller row count to
+    // the pty. rAF coalesces the burst of events during the keyboard open/close
+    // animation into one refit per frame. The control bar (touch devices only)
+    // reserves BAR_H at the bottom so terminal rows clear both bar and keyboard.
+    var bar = document.getElementById("bar");
+    var isTouch = window.matchMedia("(pointer: coarse)").matches;
+    var BAR_H = isTouch ? 44 : 0;
+    if (isTouch) bar.style.display = "flex";
+
+    // herdr's prefix key, injected by serve.py from herdr's config ([keys] prefix,
+    // default ctrl+b). Empty when the spec can't be represented as bytes (e.g. a
+    // function key) — hide the button so it never sends the wrong thing.
+    var PREFIX = "__HERDR_PREFIX__";
+    if (!PREFIX) {
+      var pbtn = bar.querySelector('[data-act="prefix"]');
+      if (pbtn) pbtn.style.display = "none";
+    }
+
     var refitQueued = false;
     function refit() {
       if (refitQueued) return;
@@ -80,8 +131,9 @@
         var el = document.getElementById("term");
         if (vv) {
           el.style.top = vv.offsetTop + "px";
-          el.style.height = vv.height + "px";
+          el.style.height = (vv.height - BAR_H) + "px";
           el.style.bottom = "auto";
+          if (isTouch) bar.style.top = (vv.offsetTop + vv.height - BAR_H) + "px";
         }
         fit.fit();
         sendResize();
@@ -93,33 +145,37 @@
       window.visualViewport.addEventListener("resize", refit);
       window.visualViewport.addEventListener("scroll", refit);
     }
+    refit(); // initial sizing + bar placement (bar has no CSS top otherwise)
 
-    // Mobile: one vertical swipe = one PageUp/PageDown, exactly like pressing the
-    // keyboard PgUp/PgDn key once. Fires once when the swipe passes a small
-    // threshold; preventDefault + touch-action keep the browser from hijacking it.
-    var startTouchY = null, swipeFired = false;
-    var SWIPE_MIN = 30; // px before a movement counts as a swipe
-
-    document.addEventListener("touchstart", function (e) {
-      if (e.touches.length !== 1) { startTouchY = null; return; }
-      startTouchY = e.touches[0].clientY;
-      swipeFired = false;
-    }, { passive: true });
-
-    document.addEventListener("touchmove", function (e) {
-      if (startTouchY === null || e.touches.length !== 1) return;
-      e.preventDefault(); // own the gesture; stop the browser hijacking the swipe
-      if (swipeFired) return;
-      var delta = e.touches[0].clientY - startTouchY;
-      if (Math.abs(delta) >= SWIPE_MIN) {
-        sendBytes(delta > 0 ? "\x1b[5~" : "\x1b[6~"); // finger down -> PageUp
-        swipeFired = true;
-      }
-    }, { passive: false });
-
-    function endTouch() { startTouchY = null; }
-    document.addEventListener("touchend", endTouch, { passive: true });
-    document.addEventListener("touchcancel", endTouch, { passive: true });
+    // Control-bar actions. Handlers fire on touchstart (preventDefault keeps the
+    // hidden textarea focused so the keyboard stays up) and on click for non-touch
+    // testing; touchstart's preventDefault suppresses the synthesized click, so
+    // touch taps never double-fire. PgUp/PgDn send the page keys to herdr, which
+    // scrolls its scrollback (there's no swipe-scroll gesture — that would fight
+    // the native long-press text selection).
+    function setCtrl(on) {
+      ctrlMode = on;
+      bar.querySelector('[data-act="ctrl"]').classList.toggle("active", on);
+    }
+    function doAction(act) {
+      // PgUp/PgDn are pure scroll — don't touch input focus, so the keyboard's
+      // current state (up or down) is left unchanged. onBar's preventDefault
+      // already keeps whatever was focused focused.
+      if (act === "pageup") { sendBytes("\x1b[5~"); return; }
+      if (act === "pagedown") { sendBytes("\x1b[6~"); return; }
+      // prefix/Ctrl focus the terminal: the user types a follow-up key next.
+      if (act === "prefix") sendBytes(PREFIX);          // herdr prefix (from config)
+      else if (act === "ctrl") setCtrl(!ctrlMode);
+      term.focus();
+    }
+    function onBar(e) {
+      var btn = e.target.closest("button");
+      if (!btn) return;
+      e.preventDefault(); // don't let the button take focus (keyboard would close)
+      doAction(btn.dataset.act);
+    }
+    bar.addEventListener("touchstart", onBar, { passive: false });
+    bar.addEventListener("click", onBar);
   </script>
 </body>
 </html>
