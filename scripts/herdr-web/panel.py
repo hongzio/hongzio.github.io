@@ -154,7 +154,7 @@ def _main_screen(stdscr, ctx):
         for i, (label, val) in enumerate(rows):
             _row(stdscr, base + i, w, focus, i, label, val)
         stdscr.addnstr(base + N + 1, 0,
-                       "Tab/↑↓ move  Space toggle  Ctrl-Y copy  Ctrl-G rand pw  "
+                       "Tab/↑↓ move  Space toggle  Ctrl-X copy  Ctrl-G rand pw  "
                        "Enter save/open  Esc close", w - 1, curses.A_DIM)
         if msg:
             stdscr.addnstr(base + N + 3, 0, msg, w - 1, curses.A_BOLD)
@@ -174,7 +174,7 @@ def _main_screen(stdscr, ctx):
             focus = (focus + 1) % N
         elif ch == curses.KEY_UP:
             focus = (focus - 1) % N
-        elif ch == 25:  # Ctrl-Y: copy the focused row's associated text
+        elif ch == 24:  # Ctrl-X: copy the focused row's associated text
             if focus == 0:
                 label, text = "local URL", local_url
             elif focus == 1:
@@ -214,7 +214,7 @@ def _main_screen(stdscr, ctx):
                     msg = "TOTP disabled"
                 else:
                     secret = config.enable_totp(config_dir)
-                    msg = "TOTP on — secret %s  (Ctrl-Y copies otpauth URI)" % secret
+                    msg = "TOTP on — secret %s  (Ctrl-X copies otpauth URI)" % secret
         elif ch in (10, 13, curses.KEY_ENTER):
             if focus == 5:  # open the notifications list
                 return "notify"
