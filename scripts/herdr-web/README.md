@@ -3,7 +3,7 @@
 herdr 세션을 **브라우저 웹 터미널**로 노출하는 플러그인. 방화벽/NAT 뒤 머신을 cloudflared quick tunnel로 optional하게 외부 공개할 수 있다. 순수 python3 stdlib + vendored xterm.js.
 
 ## 동작
-- `pane.created` 이벤트에 idempotent 런처(`serve.py ensure`)를 걸어 세션 시작과 함께 데몬이 뜬다.
+- 데몬 부트스트랩은 **`[[startup]]` 훅**(herdr 0.7.5: 세션 복원·live handoff 직후 인스턴스당 1회, 소켓 준비 후)이 맡아 뜬다. `pane.created` 이벤트에도 idempotent 런처(`serve.py ensure`)를 안전망으로 걸어, 세션 도중 데몬이 죽으면 새 pane 생성 때 되살린다.
 - 데몬은 `http.server` + 손으로 짠 WebSocket으로 vendored xterm.js를 서빙하고, `pty.fork()`로 `herdr`에 attach한다. 브라우저 창 리사이즈는 TIOCSWINSZ→SIGWINCH로 herdr까지 전파된다.
 - 기본 바인딩 `127.0.0.1:8022`. Basic Auth 필수(첫 기동 시 랜덤 비번 자동 생성, state dir에 0600 저장). URL·자격증명은 herdr toast로 표시. **TOTP 2FA(optional)**: 켜면 id/pw 위에 인증기 앱 6자리 코드 한 겹이 더 붙는다(아래 참조).
 - 설정 포트가 이미 사용 중이면 **빈 포트를 자동 선택**해서 뜨고(터널도 그 포트로 연결), 실제 포트를 state에 기록해 `web.status`·패널이 표시한다. 포트는 시작 시 고정.

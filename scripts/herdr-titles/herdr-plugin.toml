@@ -2,7 +2,7 @@ id = "titles"
 name = "Agent Titles"
 version = "0.1.0"
 description = "Report each agent pane's live task title to the sidebar as $task, and name its tab (Claude + Codex)"
-min_herdr_version = "0.7.4"   # pane metadata reporting + custom sidebar $tokens land in 0.7.4
+min_herdr_version = "0.7.5"   # pane metadata reporting (0.7.4) + [[startup]] hook (0.7.5)
 platforms = ["macos"]
 
 # The plugin [[events]] hook surface carries no title-change event (agent_status_changed
@@ -10,20 +10,18 @@ platforms = ["macos"]
 # fires on every terminal-title change, and /rename emits an OSC title so it shows there
 # too. So a small push daemon (titles.py watch) holds that subscription and does the work;
 # these hooks just `ensure` it is running. ensure is idempotent (pidfile-guarded) and
-# near-instant, so firing it on several events is harmless. Between them they bring the
-# daemon up on a fresh agent, a status change, and a new pane — covering startup, session
-# restore, and newly spawned agents.
-
-[[events]]
-on = "pane.agent_status_changed"
+# near-instant. The [[startup]] hook (herdr 0.7.5) runs once per enabled plugin right after
+# herdr restores the session and its socket is ready, and again on live handoff, so the
+# daemon comes up deterministically on restore/handoff — previously we leaned on
+# pane.agent_status_changed firing for restored agents to catch this. pane.agent_detected
+# stays as the safety net: it fires exactly when an agent appears (including in a
+# pre-existing pane, which pane.created misses), re-ensuring the daemon after an
+# unexpected crash the moment there is title work to do.
+[[startup]]
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" ensure"]
 
 [[events]]
 on = "pane.agent_detected"
-command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" ensure"]
-
-[[events]]
-on = "pane.created"
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" ensure"]
 
 # Force an immediate full refresh of every agent pane's $task and tab name. Bind to a

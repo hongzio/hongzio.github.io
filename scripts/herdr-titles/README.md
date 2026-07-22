@@ -66,16 +66,15 @@ rename = false   # 기본 true. false면 $task 토큰만 표시하고 탭 이름
 
 ```
 titles (Agent Titles)
-  events:  pane.agent_status_changed ┐
-           pane.agent_detected        ├─ titles.py ensure   # 데몬만 idempotent하게 띄움
-           pane.created              ┘
+  startup: (세션 복원 / live handoff) ┐
+  events:  pane.agent_detected        ┴─ titles.py ensure   # 데몬만 idempotent하게 띄움
   actions: titles.refresh              → titles.py report-all  # 즉시 전체 재계산(키용)
 
   daemon:  events.subscribe(pane.updated / created / closed / exited)  # push
            + $ago 버킷 경계 타이머
 ```
 
-`ensure`는 pidfile로 단일 인스턴스를 보장한다(herdr 인스턴스당 하나, `HERDR_SOCKET_PATH` 키). 데몬은 그 socket이 사라지면(=herdr 종료) 스스로 exit하고, 이벤트 스트림이 끊기면 재구독한다. `$ago` 타이머 상한은 `TITLES_AGO_INTERVAL`(초, 기본 60; 하위호환으로 `TITLES_WATCH_INTERVAL`도 인식), 디버그 로그는 `TITLES_DEBUG=1` → state dir의 `watch.log`. 에러는 항상 로깅.
+데몬 부트스트랩은 **`[[startup]]` 훅**(herdr 0.7.5: 세션 복원·live handoff 직후 인스턴스당 1회, 소켓 준비 후)이 맡고, `pane.agent_detected`는 크래시 복구용 안전망이다(에이전트가 뜨는 = title 작업이 생기는 바로 그 순간에 fire). `ensure`는 pidfile로 단일 인스턴스를 보장한다(herdr 인스턴스당 하나, `HERDR_SOCKET_PATH` 키). 데몬은 그 socket이 사라지면(=herdr 종료) 스스로 exit하고, 이벤트 스트림이 끊기면 재구독한다. `$ago` 타이머 상한은 `TITLES_AGO_INTERVAL`(초, 기본 60; 하위호환으로 `TITLES_WATCH_INTERVAL`도 인식), 디버그 로그는 `TITLES_DEBUG=1` → state dir의 `watch.log`. 에러는 항상 로깅.
 
 `/rename` 직후 **즉시** 반영을 원하면 `titles.refresh`를 키에 걸어라(`herdr.toml`):
 ```toml
@@ -109,7 +108,7 @@ python3 -m unittest test_titles
 
 ## Caveat
 
-- **min_herdr_version 0.7.4** — `report-metadata`와 커스텀 `$` 토큰이 0.7.4 기능.
+- **min_herdr_version 0.7.5** — `report-metadata`·커스텀 `$` 토큰은 0.7.4, 데몬 부트스트랩용 `[[startup]]` 훅은 0.7.5 기능.
 - transcript fallback 경로는 `~/.claude/projects`, `~/.codex/sessions`(+ `session_index.jsonl`)를 읽기만 한다.
 - macOS 전용(`platforms = ["macos"]`).
 - 세션 id 매핑은 herdr가 pane에 붙여주는 `agent_session.value`(claude jsonl stem / codex rollout uuid)를 그대로 쓴다.

@@ -2,26 +2,24 @@ id = "web"
 name = "Web Terminal"
 version = "0.1.0"
 description = "Expose the herdr session as a browser web terminal (optional cloudflared tunnel)"
-min_herdr_version = "0.7.4"  # connection panel uses popup placement (0.7.4)
+min_herdr_version = "0.7.5"  # [[startup]] hook for restore/handoff (0.7.5)
 platforms = ["macos"]
 
 # Auto-start the daemon. serve.py ensure is idempotent (pidfile liveness check), so
-# repeated fires are near-instant no-ops. herdr has no "server started" event and does
-# NOT fire pane.created / tab.focused for a session RESTORED on startup — the only
-# event that reliably fires on restore is pane.agent_status_changed (restored agents
-# report status). So we subscribe to all three: agent-status covers the restart/restore
-# case, pane.created covers new panes, tab.focused covers navigation in an agent-less
-# session. Whichever fires first brings the daemon up.
-[[events]]
-on = "pane.agent_status_changed"
+# repeated fires are near-instant no-ops. The [[startup]] hook (herdr 0.7.5) runs once
+# per enabled plugin right after herdr restores the session and its API socket is ready,
+# and again on live handoff — the two moments the daemon is legitimately down. That makes
+# restore/handoff deterministic; we no longer need to lean on pane.agent_status_changed
+# firing for restored agents (which also missed agent-less restored sessions). pane.created
+# stays as a cheap safety net: it re-ensures the daemon for panes created mid-session,
+# recovering from an unexpected daemon crash while the herdr instance is still alive.
+# Both invocations inherit HERDR_SOCKET_PATH, so per-instance keying (instance_key) and
+# socket-death watching (_watch_herdr) work identically to before.
+[[startup]]
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
 
 [[events]]
 on = "pane.created"
-command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
-
-[[events]]
-on = "tab.focused"
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/serve.py\" ensure"]
 
 # connection panel: curses popup (session-modal floating box) showing the URLs
