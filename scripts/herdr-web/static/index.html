@@ -9,6 +9,26 @@
   <title>herdr</title>
   <link rel="stylesheet" href="/static/xterm.css" />
   <style>
+    /* Embedded fonts so remote/phone browsers (which don't have them installed)
+       match Ghostty. local() first -> the local Mac uses its installed copy and
+       downloads nothing; other devices fetch the woff2 (cached hard, font-display
+       swap shows fallback text meanwhile). D2Coding is subset to Hangul. */
+    @font-face { font-family: "Hack Nerd Font"; font-style: normal; font-weight: normal;
+      font-display: swap;
+      src: local("Hack Nerd Font"), url("/static/HackNerdFont-Regular.woff2") format("woff2"); }
+    @font-face { font-family: "Hack Nerd Font"; font-style: normal; font-weight: bold;
+      font-display: swap;
+      src: local("Hack Nerd Font Bold"), local("Hack Nerd Font"),
+           url("/static/HackNerdFont-Bold.woff2") format("woff2"); }
+    @font-face { font-family: "D2CodingLigature Nerd Font"; font-style: normal; font-weight: normal;
+      font-display: swap;
+      src: local("D2CodingLigature Nerd Font"),
+           url("/static/D2CodingNerdFont-Regular.woff2") format("woff2"); }
+    @font-face { font-family: "D2CodingLigature Nerd Font"; font-style: normal; font-weight: bold;
+      font-display: swap;
+      src: local("D2CodingLigature Nerd Font Bold"), local("D2CodingLigature Nerd Font"),
+           url("/static/D2CodingNerdFont-Bold.woff2") format("woff2"); }
+
     /* overscroll-behavior: none kills mobile pull-to-refresh and the overscroll
        bounce; overflow: hidden stops the page itself from scrolling. */
     html, body { margin: 0; height: 100%; background: #000; overscroll-behavior: none; overflow: hidden; }
@@ -137,7 +157,13 @@
   <script src="/static/xterm.js"></script>
   <script src="/static/addon-fit.js"></script>
   <script>
-    var term = new Terminal({ cursorBlink: true, fontSize: 14 });
+    // Match Ghostty's font stack (Hack Nerd Font for Latin/symbols, D2Coding for
+    // Hangul). These must be installed on the *browser's* device — true on the
+    // local Mac; remote/phone falls back to the next monospace in the chain.
+    var term = new Terminal({
+      cursorBlink: true, fontSize: 14,
+      fontFamily: '"Hack Nerd Font", "D2CodingLigature Nerd Font", ui-monospace, Menlo, monospace'
+    });
     var fit = new FitAddon.FitAddon();
     term.loadAddon(fit);
     term.open(document.getElementById("term"));

@@ -138,9 +138,14 @@ def _make_handler(settings):
             self.send_response(200)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
-            # never cache: the page/creds are dynamic and auth-gated, and a stale
-            # cached index.html silently keeps old client behavior after updates.
-            self.send_header("Cache-Control", "no-store")
+            # Fonts are large, content-stable, and named per file — cache them hard
+            # (private: they're behind auth, so only this user's browser). Everything
+            # else stays no-store: the page/creds are dynamic and auth-gated, and a
+            # stale index.html silently keeps old client behavior after updates.
+            if ctype == "font/woff2":
+                self.send_header("Cache-Control", "private, max-age=31536000, immutable")
+            else:
+                self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(body)
 
@@ -184,7 +189,12 @@ def _make_handler(settings):
                 return self._send_index()
             if self.path.startswith("/static/"):
                 name = os.path.basename(self.path)
-                ctype = "text/css" if name.endswith(".css") else "application/javascript"
+                if name.endswith(".css"):
+                    ctype = "text/css"
+                elif name.endswith(".woff2"):
+                    ctype = "font/woff2"
+                else:
+                    ctype = "application/javascript"
                 fpath = os.path.join(STATIC, name)
                 if os.path.isfile(fpath):
                     return self._send_file(fpath, ctype)
