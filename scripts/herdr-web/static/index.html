@@ -70,17 +70,52 @@
     fit.fit();
 
     var proto = location.protocol === "https:" ? "wss" : "ws";
-    var sock = new WebSocket(proto + "://" + location.host + "/ws");
-    sock.binaryType = "arraybuffer";
+    // sock is (re)assigned by connect(); sendResize/sendBytes read it live.
+    var sock = null;
+    var reconnectTimer = null;
+    var backoff = 0;  // grows per failed retry (onclose); reset on a successful open
 
     function sendResize() {
-      if (sock.readyState !== WebSocket.OPEN) return;
+      if (!sock || sock.readyState !== WebSocket.OPEN) return;
       sock.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
     }
 
-    sock.onopen = function () { fit.fit(); sendResize(); term.focus(); };
-    sock.onmessage = function (ev) { term.write(new Uint8Array(ev.data)); };
-    sock.onclose = function () { term.write("\r\n[connection closed]\r\n"); };
+    // Open the WebSocket and wire its handlers. Mobile browsers freeze a
+    // backgrounded page and the OS closes its sockets, so switching away and back
+    // lands on a dead socket that never came back — the old client just showed
+    // "[connection closed]" and needed a manual reload. connect() is idempotent
+    // (a no-op while CONNECTING/OPEN) so the reconnect triggers below can call it
+    // freely. herdr is a multiplexer: a fresh attach reattaches to the same
+    // session and redraws the screen, so reconnecting is seamless.
+    function connect() {
+      if (sock && (sock.readyState === WebSocket.CONNECTING ||
+                   sock.readyState === WebSocket.OPEN)) return;
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      sock = new WebSocket(proto + "://" + location.host + "/ws");
+      sock.binaryType = "arraybuffer";
+      sock.onopen = function () { backoff = 0; fit.fit(); sendResize(); term.focus(); };
+      sock.onmessage = function (ev) { term.write(new Uint8Array(ev.data)); };
+      sock.onclose = function () {
+        // auto-reconnect with capped exponential backoff. The triggers below fire
+        // connect() immediately (clearing this timer) when the user returns, so
+        // this mainly covers background retries during a transient outage.
+        backoff = Math.min(backoff ? backoff * 2 : 1000, 5000);
+        reconnectTimer = setTimeout(connect, backoff);
+      };
+      sock.onerror = function () { try { sock.close(); } catch (e) {} };
+    }
+
+    // Reconnect the moment the user comes back or the network returns. connect()'s
+    // guard makes these no-ops when the socket is already healthy, so firing on
+    // several overlapping signals (any one of which a given browser may skip) is safe.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") connect();
+    });
+    window.addEventListener("online", connect);
+    window.addEventListener("focus", connect);
+    window.addEventListener("pageshow", connect);
+
+    connect();
 
     // keystrokes -> server (utf-8 bytes, binary frame)
     var enc = new TextEncoder();
