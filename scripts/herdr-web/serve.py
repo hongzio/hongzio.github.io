@@ -13,6 +13,7 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
+import apiclient
 import authstate
 import config
 import notify
@@ -191,6 +192,8 @@ def _make_handler(settings):
                 return
             if self.path == "/ws":
                 return self._do_ws()
+            if self.path == "/api":
+                return self._do_api()
             self.send_error(404)
 
         def do_POST(self):
@@ -262,6 +265,46 @@ def _make_handler(settings):
                     pass
                 try:
                     os.kill(pid, 9)
+                except OSError:
+                    pass
+
+        def _do_api(self):
+            """Bridge the browser's /api WebSocket to the herdr JSON socket, so the
+            floating spaces/agents sidebar can render from session.snapshot, stay
+            live via events.subscribe, and drive focus/create/etc. Independent of
+            the /ws PTY stream; auth already enforced in do_GET."""
+            key = self.headers.get("Sec-WebSocket-Key")
+            if not key:
+                self.send_error(400)
+                return
+            try:
+                herdr_sock = apiclient.open_conn()
+            except OSError:
+                self.send_error(502)
+                return
+            self.send_response(101)
+            self.send_header("Upgrade", "websocket")
+            self.send_header("Connection", "Upgrade")
+            self.send_header("Sec-WebSocket-Accept", ws.accept_key(key))
+            self.end_headers()
+            sock = self.connection
+
+            def recv_exactly(n):
+                out = b""
+                while len(out) < n:
+                    chunk = sock.recv(n - len(out))
+                    if not chunk:
+                        raise ConnectionError("eof")
+                    out += chunk
+                return out
+
+            try:
+                apiclient.proxy_pump(herdr_sock, sock, recv_exactly)
+            except (ConnectionError, OSError):
+                pass
+            finally:
+                try:
+                    herdr_sock.close()
                 except OSError:
                     pass
 

@@ -38,10 +38,84 @@
     #bar .row + .row button { margin-top: 0; }  /* rows share the gap between them */
     #bar button:active { background: #333; }
     #bar button.active { background: #2b6; color: #041; border-color: #2b6; }
+
+    /* ---- floating spaces/agents sidebar (additive overlay) ------------- */
+    #hz-menu {
+      position: fixed; top: 8px; right: 8px; z-index: 40;
+      width: 34px; height: 34px; border-radius: 8px; border: 1px solid #373b41;
+      background: rgba(29,31,33,.82); color: #c5c8c6; font-size: 17px; line-height: 1;
+      cursor: pointer; -webkit-appearance: none; backdrop-filter: blur(3px);
+    }
+    #hz-menu:active { background: #31353a; }
+    #hz-scrim { display: none; position: fixed; inset: 0; z-index: 41; background: rgba(0,0,0,.5); }
+    #hz-app.open #hz-scrim { display: block; }
+    #hz-sidebar {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 42; width: 300px; max-width: 86vw;
+      background: #1d1f21; border-left: 1px solid #373b41; color: #c5c8c6;
+      font-family: -apple-system, system-ui, sans-serif;
+      display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .2s ease;
+      box-shadow: -2px 0 14px rgba(0,0,0,.5);
+    }
+    #hz-app.open #hz-sidebar { transform: translateX(0); }
+    #hz-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #373b41; }
+    #hz-head .hz-brand { font-weight: 700; letter-spacing: .5px; }
+    #hz-head .hz-conn { width: 8px; height: 8px; border-radius: 50%; background: #cc6666; transition: background .2s; }
+    #hz-head .hz-conn.up { background: #b5bd68; }
+    #hz-new-ws { margin-left: auto; width: 26px; height: 26px; border-radius: 6px; border: 1px solid #373b41;
+      background: transparent; color: #c5c8c6; font-size: 15px; line-height: 1; cursor: pointer; }
+    #hz-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+    #hz-body section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      color: #969896; margin: 0; padding: 12px 12px 4px; }
+    #hz-body ul { list-style: none; margin: 0; padding: 0 6px; }
+    .hz-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px;
+      cursor: pointer; font-size: 13px; line-height: 1.25; }
+    .hz-row:hover { background: #282a2e; }
+    .hz-row.focused { background: #31353a; }
+    .hz-row .hz-label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hz-row .hz-meta { color: #969896; font-size: 11px; flex: 0 0 auto; }
+    .hz-row .hz-actions { display: none; gap: 2px; flex: 0 0 auto; }
+    .hz-row:hover .hz-actions { display: flex; }
+    .hz-row .hz-actions button { background: transparent; border: 0; color: #969896; cursor: pointer;
+      font-size: 13px; padding: 0 3px; line-height: 1; border-radius: 4px; }
+    .hz-row .hz-actions button:hover { color: #c5c8c6; background: #31353a; }
+    .hz-row.tab { padding-left: 24px; }
+    .hz-row.tab .hz-num { color: #969896; font-size: 11px; min-width: 14px; text-align: right; }
+    .hz-row.agent { flex-wrap: wrap; }
+    .hz-row.agent .hz-sub { flex: 1 0 100%; padding-left: 16px; color: #969896; font-size: 11px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hz-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; background: #969896; }
+    .hz-dot.working { background: #b5bd68; animation: hzpulse 1.4s ease-in-out infinite; }
+    .hz-dot.blocked { background: #de935f; }
+    .hz-dot.unknown { background: #4a4d51; }
+    @keyframes hzpulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+    .hz-tools { display: flex; gap: 4px; padding: 2px 8px 8px 24px; flex-wrap: wrap; }
+    .hz-tools button { background: #282a2e; border: 1px solid #373b41; color: #969896;
+      border-radius: 5px; font-size: 11px; padding: 2px 7px; cursor: pointer; }
+    .hz-tools button:hover { color: #c5c8c6; background: #31353a; }
   </style>
 </head>
 <body>
   <div id="term"></div>
+
+  <!-- Floating spaces/agents sidebar (overlay drawer). Additive: the terminal
+       below is unchanged; this just drives herdr via the /api socket. -->
+  <div id="hz-app">
+    <button id="hz-menu" title="Spaces &amp; agents" aria-label="Spaces and agents">☰</button>
+    <div id="hz-scrim"></div>
+    <aside id="hz-sidebar">
+      <div id="hz-head">
+        <span class="hz-brand">herdr</span>
+        <span class="hz-conn" id="hz-conn" title="API connection"></span>
+        <button id="hz-new-ws" title="New workspace">＋</button>
+      </div>
+      <div id="hz-body">
+        <section><h2>Spaces</h2><ul id="hz-ws"></ul></section>
+        <section><h2>Agents</h2><ul id="hz-agent"></ul></section>
+      </div>
+    </aside>
+  </div>
+
   <div id="bar">
     <div class="row">
       <button data-act="esc">esc</button>
@@ -269,5 +343,6 @@
     bar.addEventListener("touchstart", onBar, { passive: false });
     bar.addEventListener("click", onBar);
   </script>
+  <script src="/static/sidebar.js"></script>
 </body>
 </html>
