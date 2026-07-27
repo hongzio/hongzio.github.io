@@ -24,10 +24,10 @@ import ws
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.path.join(HERE, "static")
 
-# Second-factor prompt shown when TOTP is enabled but the request carries no valid
-# session cookie. Fully self-contained (no /static refs) so it renders before the
-# session gate would let any asset through. __ERR__ is replaced per render.
-LOGIN_HTML = """<!doctype html><meta charset="utf-8">
+# Shared chrome for the self-contained auth pages. Fully inline (no /static refs) so
+# they render before the session gate would let any asset through. __ERR__ is
+# replaced per render; __BODY__ holds the page-specific form.
+_AUTH_PAGE = """<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>herdr-web</title>
 <style>
@@ -38,18 +38,38 @@ LOGIN_HTML = """<!doctype html><meta charset="utf-8">
  input{width:100%;box-sizing:border-box;font-size:1.5rem;letter-spacing:.4rem;
        text-align:center;padding:.5rem;border:1px solid #373b41;border-radius:.4rem;
        background:#282a2e;color:#c5c8c6}
+ input+input{margin-top:.5rem}
  button{width:100%;margin-top:.75rem;padding:.55rem;font-size:1rem;border:0;
         border-radius:.4rem;background:#81a2be;color:#1d1f21;font-weight:600}
  .err{color:#cc6666;min-height:1.2rem;margin:.5rem 0 0;font-size:.85rem}
 </style>
-<form method="POST" action="/totp">
+__BODY__"""
+
+# First factor: custom credential form, in place of the browser's native Basic Auth
+# dialog. Uses letter-spacing:normal so typed text isn't stretched like the code field.
+CREDS_HTML = _AUTH_PAGE.replace("__BODY__", """<form method="POST" action="/login">
+ <h1>Sign in to herdr-web</h1>
+ <input name="username" autocomplete="username" autocapitalize="none"
+        autocorrect="off" spellcheck="false" placeholder="username"
+        style="letter-spacing:normal;font-size:1.1rem;text-align:left" autofocus>
+ <input name="password" type="password" autocomplete="current-password"
+        placeholder="password"
+        style="letter-spacing:normal;font-size:1.1rem;text-align:left">
+ <button type="submit">Sign in</button>
+ <p class="err">__ERR__</p>
+</form>
+""")
+
+# Second factor: TOTP code prompt, shown when a secret is provisioned but the request
+# carries no valid TOTP session cookie.
+TOTP_HTML = _AUTH_PAGE.replace("__BODY__", """<form method="POST" action="/totp">
  <h1>Enter authenticator code</h1>
  <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*"
         maxlength="6" autofocus>
  <button type="submit">Verify</button>
  <p class="err">__ERR__</p>
 </form>
-"""
+""")
 
 
 def _cookie_value(header, name):
@@ -98,24 +118,22 @@ def _paths():
     return os.path.join(_rt(), "web.pid")
 
 def _make_handler(settings):
-    realm = 'Basic realm="herdr-web"'
     config_dir = config.config_dir_default()
     rt = config.instance_state_dir(config.state_dir_default())  # per-instance password
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
-        def _authed(self):
+        def _first_factor_ok(self):
             # read creds fresh each request so the panel's live edits apply to
-            # new connections without a restart (which would change the URL).
+            # new connections without a restart (which would change the URL). The
+            # first factor is satisfied by either the signed login cookie (set by
+            # the custom form) or a valid Basic Auth header (programmatic clients).
             user, pw = config.current_creds(config_dir, rt)
-            if authstate.check_basic_auth(self.headers.get("Authorization"), user, pw):
+            token = _cookie_value(self.headers.get("Cookie"), authstate.PW_COOKIE_NAME)
+            if authstate.valid_session(user, pw, token):
                 return True
-            self.send_response(401)
-            self.send_header("WWW-Authenticate", realm)
-            self.send_header("Content-Length", "0")
-            self.end_headers()
-            return False
+            return authstate.check_basic_auth(self.headers.get("Authorization"), user, pw)
 
         def _send_index(self):
             """Serve index.html with the mobile prefix button wired to herdr's
@@ -158,8 +176,8 @@ def _make_handler(settings):
             token = _cookie_value(self.headers.get("Cookie"), totp.COOKIE_NAME)
             return totp.valid_session(secret, token)
 
-        def _send_login(self, error=None):
-            body = LOGIN_HTML.replace(
+        def _send_auth_page(self, template, error=None):
+            body = template.replace(
                 "__ERR__", html.escape(error) if error else "").encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -168,6 +186,12 @@ def _make_handler(settings):
             self.end_headers()
             self.wfile.write(body)
 
+        def _send_creds(self, error=None):
+            self._send_auth_page(CREDS_HTML, error)
+
+        def _send_totp(self, error=None):
+            self._send_auth_page(TOTP_HTML, error)
+
         def _redirect(self, location):
             self.send_response(302)
             self.send_header("Location", location)
@@ -175,14 +199,20 @@ def _make_handler(settings):
             self.end_headers()
 
         def do_GET(self):
-            if not self._authed():
+            # First factor: without a valid login session/Basic header, the root
+            # path shows the credential form and everything else is refused — the
+            # real page and its assets only load once the session is established.
+            if not self._first_factor_ok():
+                if self.path in ("/", "/index.html"):
+                    return self._send_creds()
+                self.send_error(403)
                 return
             # TOTP second factor: without a valid session, the root path shows the
             # code prompt and everything else (static/ws) is refused — those only
             # load from the real page, which is gated behind the session.
             if not self._second_factor_ok():
                 if self.path in ("/", "/index.html"):
-                    return self._send_login()
+                    return self._send_totp()
                 self.send_error(403)
                 return
             if self.path == "/" or self.path == "/index.html":
@@ -206,8 +236,17 @@ def _make_handler(settings):
                 return self._do_api()
             self.send_error(404)
 
+        def _read_body(self):
+            length = int(self.headers.get("Content-Length") or 0)
+            return self.rfile.read(length) if length else b""
+
         def do_POST(self):
-            if not self._authed():
+            # /login establishes the first factor, so it must be reachable before a
+            # session exists; it validates the submitted creds itself.
+            if self.path == "/login":
+                return self._do_login()
+            if not self._first_factor_ok():
+                self.send_error(403)
                 return
             if self.path != "/totp":
                 self.send_error(404)
@@ -215,8 +254,7 @@ def _make_handler(settings):
             secret = config.load_totp_secret(config_dir)
             if secret is None:
                 return self._redirect("/")  # TOTP off; nothing to verify
-            length = int(self.headers.get("Content-Length") or 0)
-            body = self.rfile.read(length) if length else b""
+            body = self._read_body()
             if totp.verify(secret, _form_field(body, "code")):
                 cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/" % (
                     totp.COOKIE_NAME, totp.make_session(secret))
@@ -226,7 +264,22 @@ def _make_handler(settings):
                 self.send_header("Content-Length", "0")
                 self.end_headers()
             else:
-                self._send_login(error="Invalid code — try again.")
+                self._send_totp(error="Invalid code — try again.")
+
+        def _do_login(self):
+            user, pw = config.current_creds(config_dir, rt)
+            body = self._read_body()
+            if authstate.check_creds(_form_field(body, "username"),
+                                     _form_field(body, "password"), user, pw):
+                cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/" % (
+                    authstate.PW_COOKIE_NAME, authstate.make_session(user, pw))
+                self.send_response(302)
+                self.send_header("Location", "/")
+                self.send_header("Set-Cookie", cookie)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+            else:
+                self._send_creds(error="Invalid username or password.")
 
         def _do_ws(self):
             key = self.headers.get("Sec-WebSocket-Key")
