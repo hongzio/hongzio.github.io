@@ -1,8 +1,8 @@
 id = "titles"
 name = "Agent Titles"
-version = "0.1.0"
-description = "Report each agent pane's live task title to the sidebar as $task, and name its tab (Claude + Codex)"
-min_herdr_version = "0.7.5"   # pane metadata reporting (0.7.4) + [[startup]] hook (0.7.5)
+version = "0.2.0"
+description = "Report each agent pane's live task title and herdr agent name to the sidebar as $task/$name, and name its tab (Claude + Codex)"
+min_herdr_version = "0.8.0"   # agent.rename + AgentInfo.name (0.8.0); pane metadata (0.7.4); [[startup]] (0.7.5)
 platforms = ["macos"]
 
 # The plugin [[events]] hook surface carries no title-change event (agent_status_changed
@@ -24,8 +24,31 @@ command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" ensure"]
 on = "pane.agent_detected"
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" ensure"]
 
-# Force an immediate full refresh of every agent pane's $task and tab name. Bind to a
-# key for a manual kick; the daemon already keeps things current within ~3s.
+# Rename popup. A small framed box: header, name input, hint/error line. Sized in
+# cells for the height (fixed content) and a % for the width (names are short but
+# herdr's error messages are not). The pane it renames is resolved by the action
+# below and handed over in TITLES_TARGET_PANE — once the popup takes focus it can
+# only see its own pane's context.
+[[panes]]
+id = "rename-agent"
+title = "Rename agent"
+placement = "popup"
+width = "58%"
+height = 9
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" rename-ui"]
+
+# Rename the focused agent pane (herdr's own agent name, i.e. `herdr agent rename`).
+# The popup writes the $name token itself on success, so the rename is on screen
+# immediately instead of waiting for the daemon's next refresh tick.
+[[actions]]
+id = "rename"
+title = "Agent name: rename this pane"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" rename-open"]
+
+# Force an immediate full refresh of every agent pane's $task/$name and tab name.
+# Bind to a key for a manual kick; the daemon already keeps things current within
+# one refresh interval (60s), and pushes terminal-title changes instantly.
 [[actions]]
 id = "refresh"
 title = "Sidebar titles: refresh all"

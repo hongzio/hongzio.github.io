@@ -52,6 +52,73 @@ class TestAgentTabLabel(unittest.TestCase):
         self.assertEqual(titles.agent_tab_label(""), "")
 
 
+class TestIsValidAgentName(unittest.TestCase):
+    def test_accepts_herdr_slugs(self):
+        for name in ("a", "backend", "backend-refactor", "web_2", "x" * 32):
+            self.assertTrue(titles.is_valid_agent_name(name), name)
+
+    def test_rejects_what_herdr_rejects(self):
+        for name in ("", "Backend", "2fast", "-lead", "has space", "백엔드", "x" * 33):
+            self.assertFalse(titles.is_valid_agent_name(name), name)
+
+
+class TestNameToken(unittest.TestCase):
+    def test_name_passes_through(self):
+        self.assertEqual(titles.name_token("backend"), "backend")
+
+    def test_empty_when_unset(self):
+        # empty clears the token, so an unnamed agent shows nothing on its row
+        self.assertEqual(titles.name_token(""), "")
+        self.assertEqual(titles.name_token(None), "")
+        self.assertEqual(titles.name_token("   "), "")
+
+
+class TestContextPane(unittest.TestCase):
+    def test_focused_pane_id(self):
+        ctx = json.dumps({"tab_id": "w1:t1", "focused_pane_id": "w1:p3",
+                          "focused_pane_agent": "claude"})
+        self.assertEqual(titles.context_pane(ctx), "w1:p3")
+
+    def test_empty_when_absent_or_junk(self):
+        self.assertEqual(titles.context_pane(""), "")
+        self.assertEqual(titles.context_pane("not json"), "")
+        self.assertEqual(titles.context_pane(json.dumps({"tab_id": "w1:t1"})), "")
+
+
+class TestResolveTargetPane(unittest.TestCase):
+    AGENTS = [{"pane_id": "w1:p1", "focused": False}, {"pane_id": "w2:p3", "focused": True}]
+
+    def test_caller_pane_wins(self):
+        self.assertEqual(titles.resolve_target_pane(self.AGENTS, "w1:p1"), "w1:p1")
+
+    def test_focused_agent_when_no_caller_pane(self):
+        self.assertEqual(titles.resolve_target_pane(self.AGENTS, ""), "w2:p3")
+
+    def test_caller_pane_without_agent_never_retargets(self):
+        # a keypress from a shell pane must not rename somebody else's agent
+        self.assertEqual(titles.resolve_target_pane(self.AGENTS, "w1:p9"), "")
+
+    def test_empty_when_nothing_focused(self):
+        self.assertEqual(titles.resolve_target_pane([{"pane_id": "w1:p1"}], ""), "")
+        self.assertEqual(titles.resolve_target_pane([], ""), "")
+
+
+class TestErrorMessage(unittest.TestCase):
+    def test_extracts_herdr_error_message(self):
+        err = json.dumps({"error": {"code": "invalid_agent_name", "message": "bad slug"},
+                          "id": "cli:agent:rename"})
+        self.assertEqual(titles.error_message(err), "bad slug")
+
+    def test_falls_back_to_raw_line(self):
+        self.assertEqual(titles.error_message("boom\n"), "boom")
+
+    def test_falls_back_across_streams(self):
+        self.assertEqual(titles.error_message("", "  \n", "from stdout"), "from stdout")
+
+    def test_default_when_silent(self):
+        self.assertEqual(titles.error_message("", ""), "rename failed")
+
+
 class TestParseTabRename(unittest.TestCase):
     def test_default_on_when_absent(self):
         self.assertTrue(titles.parse_tab_rename(""))
@@ -70,112 +137,6 @@ class TestParseTabRename(unittest.TestCase):
 
     def test_rename_outside_tab_section_ignored(self):
         self.assertTrue(titles.parse_tab_rename("rename = false\n[tab]\n"))
-
-
-class TestHumanizeAgo(unittest.TestCase):
-    def test_just_now(self):
-        self.assertEqual(titles.humanize_ago(0), "just now")
-        self.assertEqual(titles.humanize_ago(29), "just now")   # <30s rounds to 0 min
-
-    def test_minutes_round_half_up(self):
-        self.assertEqual(titles.humanize_ago(30), "1m ago")     # 0.5 -> 1
-        self.assertEqual(titles.humanize_ago(60), "1m ago")
-        self.assertEqual(titles.humanize_ago(89), "1m ago")     # 1.48 -> 1
-        self.assertEqual(titles.humanize_ago(90), "2m ago")     # 1.5 -> 2
-
-    def test_hours_round_on_minutes(self):
-        # the spec's examples: 3h29m -> 3h ago, 3h31m -> 4h ago
-        self.assertEqual(titles.humanize_ago(3 * 3600 + 29 * 60), "3h ago")
-        self.assertEqual(titles.humanize_ago(3 * 3600 + 31 * 60), "4h ago")
-
-    def test_days_and_weeks(self):
-        self.assertEqual(titles.humanize_ago(3 * 86400 + 11 * 3600), "3d ago")  # 3.46 -> 3
-        self.assertEqual(titles.humanize_ago(3 * 86400 + 13 * 3600), "4d ago")  # 3.54 -> 4
-        self.assertEqual(titles.humanize_ago(9 * 86400), "1w ago")              # 9d -> 1.29w -> 1
-
-    def test_carry_up_to_next_unit(self):
-        self.assertEqual(titles.humanize_ago(59 * 60 + 40), "1h ago")           # 59.67m -> 60 -> 1h
-        self.assertEqual(titles.humanize_ago(23 * 3600 + 59 * 60), "1d ago")    # ~24h -> 1d
-
-
-class TestSecondsToNextAgoChange(unittest.TestCase):
-    def _flips_at(self, age):
-        """The string humanize_ago renders at `age` differs from at `age + dt`."""
-        dt = titles.seconds_to_next_ago_change(age)
-        before = titles.humanize_ago(age)
-        # just below the boundary the string still matches; at/above it differs
-        self.assertEqual(titles.humanize_ago(age + dt - 0.5), before)
-        self.assertNotEqual(titles.humanize_ago(age + dt + 0.5), before)
-        return dt
-
-    def test_just_now_flips_to_1m_at_30s(self):
-        self.assertAlmostEqual(titles.seconds_to_next_ago_change(0), 30.0)
-
-    def test_minute_bucket_ticks_about_once_a_minute(self):
-        dt = self._flips_at(5 * 60)          # "5m ago"
-        self.assertLessEqual(dt, 60.0)
-
-    def test_hour_bucket_ticks_about_once_an_hour(self):
-        dt = self._flips_at(3 * 3600)        # "3h ago" -> "4h ago" at 3.5h
-        self.assertAlmostEqual(dt, 1800.0)
-
-    def test_day_bucket_ticks_about_once_a_day(self):
-        dt = self._flips_at(2 * 86400)       # "2d ago"
-        self.assertGreater(dt, 3600.0)
-
-    def test_never_returns_nonpositive(self):
-        for age in (0, 29, 30, 59, 3599, 3600, 86399, 700000):
-            self.assertGreaterEqual(titles.seconds_to_next_ago_change(age), 1.0)
-
-    def test_across_unit_rollover(self):
-        # ~59.7m renders as "1h"; next flip is at 1.5h, not a minute away
-        self._flips_at(59 * 60 + 40)
-
-
-class TestLastActivityTs(unittest.TestCase):
-    def _write(self, records):
-        import tempfile
-        fh = tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False, encoding="utf-8")
-        for r in records:
-            fh.write(json.dumps(r) + "\n")
-        fh.close()
-        self.addCleanup(lambda: __import__("os").remove(fh.name))
-        return fh.name
-
-    def test_uses_last_real_turn_not_metadata(self):
-        # a real turn yesterday, then rename/restore metadata writes with no/newer stamp
-        path = self._write([
-            {"type": "assistant", "timestamp": "2026-07-18T13:39:02.000Z"},
-            {"type": "custom-title", "customTitle": "New SMO PR"},          # /rename, no ts
-            {"type": "agent-name"},
-            {"type": "system", "timestamp": "2026-07-19T09:00:00.000Z"},    # restore, not a turn
-            {"type": "user", "timestamp": "2026-07-19T09:00:00.000Z",
-             "message": {"content": "<system-reminder>named session"}},     # synthetic user
-        ])
-        ts = titles.last_activity_ts(path)
-        self.assertEqual(ts, titles._parse_iso("2026-07-18T13:39:02.000Z"))
-
-    def test_real_user_message_counts(self):
-        path = self._write([
-            {"type": "assistant", "timestamp": "2026-07-18T10:00:00.000Z"},
-            {"type": "user", "timestamp": "2026-07-18T12:00:00.000Z",
-             "message": {"content": "do the thing"}},
-        ])
-        self.assertEqual(titles.last_activity_ts(path),
-                         titles._parse_iso("2026-07-18T12:00:00.000Z"))
-
-    def test_no_turns_returns_zero(self):
-        path = self._write([{"type": "custom-title", "customTitle": "x"}])
-        self.assertEqual(titles.last_activity_ts(path), 0.0)
-
-
-class TestParseIso(unittest.TestCase):
-    def test_z_suffix(self):
-        self.assertGreater(titles._parse_iso("2026-07-18T13:39:02.000Z"), 0)
-
-    def test_garbage_is_zero(self):
-        self.assertEqual(titles._parse_iso("not-a-date"), 0.0)
-        self.assertEqual(titles._parse_iso(""), 0.0)
 
 
 class TestIsShellTitle(unittest.TestCase):

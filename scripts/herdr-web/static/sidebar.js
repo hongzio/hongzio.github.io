@@ -132,8 +132,11 @@
       row.dataset.ws = a.workspace_id; row.dataset.tab = a.tab_id;
       row.appendChild(dot(a.agent_status));
       row.appendChild(el("span", "hz-label", a.terminal_title_stripped || a.agent || "agent"));
-      var ago = (a.tokens && a.tokens.ago) ? a.tokens.ago : "";
-      row.appendChild(el("span", "hz-meta", ago));
+      // herdr's own agent name (`herdr agent rename`), straight off the snapshot —
+      // the titles plugin mirrors the same value into $name for the TUI sidebar,
+      // which has no built-in token for it, but here we read it at the source.
+      // Unnamed agents get no span rather than an empty one.
+      if (a.name) row.appendChild(el("span", "hz-meta", a.name));
       var where = (wsLabel[a.workspace_id] || "") + (tabLabel[a.tab_id] ? " / " + tabLabel[a.tab_id] : "");
       row.appendChild(el("div", "hz-sub", where + " · " + (a.agent || "")));
       agentList.appendChild(row);

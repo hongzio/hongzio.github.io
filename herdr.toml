@@ -6,14 +6,16 @@ mouse_capture = true
 # session persistence (built-in, no plugin needed unlike tmux-resurrect)
 show_agent_labels_on_pane_borders = true
 
-# expanded agent rows: row 1 = state/space/"time since last activity", row 2 = task.
-# $task and $ago are custom metadata tokens fed by the `titles` plugin
+# expanded agent rows: row 1 = state/space/agent name, row 2 = task.
+# $task and $name are custom metadata tokens fed by the `titles` plugin
 # (scripts/herdr-titles): $task is the live task title (Claude rolling summary /
-# transcript title), $ago is "Nm/Nh/Nd ago" from the transcript mtime. Built-in
-# tokens: state_icon, state_text, workspace, tab, pane, agent, terminal_title,
-# terminal_title_stripped.
+# transcript title), $name mirrors herdr's own agent name (`herdr agent rename`,
+# prefix+ctrl+r below) and is simply absent when the agent has none — herdr has
+# no built-in sidebar token for it. Built-in tokens: state_icon, state_text,
+# workspace, tab, pane, agent, terminal_title, terminal_title_stripped.
+agent_panel_sort = "spaces"
 [ui.sidebar.agents]
-rows = [["state_icon", "workspace", "$ago"], ["$task"]]
+rows = [["state_icon", "workspace", "$name"], ["$task"]]
 
 [session]
 # restart supported agent panes (Claude Code, Codex, etc.) in their native sessions
@@ -193,9 +195,19 @@ width = "60%"
 height = "20%"
 description = "stop herdr server (confirm)"
 
-# sidebar titles (titles plugin): force-refresh every agent pane's $task token and
-# tab name now. Useful right after /rename, which fires no herdr event so the
-# sidebar/tab otherwise wait for the next agent turn to update.
+# agent name (titles plugin): popup that renames the focused agent pane. This is
+# herdr's own agent name (`herdr agent rename`), which the plugin mirrors into the
+# sidebar's $name; the popup writes the token itself so the rename shows at once.
+[[keys.command]]
+key = "prefix+ctrl+r"
+type = "plugin_action"
+command = "titles.rename"
+description = "rename this agent"
+
+# sidebar titles (titles plugin): force-refresh every agent pane's $task/$name
+# tokens and tab name now. Useful right after a Codex /rename or a `herdr agent
+# rename` typed in a shell — neither fires a herdr event, so the sidebar/tab
+# otherwise wait for the daemon's next refresh tick (60s).
 [[keys.command]]
 key = "prefix+ctrl+u"
 type = "plugin_action"
