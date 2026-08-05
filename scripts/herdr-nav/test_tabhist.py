@@ -108,44 +108,45 @@ class RecordFocusTest(unittest.TestCase):
 class SettleTest(unittest.TestCase):
     def test_no_pending(self):
         self.assertEqual(
-            tabhist.settle(["A", "B"], 1, None, 100.0, 5, 100), (["A", "B"], 1, False)
+            tabhist.settle(["A", "B"], 1, None, 100.0, 5, 100), (["A", "B"], 1)
         )
 
     def test_commits_when_held(self):
-        # pending C held 10s, anchor is B -> committed, off_anchor False
+        # pending C held 10s, anchor is B -> committed
         self.assertEqual(
-            tabhist.settle(["A", "B"], 1, ("C", 0.0), 10.0, 5, 100),
-            (["A", "B", "C"], 2, False),
+            tabhist.settle(["A", "B"], 1, ("C", 0.0), 10.0, 5, 100), (["A", "B", "C"], 2)
         )
 
     def test_drops_flyby(self):
-        # pending C held 2s (< 5) -> dropped, off_anchor True (physically on C)
+        # pending C held 2s (< 5) -> dropped
         self.assertEqual(
-            tabhist.settle(["A", "B"], 1, ("C", 0.0), 2.0, 5, 100),
-            (["A", "B"], 1, True),
+            tabhist.settle(["A", "B"], 1, ("C", 0.0), 2.0, 5, 100), (["A", "B"], 1)
+        )
+
+    def test_zero_threshold_commits_flyby(self):
+        # what the navigation commands pass: the tab you sit on is committed even
+        # though it was only just focused
+        self.assertEqual(
+            tabhist.settle(["A", "B"], 1, ("C", 0.0), 0.5, 0, 100), (["A", "B", "C"], 2)
         )
 
     def test_echo_is_noop(self):
         # pending equals the anchor (a back/forward echo) -> no commit regardless
         self.assertEqual(
-            tabhist.settle(["A", "B"], 1, ("B", 0.0), 100.0, 5, 100),
-            (["A", "B"], 1, False),
+            tabhist.settle(["A", "B"], 1, ("B", 0.0), 100.0, 5, 100), (["A", "B"], 1)
         )
 
     def test_commit_truncates_forward_branch(self):
         # anchor B (cursor 1) with forward branch C; commit held D -> A-B-D
         self.assertEqual(
-            tabhist.settle(["A", "B", "C"], 1, ("D", 0.0), 10.0, 5, 100),
-            (["A", "B", "D"], 2, False),
+            tabhist.settle(["A", "B", "C"], 1, ("D", 0.0), 10.0, 5, 100), (["A", "B", "D"], 2)
         )
 
     def test_empty_history_flyby(self):
-        self.assertEqual(tabhist.settle([], -1, ("A", 0.0), 1.0, 5, 100), ([], -1, True))
+        self.assertEqual(tabhist.settle([], -1, ("A", 0.0), 1.0, 5, 100), ([], -1))
 
     def test_empty_history_commit(self):
-        self.assertEqual(
-            tabhist.settle([], -1, ("A", 0.0), 10.0, 5, 100), (["A"], 0, False)
-        )
+        self.assertEqual(tabhist.settle([], -1, ("A", 0.0), 10.0, 5, 100), (["A"], 0))
 
 
 class DwellScenarioTest(unittest.TestCase):
@@ -155,15 +156,36 @@ class DwellScenarioTest(unittest.TestCase):
         limit, thr = 100, 5
         entries, cursor = ["Z"], 0  # Z already committed and the anchor
         # Focus A (staged). settle with pending None is a no-op.
-        entries, cursor, _ = tabhist.settle(entries, cursor, None, 30.0, thr, limit)
+        entries, cursor = tabhist.settle(entries, cursor, None, 30.0, thr, limit)
         pending = ("A", 30.0)
         # Fly A -> B -> C -> E at 1s intervals (each < threshold): all dropped.
         for tab, t in (("B", 31.0), ("C", 32.0), ("E", 33.0)):
-            entries, cursor, _ = tabhist.settle(entries, cursor, pending, t, thr, limit)
+            entries, cursor = tabhist.settle(entries, cursor, pending, t, thr, limit)
             pending = (tab, t)
         # Sit on E for 20s, then a further focus resolves it -> E committed.
-        entries, cursor, _ = tabhist.settle(entries, cursor, pending, 53.0, thr, limit)
+        entries, cursor = tabhist.settle(entries, cursor, pending, 53.0, thr, limit)
         self.assertEqual((entries, cursor), (["Z", "E"], 1))
+
+    def test_navigation_commits_the_flyby_it_starts_from(self):
+        """The reported bug: toggle twice after flying through tabs.
+
+        A -> B (both held), then next_agent hops through C1/C2/C faster than the
+        dwell threshold. The first toggle must commit C (threshold 0) and flip to
+        B; the second must flip back to C, not to A.
+        """
+        limit, thr, live = 100, 5, {"A", "B", "C1", "C2", "C"}
+        entries, cursor, pending = ["A"], 0, ("B", 100.0)
+        for tab, t in (("C1", 110.0), ("C2", 111.0), ("C", 112.0)):  # fly-bys
+            entries, cursor = tabhist.settle(entries, cursor, pending, t, thr, limit)
+            pending = (tab, t)
+        self.assertEqual((entries, cursor), (["A", "B"], 1))  # C never committed
+
+        for t, expect in ((113.0, "B"), (114.0, "C")):
+            entries, cursor = tabhist.settle(entries, cursor, pending, t, 0, limit)
+            target = tabhist.step_toggle(entries, cursor, live)
+            self.assertEqual(entries[target], expect)
+            cursor = target
+            pending = (entries[target], t)  # what the focus echo re-stages
 
 
 class StepTest(unittest.TestCase):

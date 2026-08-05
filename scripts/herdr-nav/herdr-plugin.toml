@@ -162,7 +162,9 @@ command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/attention.py\" focus"
 # --- tab-history ---
 # Step the history cursor back/forward to the nearest still-live tab and focus
 # it. Saving the cursor before focusing makes the resulting tab.focused echo a
-# no-op, so the move isn't re-recorded.
+# no-op, so the move isn't re-recorded. All three keys commit the tab you are
+# currently on before stepping (min_dwell_seconds gates passive focus changes
+# only), so a tab you flew into is still the one you navigate away from.
 [[actions]]
 id = "tab-back"
 title = "Tab history: back"

@@ -18,11 +18,17 @@ Subcommands:
 
 Dwell gate — the event model has no timer, so we can't know at focus time
 whether a tab will be held. Instead each focus is STAGED as `pending` (tab +
-timestamp); the NEXT focus (or a back/forward press) resolves it: if the gap is
->= min_dwell_seconds the staged tab is committed to history, otherwise it is
-dropped. A tab thus enters history when you leave it (or navigate away) having
-stayed long enough, not the instant you land on it. `min_dwell_seconds = 0`
-disables the gate (record every focus immediately, the pre-dwell behaviour).
+timestamp); the NEXT focus resolves it: if the gap is >= min_dwell_seconds the
+staged tab is committed to history, otherwise it is dropped. A tab thus enters
+history when you leave it having stayed long enough, not the instant you land on
+it. `min_dwell_seconds = 0` disables the gate (record every focus immediately,
+the pre-dwell behaviour).
+
+The gate applies to PASSIVE focus changes only. Pressing back/forward/toggle
+bypasses it and commits the staged tab unconditionally: the keys mean "from THIS
+tab, go elsewhere", so the tab you are physically sitting on must be in history
+first — otherwise a tab you flew into (next_tab, next_agent, ...) is invisible to
+navigation and the move is computed from a stale anchor.
 
 History model — a committed list `entries` plus an integer `cursor` (index of
 the current anchor), exactly like a browser:
@@ -33,9 +39,9 @@ the current anchor), exactly like a browser:
     forward navigation itself NOT get recorded: the action moves the cursor and
     focuses the tab, and the resulting `tab.focused` echo lands on the tab the
     cursor already points at, so record does nothing. No marker files needed.
-  * If you press back/forward while sitting on an uncommitted fly-by (a tab not
-    held long enough), the first press snaps back to the anchor rather than
-    stepping — the fly-by is transparent to navigation.
+  * Pressing back/forward/toggle while sitting on an uncommitted fly-by commits
+    that tab first (see the dwell note above), so the step starts from where you
+    actually are. As with any commit this truncates the forward branch.
   * back/forward skip over tabs that no longer exist (checked against
     `herdr tab list`), landing on the nearest still-live tab.
 
@@ -202,29 +208,26 @@ def settle(
     now: float,
     threshold: float,
     limit: int,
-) -> tuple[list[str], int, bool]:
+) -> tuple[list[str], int]:
     """Resolve a staged `pending` focus against the dwell threshold. Pure.
 
-    `pending` is (tab_id, focused_at) or None. Returns (entries, cursor,
-    off_anchor):
+    `pending` is (tab_id, focused_at) or None. Returns the new (entries, cursor):
       * held >= threshold and not already the anchor -> committed to history.
       * held  < threshold                            -> dropped as a fly-by.
       * equal to the current anchor                  -> no-op (back/forward echo).
 
-    `off_anchor` is True only when a fly-by was dropped while it differs from the
-    anchor — i.e. the user is physically sitting on an uncommitted tab, so a
-    back/forward press should snap back to the anchor instead of stepping.
+    `threshold = 0` commits unconditionally — what the navigation commands pass so
+    the tab you are physically on enters history before the cursor moves.
     """
     if pending is None:
-        return entries, cursor, False
+        return entries, cursor
     tab, at = pending
     anchor = entries[cursor] if 0 <= cursor < len(entries) else None
     if tab == anchor:
-        return entries, cursor, False
+        return entries, cursor
     if now - at >= threshold:
-        entries, cursor = record_focus(entries, cursor, tab, limit)
-        return entries, cursor, False
-    return entries, cursor, True
+        return record_focus(entries, cursor, tab, limit)
+    return entries, cursor
 
 
 def step_back(entries: list[str], cursor: int, live: set[str]) -> int | None:
@@ -421,29 +424,28 @@ def cmd_record() -> int:
         return 0
     # Commit the previously-staged tab if it was held >= threshold (its dwell is
     # now - its focus time), then stage this focus as the new pending.
-    new_entries, new_cursor, _ = settle(entries, cursor, pending, now, threshold, limit)
+    new_entries, new_cursor = settle(entries, cursor, pending, now, threshold, limit)
     save_state(new_entries, new_cursor, (tab_id, now))
     return 0
 
 
 def _navigate(step, now: float) -> int:
-    """Shared back/forward: settle the current focus, move the cursor, focus.
+    """Shared back/forward/toggle: commit where you are, move the cursor, focus.
+
+    Settles with threshold 0, i.e. the dwell gate is deliberately bypassed: a
+    navigation key means "from THIS tab, go elsewhere", so the tab currently held
+    is committed even if you only just landed on it. Without that, a tab reached
+    by flying through (next_tab, next_agent, ...) never enters history and the
+    step is computed from a stale anchor.
 
     Persist BEFORE focusing so the resulting `tab.focused` echo lands on the tab
     the cursor now points at and record no-ops (the move isn't re-recorded).
     """
     entries, cursor, pending = load_state()
-    threshold = read_min_dwell()
     limit = read_max()
-    entries, cursor, off_anchor = settle(entries, cursor, pending, now, threshold, limit)
+    entries, cursor = settle(entries, cursor, pending, now, 0, limit)
 
-    target = None
-    if off_anchor:
-        # Sitting on an uncommitted fly-by: snap back to the anchor first.
-        if 0 <= cursor < len(entries):
-            target = cursor
-    elif entries:
-        target = step(entries, cursor, live_tab_set())
+    target = step(entries, cursor, live_tab_set()) if entries else None
 
     if target is None:
         # Nowhere to go, but settle may have committed a tab — persist that and

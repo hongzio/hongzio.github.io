@@ -39,7 +39,7 @@ pane id(`fav-picker`, `conversations`)는 매니페스트 내부에서 action의
 | 섹션 | 키 | 성격 |
 |---|---|---|
 | `[tab-history]` | `max` | back/forward로 되짚을 최근 탭 개수 (첫 record 때 기본 100으로 자동 생성) |
-| `[tab-history]` | `min_dwell_seconds` | 탭에 이 시간(초) 이상 머물러야 히스토리에 기록 (기본 5, `0`=끄고 즉시 기록). 빠르게 지나친 탭은 무시 |
+| `[tab-history]` | `min_dwell_seconds` | 탭에 이 시간(초) 이상 머물러야 히스토리에 기록 (기본 5, `0`=끄고 즉시 기록). 빠르게 지나친 탭은 무시. 단 back/forward/토글 키를 누르는 순간 **현재 탭은 이 게이트와 무관하게 커밋**된다 — "지금 이 탭에서 다른 데로" 라는 의미이므로 |
 
 **state** — 기계가 write, 언제든 삭제 가능. `HERDR_PLUGIN_STATE_DIR`(기본 `~/.local/state/herdr/plugins/nav/`)을 공유하되 파일명이 안 겹친다:
 
