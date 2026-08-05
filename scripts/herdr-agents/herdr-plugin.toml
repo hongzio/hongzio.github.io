@@ -1,0 +1,53 @@
+id = "agents"
+name = "Agent Actions"
+version = "0.1.0"
+description = "Actions on the agent you are looking at, gathered behind one popup menu (prefix+a)"
+min_herdr_version = "0.8.0"  # agent_session on AgentInfo (0.8.0); popup panes (0.7.4)
+platforms = ["macos"]
+
+# The menu is the point: a feature costs a MENU entry in agents.py and nothing
+# here — one key to remember no matter how many features land. The per-feature
+# [[actions]] below are optional shortcuts for the ones worth their own key.
+
+# ===========================================================================
+# panes (overlays)
+# ===========================================================================
+
+# Feature menu. A small framed box: header (what would be acted on), the item
+# list, then a hint/error row. Width is a % because the header carries the
+# source agent's task title; height is fixed cells sized to the item count
+# (header + blank + N items + blank + hint), so bump it as MENU grows. addstr is
+# clip-safe, so an undersized popup degrades instead of erroring.
+# The pane it acts on is resolved by the action below and handed over in
+# AGENTS_TARGET_PANE — once the popup takes focus it can only see its own pane.
+[[panes]]
+id = "menu"
+title = "Agents"
+placement = "popup"
+width = "62%"
+height = 9
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/agents.py\" menu-ui"]
+
+# ===========================================================================
+# actions
+# ===========================================================================
+
+# The menu (bind this: prefix+a). Resolves the focused agent pane, then opens
+# the popup over it. This is the only action a new feature needs.
+[[actions]]
+id = "menu"
+title = "Agents: feature menu"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/agents.py\" menu-open"]
+
+# --- per-feature shortcuts (optional; the menu reaches all of them anyway) ---
+
+# Fork straight from a key, skipping the menu. Same code path the popup spawns:
+# copy the focused agent's conversation into a new tab of the same workspace
+# (claude --fork-session / codex fork), launched via `pane run` so the fork gets
+# no herdr agent name.
+[[actions]]
+id = "fork"
+title = "Agents: fork this conversation into a new tab"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/agents.py\" fork"]

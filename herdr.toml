@@ -182,6 +182,16 @@ type = "plugin_action"
 command = "web.panel"
 description = "web terminal panel"
 
+# agent actions (agents plugin): popup menu of things to do to the agent you are
+# looking at — fork (copy this conversation into a new agent in a new tab of the
+# same workspace), and whatever lands next. Features are menu entries, so this
+# stays the single key for all of them.
+[[keys.command]]
+key = "prefix+a"
+type = "plugin_action"
+command = "agents.menu"
+description = "agent actions"
+
 # stop the whole server (tmux kill-server). herdr has no built-in kill/confirm
 # action, so open a modal popup that y/N-gates `herdr server stop`. Distinct from
 # detach (prefix+ctrl+d), which leaves the server + agents running.
