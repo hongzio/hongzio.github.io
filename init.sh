@@ -265,10 +265,12 @@ if ! check_step "brew_install_herdr"; then
     echo -e "${RED}Failed to link herdr config${NC}"
     exit 1
   }
-  herdr plugin link $HOME/.hongzio.github.io/scripts/herdr-nav || {
-    echo -e "${RED}Failed to link herdr nav plugin${NC}"
-    exit 1
-  }
+  for plugin in nav titles web agents; do
+    herdr plugin link $HOME/.hongzio.github.io/scripts/herdr-$plugin || {
+      echo -e "${RED}Failed to link herdr $plugin plugin${NC}"
+      exit 1
+    }
+  done
   herdr server reload-config || {
     echo -e "${GREEN}Herdr config is linked. Start or restart herdr to load it.${NC}"
   }
