@@ -47,8 +47,14 @@ vim.pack.add({
   -- Label-based motion: jump anywhere on screen in a few keystrokes (s / S).
   { src = 'https://github.com/folke/flash.nvim' },
 
-  -- Lua utility library (dependency of harpoon).
+  -- Lua utility library (dependency of harpoon, telescope).
   { src = 'https://github.com/nvim-lua/plenary.nvim' },
+
+  -- Telescope: extensible picker framework. fzf-lua stays the daily fuzzy
+  -- finder (and owns the <leader>f* maps); telescope carries no keymaps.
+  -- Pinned to the latest release tag; vim.version.range doesn't match the
+  -- v-prefixed tags telescope switched to after 0.1.8, so pin explicitly.
+  { src = 'https://github.com/nvim-telescope/telescope.nvim', version = 'v0.2.2' },
 
   -- Harpoon: pin a handful of files and jump straight to them.
   { src = 'https://github.com/ThePrimeagen/harpoon', version = 'harpoon2' },
@@ -70,6 +76,7 @@ require('plugins.treesitter-textobjects')
 require('plugins.treesitter-incremental')
 require('plugins.treesitter-context')
 require('plugins.fzf')
+require('plugins.telescope')
 require('plugins.snacks')
 require('plugins.statusline')
 require('plugins.surround')
