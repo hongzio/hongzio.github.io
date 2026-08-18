@@ -55,6 +55,9 @@ vim.pack.add({
 
   -- Markdown: in-buffer rendering (headings, code blocks, tables, LaTeX, ...).
   { src = 'https://github.com/OXY2DEV/markview.nvim' },
+
+  -- Virgil: notes pinned onto code lines, readable/writable by agents over RPC.
+  { src = 'https://github.com/hongzio/virgil.nvim' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
@@ -79,3 +82,4 @@ require('plugins.dial')
 require('plugins.flash')
 require('plugins.harpoon')
 require('plugins.markview')
+require('plugins.virgil')

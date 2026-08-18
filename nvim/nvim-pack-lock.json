@@ -79,6 +79,10 @@
     "vague.nvim": {
       "rev": "49fe06ad33d8847b931ba4279197bda222374cd1",
       "src": "https://github.com/vague2k/vague.nvim"
+    },
+    "virgil.nvim": {
+      "rev": "8788511e6757ee6388e60d5c6c59bfb5b5dfe2f3",
+      "src": "https://github.com/hongzio/virgil.nvim"
     }
   }
 }
