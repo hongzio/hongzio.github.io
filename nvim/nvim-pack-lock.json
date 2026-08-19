@@ -6,7 +6,7 @@
       "version": "1.0.0 - 2.0.0"
     },
     "copilot.lua": {
-      "rev": "760912b5992e1d6437378a9c7f2b0cb950966cf5",
+      "rev": "7e6723aabea044519462958ffcea68d7985c5ed0",
       "src": "https://github.com/zbirenbaum/copilot.lua"
     },
     "dial.nvim": {
@@ -14,15 +14,15 @@
       "src": "https://github.com/monaqa/dial.nvim"
     },
     "flash.nvim": {
-      "rev": "fcea7ff883235d9024dc41e638f164a450c14ca2",
+      "rev": "b6346946d10d07998efee029fb0f7a593806d0cd",
       "src": "https://github.com/folke/flash.nvim"
     },
     "fzf-lua": {
-      "rev": "39da6060d53659acf3ec118200bc48721b29b8fd",
+      "rev": "05e44d38de0a79c11fba5f7bf8138791b1dbdd1e",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
-      "rev": "eb60cc7b94c46005237fd34170d76f3a089a90aa",
+      "rev": "5be654f2232c10ddcad19c1607a67b6b4b78fc29",
       "src": "https://github.com/lewis6991/gitsigns.nvim"
     },
     "harpoon": {
@@ -35,11 +35,11 @@
       "src": "https://github.com/rebelot/kanagawa.nvim"
     },
     "markview.nvim": {
-      "rev": "2471f4097f8561a6880a0fe05ee0f21cbc82b374",
+      "rev": "5d9fc2aa6dd1c2fbdc7a68bc79b300e9967b21ff",
       "src": "https://github.com/OXY2DEV/markview.nvim"
     },
     "mini.nvim": {
-      "rev": "dc8a9918c3b1bc18a5fcd04d39b6d658074c0886",
+      "rev": "e58ad4b0c9e9376096b9704f98fc00d4c9448870",
       "src": "https://github.com/echasnovski/mini.nvim"
     },
     "monokai-pro.nvim": {
@@ -51,16 +51,16 @@
       "src": "https://github.com/jake-stewart/multicursor.nvim"
     },
     "nvim-treesitter": {
-      "rev": "4916d6592ede8c07973490d9322f187e07dfefac",
+      "rev": "074aa4422bf029908338e855d0c0f71470a971bb",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
     "nvim-treesitter-context": {
-      "rev": "b311b30818951d01f7b4bf650521b868b3fece16",
+      "rev": "f3061339b8eaf9fda873600bc425b8d2d8502533",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-context"
     },
     "nvim-treesitter-textobjects": {
-      "rev": "851e865342e5a4cb1ae23d31caf6e991e1c99f1e",
+      "rev": "898ee307df58f854d11cd7edd06472574d48014e",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
       "version": "'main'"
     },
@@ -82,11 +82,11 @@
       "version": "'v0.2.2'"
     },
     "vague.nvim": {
-      "rev": "49fe06ad33d8847b931ba4279197bda222374cd1",
+      "rev": "f9060fdaf7b20f68575d6f8214da6f1cf0c72825",
       "src": "https://github.com/vague2k/vague.nvim"
     },
     "virgil.nvim": {
-      "rev": "8788511e6757ee6388e60d5c6c59bfb5b5dfe2f3",
+      "rev": "801ff81467f93040bdc2a68a95741da8166f67cf",
       "src": "https://github.com/hongzio/virgil.nvim"
     }
   }
