@@ -86,7 +86,7 @@
       "src": "https://github.com/vague2k/vague.nvim"
     },
     "virgil.nvim": {
-      "rev": "801ff81467f93040bdc2a68a95741da8166f67cf",
+      "rev": "d91888de52ddf12a14bc7ff0e7dbbe8b3545a41a",
       "src": "https://github.com/hongzio/virgil.nvim"
     }
   }
