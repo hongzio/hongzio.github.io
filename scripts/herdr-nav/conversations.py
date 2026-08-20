@@ -3,8 +3,12 @@
 
 Lists Claude/Codex conversations, lets you pick one with fzf, and restores it:
   1. already active in an agent -> focus that pane
-  2. a space with the same root cwd exists -> new tab in that space
-  3. no matching space -> new space (+ tab) at that cwd
+  2. otherwise -> new tab in the workspace you are looking at, cwd'd to the
+     conversation's own directory
+
+Restores land in the current workspace on purpose: the picker is something you
+reach for while working somewhere, so the conversation should come to you rather
+than move you to a space chosen by its cwd (or spawn a new one).
 
 Subcommands:
   list             stream conversation rows (recency-desc) for fzf
@@ -35,7 +39,6 @@ HOME = os.path.expanduser("~")
 CLAUDE_PROJECTS = os.path.join(HOME, ".claude", "projects")
 CODEX_SESSIONS = os.path.join(HOME, ".codex", "sessions")
 CODEX_INDEX = os.path.join(HOME, ".codex", "session_index.jsonl")
-HERDR_SESSION_JSON = os.path.join(HOME, ".config", "herdr", "session.json")
 
 UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 LABEL_MAX = 72
@@ -380,43 +383,27 @@ def active_session_map() -> dict[str, str]:
     return result
 
 
-def space_cwd_map() -> dict[str, str]:
-    """realpath(root cwd) -> workspace_id, from herdr session.json identity_cwd."""
-    result = {}
+def current_workspace() -> str:
+    """The workspace a restore should land in ("" if it cannot be resolved).
+
+    CONV_ACTIVE_WORKSPACE is forwarded by the conv-open action, so it is the
+    workspace focused at keypress time — the authoritative answer. HERDR_WORKSPACE_ID
+    (the picker pane's own workspace) covers `conversations.py open` run by hand from
+    a normal pane. The `workspace list` lookup is the last resort for a picker started
+    without either, e.g. a plugin pane opened straight from the CLI.
+    """
+    for var in ("CONV_ACTIVE_WORKSPACE", "HERDR_WORKSPACE_ID"):
+        wid = (os.environ.get(var) or "").strip()
+        if wid:
+            return wid
     try:
-        with open(HERDR_SESSION_JSON, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, json.JSONDecodeError):
-        data = None
-    if data is not None:
-        for wid, cwd in _walk_identity_cwd(data):
-            if cwd:
-                result[os.path.realpath(os.path.expanduser(cwd))] = wid
-    if result:
-        return result
-    # fallback: group live panes by workspace (less reliable — pane cwd drifts)
-    try:
-        panes = herdr("pane", "list").get("result", {}).get("panes", [])
+        spaces = herdr("workspace", "list").get("result", {}).get("workspaces", [])
     except (RuntimeError, json.JSONDecodeError):
-        panes = []
-    for pane in panes:
-        cwd = pane.get("cwd")
-        if cwd:
-            result.setdefault(os.path.realpath(cwd), pane["workspace_id"])
-    return result
-
-
-def _walk_identity_cwd(obj) -> list[tuple[str, str]]:
-    out = []
-    if isinstance(obj, dict):
-        if "id" in obj and "identity_cwd" in obj:
-            out.append((obj["id"], obj.get("identity_cwd")))
-        for v in obj.values():
-            out += _walk_identity_cwd(v)
-    elif isinstance(obj, list):
-        for v in obj:
-            out += _walk_identity_cwd(v)
-    return out
+        return ""
+    for space in spaces:
+        if space.get("focused") and space.get("workspace_id"):
+            return space["workspace_id"]
+    return ""
 
 
 # ---------------------------------------------------------------------------
@@ -432,14 +419,17 @@ def resume_command(agent: str, session_id: str) -> str:
     raise ValueError(f"unknown agent: {agent}")
 
 
-def decide_action(conv: Conversation, active: dict[str, str], spaces: dict[str, str]) -> dict:
-    """Return {kind, ...} describing what to do. Pure — no side effects."""
+def decide_action(conv: Conversation, active: dict[str, str], workspace_id: str) -> dict:
+    """Return {kind, ...} describing what to do. Pure — no side effects.
+
+    A live conversation is focused where it already runs; everything else becomes
+    a tab in `workspace_id` (the workspace on screen), keeping the conversation's
+    own cwd so the resumed agent starts in its project.
+    """
     if conv.session_id in active:
         return {"kind": "focus", "pane_id": active[conv.session_id]}
-    target = os.path.realpath(os.path.expanduser(conv.cwd)) if conv.cwd else ""
-    if target and target in spaces:
-        return {"kind": "new_tab", "workspace_id": spaces[target], "cwd": target}
-    return {"kind": "new_space", "cwd": target or os.path.expanduser(conv.cwd)}
+    cwd = os.path.realpath(os.path.expanduser(conv.cwd)) if conv.cwd else ""
+    return {"kind": "new_tab", "workspace_id": workspace_id, "cwd": cwd}
 
 
 def perform_action(action: dict, conv: Conversation) -> None:
@@ -458,42 +448,6 @@ def perform_action(action: dict, conv: Conversation) -> None:
         tab = res["result"]["tab"]["tab_id"]
         _run_when_ready(pane, cmd)
         herdr("tab", "focus", tab)
-    elif kind == "new_space":
-        label = os.path.basename(action["cwd"].rstrip("/")) or action["cwd"]
-        res = herdr("workspace", "create", "--cwd", action["cwd"],
-                    "--label", label, "--no-focus")
-        result = res["result"]
-        pane = (result.get("root_pane") or {}).get("pane_id")
-        wid = (result.get("workspace") or {}).get("workspace_id") or result.get("workspace_id")
-        if not pane:  # fall back to the workspace's active tab pane
-            pane = _first_pane_of_workspace(wid)
-        _run_when_ready(pane, cmd)
-        # the space carries the cwd basename; name its tab after the conversation
-        if conv.name and wid:
-            tab = _first_tab_of_workspace(wid)
-            if tab:
-                try:
-                    herdr("tab", "rename", tab, conv.name)
-                except RuntimeError:
-                    pass
-        if wid:
-            herdr("workspace", "focus", wid)
-
-
-def _first_pane_of_workspace(wid: str) -> str | None:
-    try:
-        panes = herdr("pane", "list", "--workspace", wid).get("result", {}).get("panes", [])
-    except (RuntimeError, json.JSONDecodeError):
-        return None
-    return panes[0]["pane_id"] if panes else None
-
-
-def _first_tab_of_workspace(wid: str) -> str | None:
-    try:
-        tabs = herdr("tab", "list", "--workspace", wid).get("result", {}).get("tabs", [])
-    except (RuntimeError, json.JSONDecodeError):
-        return None
-    return tabs[0]["tab_id"] if tabs else None
 
 
 def _run_when_ready(pane_id: str | None, command: str, attempts: int = 20) -> None:
@@ -640,14 +594,16 @@ def cmd_open(token: str) -> int:
         else:
             codex_enrich(conv, codex_index())
         conv.name = tab_name(conv)  # recompute now that title/label are filled
-    action = decide_action(conv, active_session_map(), space_cwd_map())
+    action = decide_action(conv, active_session_map(), current_workspace())
     if action["kind"] == "focus":
         try:
             perform_action(action, conv)
         except RuntimeError as exc:
             return _fail(f"could not focus the agent: {exc}")
         return 0
-    # restore paths need a real directory and the agent's CLI on PATH
+    # restore paths need a target workspace, a real directory, and the agent's CLI
+    if not action.get("workspace_id"):
+        return _fail("cannot restore: could not resolve the current workspace")
     if not action.get("cwd"):
         return _fail("cannot restore: conversation has no working directory")
     if not os.path.isdir(action["cwd"]):

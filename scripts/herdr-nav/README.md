@@ -5,7 +5,7 @@ workspace 안을 "원하는 곳으로 점프"하는 herdr 네비게이션 유틸
 | 기능 | 하는 일 | 기본 키 |
 |---|---|---|
 | **favorites** | 탭을 `ctrl+1..9` 슬롯에 핀 고정 → 즉시 focus | `prefix+ctrl+f`(popup), `ctrl+1..9`(focus) |
-| **conversations** | 과거 Claude/Codex 대화를 골라 복원해서 이동 | `prefix+c` |
+| **conversations** | 과거 Claude/Codex 대화를 골라 **지금 보고 있는 workspace에** 탭으로 복원 | `prefix+c` |
 | **attention** | 손이 필요한(done/blocked) 에이전트들을 최신순으로 순회 focus | `prefix+ctrl+.` |
 | **tab-history** | 브라우저식 탭 back/forward + 최근 두 탭 토글 | `prefix+ctrl+o`/`prefix+ctrl+i`, `prefix+ctrl+;`(토글) |
 
@@ -29,6 +29,17 @@ action id는 기능별 prefix로 평평하게 구분한다(같은 플러그인 �
 | `nav.attention-focus` | 대기 에이전트 순회 | `nav.tab-back` / `-forward` / `-toggle` | 탭 back/forward/토글 |
 
 pane id(`fav-picker`, `conversations`)는 매니페스트 내부에서 action의 `--entrypoint`가 참조하는 이름일 뿐, 키바인딩에는 노출되지 않는다.
+
+두 오버레이는 **키를 누른 순간의 컨텍스트**를 `--env`로 넘겨받는다 — 포커스를 잡고 나면 자기 pane 것만 보이기 때문. favorites는 `FAV_ACTIVE_TAB`(`$HERDR_TAB_ID`), conversations는 `CONV_ACTIVE_WORKSPACE`(`$HERDR_WORKSPACE_ID`).
+
+**대화 복원 규칙** (`conversations`):
+
+| 상황 | 동작 |
+|---|---|
+| 이미 살아있는 에이전트 세션 | 그 pane으로 focus (이동) |
+| 그 외 전부 | **현재 workspace**에 새 탭 + `--resume`/`resume` 실행. 탭 cwd는 대화 자신의 디렉토리, 탭 이름은 대화 제목 |
+
+대화의 cwd는 탭의 작업 디렉토리만 정하고 workspace는 정하지 않는다. 피커는 "일하다가 부르는" 도구라, 복원된 대화가 내게 오는 게 맞지 내가 다른 space로 끌려가거나 새 space가 생기면 안 되기 때문.
 
 ## 상태 / 설정 파일
 

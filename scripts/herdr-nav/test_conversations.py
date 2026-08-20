@@ -105,28 +105,66 @@ class DecideAction(unittest.TestCase):
 
     def test_focus_when_active(self):
         conv = Conversation("claude", "sess1", "/p", 0.0, cwd=self.tmp)
-        action = picker.decide_action(conv, {"sess1": "w1:p3"}, {})
+        action = picker.decide_action(conv, {"sess1": "w1:p3"}, "w2")
         self.assertEqual(action, {"kind": "focus", "pane_id": "w1:p3"})
 
-    def test_new_tab_when_space_matches(self):
+    def test_new_tab_in_current_workspace(self):
         conv = Conversation("claude", "sess1", "/p", 0.0, cwd=self.tmp + "/")  # trailing slash
-        spaces = {os.path.realpath(self.tmp): "w2"}
-        action = picker.decide_action(conv, {}, spaces)
+        action = picker.decide_action(conv, {}, "w2")
         self.assertEqual(action["kind"], "new_tab")
         self.assertEqual(action["workspace_id"], "w2")
         self.assertEqual(action["cwd"], os.path.realpath(self.tmp))
 
-    def test_new_space_when_no_match(self):
+    def test_cwd_does_not_pick_the_workspace(self):
+        # the conversation's directory decides the tab's cwd, never its workspace
         conv = Conversation("codex", "sess1", "/p", 0.0, cwd=self.tmp)
-        action = picker.decide_action(conv, {}, {"/somewhere/else": "w9"})
-        self.assertEqual(action["kind"], "new_space")
+        action = picker.decide_action(conv, {}, "w9")
+        self.assertEqual(action["kind"], "new_tab")
+        self.assertEqual(action["workspace_id"], "w9")
         self.assertEqual(action["cwd"], os.path.realpath(self.tmp))
 
-    def test_active_takes_priority_over_space(self):
+    def test_active_takes_priority_over_current_workspace(self):
         conv = Conversation("claude", "sess1", "/p", 0.0, cwd=self.tmp)
-        spaces = {os.path.realpath(self.tmp): "w2"}
-        action = picker.decide_action(conv, {"sess1": "w1:p3"}, spaces)
+        action = picker.decide_action(conv, {"sess1": "w1:p3"}, "w2")
         self.assertEqual(action["kind"], "focus")
+
+
+class CurrentWorkspace(unittest.TestCase):
+    def setUp(self):
+        self._env = {k: os.environ.get(k) for k in ("CONV_ACTIVE_WORKSPACE", "HERDR_WORKSPACE_ID")}
+        self._herdr = picker.herdr
+        for k in self._env:
+            os.environ.pop(k, None)
+
+    def tearDown(self):
+        picker.herdr = self._herdr
+        for k, v in self._env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    def test_forwarded_workspace_wins(self):
+        os.environ["CONV_ACTIVE_WORKSPACE"] = "w3"
+        os.environ["HERDR_WORKSPACE_ID"] = "w1"
+        self.assertEqual(picker.current_workspace(), "w3")
+
+    def test_falls_back_to_pane_workspace(self):
+        os.environ["HERDR_WORKSPACE_ID"] = "w1"
+        self.assertEqual(picker.current_workspace(), "w1")
+
+    def test_falls_back_to_focused_workspace(self):
+        picker.herdr = lambda *a: {"result": {"workspaces": [
+            {"workspace_id": "w1", "focused": False},
+            {"workspace_id": "w5", "focused": True},
+        ]}}
+        self.assertEqual(picker.current_workspace(), "w5")
+
+    def test_empty_when_unresolvable(self):
+        def boom(*a):
+            raise RuntimeError("no server")
+        picker.herdr = boom
+        self.assertEqual(picker.current_workspace(), "")
 
 
 class ClaudeParsing(unittest.TestCase):
@@ -284,12 +322,12 @@ class FallbackPicker(unittest.TestCase):
 
 class OpenGuards(unittest.TestCase):
     def setUp(self):
-        self._active, self._space = picker.active_session_map, picker.space_cwd_map
+        self._active, self._space = picker.active_session_map, picker.current_workspace
         picker.active_session_map = lambda: {}
-        picker.space_cwd_map = lambda: {}
+        picker.current_workspace = lambda: "w1"
 
     def tearDown(self):
-        picker.active_session_map, picker.space_cwd_map = self._active, self._space
+        picker.active_session_map, picker.current_workspace = self._active, self._space
 
     def test_missing_cli_blocks_restore(self):
         # agent whose CLI is not on PATH -> restore refused, no herdr effects
@@ -298,6 +336,11 @@ class OpenGuards(unittest.TestCase):
 
     def test_missing_directory_blocks_restore(self):
         conv = Conversation("claude", "s", "/p", 0.0, cwd="/no/such/dir/xyz")
+        self.assertEqual(picker.cmd_open(picker.encode_token(conv)), 1)
+
+    def test_unresolvable_workspace_blocks_restore(self):
+        picker.current_workspace = lambda: ""
+        conv = Conversation("claude", "s", "/p", 0.0, cwd=tempfile.mkdtemp())
         self.assertEqual(picker.cmd_open(picker.encode_token(conv)), 1)
 
 

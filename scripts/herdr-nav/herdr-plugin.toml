@@ -131,23 +131,27 @@ command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/favorites.py\" focus 
 #   nav.conv-open         -> auto   (fzf if installed, else native curses)
 #   nav.conv-open-fzf     -> force fzf
 #   nav.conv-open-native  -> force native curses
+# CONV_ACTIVE_WORKSPACE carries HERDR_WORKSPACE_ID (the workspace focused at
+# trigger time) into the overlay, the same trick fav-open uses for the tab: a
+# restored conversation opens as a tab in the workspace you were looking at, and
+# the overlay cannot ask for that itself once it holds focus.
 [[actions]]
 id = "conv-open"
 title = "Conversations picker (auto)"
 contexts = ["workspace"]
-command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=auto"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=auto --env CONV_ACTIVE_WORKSPACE=\"$HERDR_WORKSPACE_ID\""]
 
 [[actions]]
 id = "conv-open-fzf"
 title = "Conversations picker (fzf)"
 contexts = ["workspace"]
-command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=fzf"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=fzf --env CONV_ACTIVE_WORKSPACE=\"$HERDR_WORKSPACE_ID\""]
 
 [[actions]]
 id = "conv-open-native"
 title = "Conversations picker (native)"
 contexts = ["workspace"]
-command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=native"]
+command = ["sh", "-lc", "exec \"$HERDR_BIN_PATH\" plugin pane open --plugin nav --entrypoint conversations --placement overlay --focus --env CONV_PICKER_MODE=native --env CONV_ACTIVE_WORKSPACE=\"$HERDR_WORKSPACE_ID\""]
 
 # --- attention ---
 # Cycle focus through the waiting agents. attention.py focus reads the log
