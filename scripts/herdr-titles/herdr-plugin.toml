@@ -54,3 +54,13 @@ id = "refresh"
 title = "Sidebar titles: refresh all"
 contexts = ["workspace"]
 command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" report-all"]
+
+# Toggle a 🔖 marker on the focused agent's sidebar row, to come back to it later.
+# Same key removes it, and the daemon retires it on its own once you have actually
+# come back (focus round trip) or started working in there again (working/blocked).
+# It writes the token itself so the marker lands before you look away.
+[[actions]]
+id = "bookmark"
+title = "Agent bookmark: mark this pane to come back to"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/titles.py\" bookmark"]

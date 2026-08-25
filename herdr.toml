@@ -218,11 +218,22 @@ description = "rename this agent"
 # tokens and tab name now. Useful right after a Codex /rename or a `herdr agent
 # rename` typed in a shell — neither fires a herdr event, so the sidebar/tab
 # otherwise wait for the daemon's next refresh tick (60s).
+# Moved off prefix+ctrl+u, which now marks unread — this is the rarer of the two.
 [[keys.command]]
-key = "prefix+ctrl+u"
+key = "prefix+ctrl+t"
 type = "plugin_action"
 command = "titles.refresh"
 description = "refresh sidebar task titles"
+
+# mark unread (titles plugin): prefix 🔖 onto this agent's sidebar $name to come back
+# to it later. Same key toggles it off; otherwise it clears itself once you have come
+# back (focus leaves the pane and returns) or start working in there again
+# (working/blocked — a finished turn, i.e. done, keeps the mark).
+[[keys.command]]
+key = "prefix+ctrl+u"
+type = "plugin_action"
+command = "titles.bookmark"
+description = "mark this agent unread (come back later)"
 
 [theme]
 name = "terminal"

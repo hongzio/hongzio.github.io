@@ -8,6 +8,7 @@
 | `$name` | herdr 에이전트 이름 (없으면 표시 안 함) | `agent list`에서 읽어 `--token name=…` |
 | 탭 이름 | `🤖 <task>`로 rename (기본 on) | `herdr tab rename <tab_id> <label>` |
 | rename UI | 현재 pane의 에이전트 이름을 바꾸는 팝업 (`titles.rename`) | `herdr agent rename` + 즉시 토큰 write |
+| 북마크 | `$name` 앞에 🔖 (`titles.bookmark`), 조건 충족 시 자동 해제 | state dir의 JSON 테이블 + `pane.focused` 구독 |
 | 트리거 | 소켓 이벤트 구독 (`pane.updated` push) + 60s 재조회 타이머 |
 
 ## `$name` — herdr 에이전트 이름 미러링
@@ -21,6 +22,33 @@
 이름이 없으면 토큰을 **clear**한다(placeholder 없음) — 사이드바 행에는 아무것도 안 나온다.
 
 `$name`은 `agent list`로만 읽을 수 있다. `pane.updated`가 실어주는 **PaneInfo에는 `name` 필드가 없기** 때문(AgentInfo에만 있다). 그래서 이름은 재조회 틱의 `agent list` 스냅샷에서 갱신되고, 틱 사이의 push 이벤트는 마지막 스냅샷의 이름을 재사용한다(빈 값으로 덮어쓰지 않는다).
+
+## 🔖 북마크 — "이건 이따 다시 보자"
+
+`titles.bookmark`(기본 `prefix+ctrl+u`, **u**nread)는 지금 보고 있는 agent의 `$name` 앞에 🔖를 붙인다. 같은 키를 다시 누르면 뗀다.
+
+**마커는 진짜 agent 이름에 못 들어간다.** herdr 이름은 `[a-z][a-z0-9_-]{0,31}`이라 이모지가 거부된다. 하지만 사이드바에 보이는 건 이 플러그인이 조립하는 `$name` **토큰**이고 토큰 값은 자유 문자열이라, 마커는 거기 붙는다. 이름이 없는 agent는 🔖만 단독으로 나온다 — 행을 눈에 띄게 만드는 게 목적이니 빈 값으로 두면 의미가 없다.
+
+자동 해제는 두 가지고, 둘 다 데몬이 처리한다:
+
+1. **status가 `working`/`blocked`로 바뀔 때** — 그 agent에서 실제로 다시 일을 시작했다는 뜻. `done`은 **일부러 제외**한다: 내부적으로 idle이라, 턴 하나 끝난 것으로 마커가 사라지면 안 된다.
+2. **포커스가 그 pane을 떠났다가 다시 돌아올 때** — `pane.focused` 구독이 이걸 본다(전역 구독이라 pane id가 필요 없다). 키를 누르는 순간엔 그 pane이 포커스 상태이므로 pane별로 2단계를 둔다: `armed`(아직 안 떠남) → `away`(떠남) → 복귀 시 삭제.
+
+액션 프로세스는 토큰을 **직접 write**한다(rename 팝업과 같은 이유). 마커는 눈을 돌리기 전에 화면에 떠 있어야 하는데, 눈을 돌리는 것이 바로 그 마커의 존재 이유다.
+
+북마크 테이블은 state dir의 `bookmarks-<instance>.json`이고, **액션이 추가하고 데몬이 회수**하므로 flock + `os.replace`로 원자적으로 쓴다. herdr 인스턴스 단위로 키를 잡는다 — pane id는 그 안에서만 의미가 있다. 재조회 틱이 스냅샷에 없는 pane의 북마크를 정리하므로 파일이 무한정 자라지 않는다.
+
+> **캐싱 주의**: 데몬의 signature 게이트는 "`$name`을 쓰는 건 나뿐"이라고 가정하는데, 북마크는 액션 프로세스도 쓴다. 그래서 마커가 붙거나 떨어질 때 해당 pane의 캐시된 signature를 **무효화**한다(`_invalidate`). 안 그러면 데몬이 못 본 사이에 붙었다 떨어진 마커의 signature가 원래와 같아서, 화면의 🔖가 영영 안 지워진다. `apply_pane`은 여전히 pane의 실제 토큰과 비교하므로 중복 write는 없다.
+
+> **이름 복원 주의**: 마커를 붙이거나 뗄 때 `$name`을 다시 쓰는데, 그 밑에 깔린 이름이 정확해야 한다. `PaneInfo`에는 `name` 필드가 없고 데몬 캐시는 (a) 재조회 틱이 아직 안 닿은 pane, (b) 리플레이된 agent-없는 `pane.updated`가 항목을 지워버린 pane 양쪽에서 비어 있다. 그래서 마커가 걸린 pane의 `$name`을 쓸 때는 `agent get`을 다시 읽는다. 안 그러면 이름 있는 agent 위에 🔖만 덮어쓴다(실측으로 두 번 밟았다).
+
+### 구독 리플레이 — 재시작 때 마크가 증발하던 이유
+
+`events.subscribe`는 **새 구독마다 백로그를 먼저 리플레이한다.** 실측: 새 구독자는 첫 9.2초 동안 `pane.focused` 89건을 ~100ms 간격으로 받고 그 뒤 50초간 0건, 반면 같은 창에서 오래 붙어 있던 데몬은 0건을 받는다. 즉 유한한 버스트고, 끝나면 스트림이 라이브가 된다.
+
+문제는 리플레이된 이벤트가 "사용자가 방금 한 일"처럼 보인다는 것이다. 데몬이 재시작할 때마다 리플레이된 포커스 이동과 리플레이된 agent-없는 `pane.updated`가 마크를 지웠다 — 실측으로 **재구독 1초 만에** 사라졌다.
+
+herdr에는 live-only 구독 플래그가 없으므로(`EventsSubscribeParams`는 `subscriptions` 하나뿐), **스트림이 처음 조용해질 때까지 북마크 규칙을 얼린다**(`REPLAY_QUIET = 1.0`). 얼어 있는 건 북마크 규칙뿐이고 title 갱신은 그대로 돈다. `agent list`를 읽는 경로(부팅 backfill, 재조회 틱)는 스트림이 아니라 권위 있는 상태를 보므로 `force=True`로 얼음을 통과한다. 세션이 진짜 바쁘면 조용해질 틈이 없을 수 있어서, 재조회 틱이 무조건 해동시키는 백스톱 역할을 한다.
 
 ## title 소스 (pane별, 우선순위)
 
@@ -58,7 +86,19 @@ description = "rename this agent"
 
 > herdr는 팝업을 **한 번에 하나만** 허용한다. 다른 팝업이 떠 있으면 이 액션은 아무 일도 안 하고 `herdr plugin log list --plugin titles`에 `popup already open`을 남긴다.
 
-### 3) 플러그인 등록
+### 3) 북마크 — 키 (`prefix+ctrl+u`)
+
+```toml
+[[keys.command]]
+key = "prefix+ctrl+u"
+type = "plugin_action"
+command = "titles.bookmark"
+description = "mark this agent unread (come back later)"
+```
+
+토글이다. agent가 없는 pane에서 누르면 "No agent in this pane." 토스트가 뜬다 — 팝업이 없는 액션이라 아무 반응도 없으면 키가 고장난 것처럼 보인다. 해제 규칙은 [🔖 북마크](#-북마크--이건-이따-다시-보자) 참고.
+
+### 4) 플러그인 등록
 
 ```sh
 cd scripts/herdr-titles
@@ -92,7 +132,7 @@ rename = false   # 기본 true. false면 토큰만 표시하고 탭 이름은 �
 1. **Codex `/rename`** — Claude와 달리 terminal title(OSC)을 안 바꾸고 공유 `session_index.jsonl`의 `thread_name`만 갱신한다. 그래서 변경 signature에 resolved title을 포함시키고 그 캐시 키에 `session_index.jsonl` mtime을 넣어 다음 틱에 잡는다. (이건 **task 이름**이지 agent 이름이 아니다.)
 2. **`herdr agent rename`** — 이름 변경에 대응하는 herdr 이벤트가 없다(실측: rename 후 `pane.updated` 0건). 팝업 경로는 자기가 토큰을 쓰므로 즉시 반영되고, 셸에서 직접 친 rename만 틱을 기다린다.
 
-틱은 `agent list` 스냅샷 하나로 두 가지를 동시에 처리한다(이름 + transcript 재조회). 즉시 전체 반영은 `titles.refresh`(`prefix+ctrl+u`).
+틱은 `agent list` 스냅샷 하나로 두 가지를 동시에 처리한다(이름 + transcript 재조회). 즉시 전체 반영은 `titles.refresh`(`prefix+ctrl+t`).
 
 또 herdr가 세션을 pane에 못 붙인 Codex pane(=`agent_session` 없음)은 **cwd로 rename된 rollout을 매칭**해 resolve하므로, 바인딩 안 된 세션의 `/rename`도 표시된다.
 
@@ -102,9 +142,10 @@ titles (Agent Titles)
   events:  pane.agent_detected        ┴─ titles.py ensure   # 데몬만 idempotent하게 띄움
   actions: titles.refresh              → titles.py report-all   # 즉시 전체 재계산(키용)
            titles.rename               → titles.py rename-open  # 팝업 열기(대상 pane 결정)
+           titles.bookmark             → titles.py bookmark     # 🔖 토글 + 즉시 토큰 write
   panes:   rename-agent (popup)        → titles.py rename-ui    # 이름 입력 UI
 
-  daemon:  events.subscribe(pane.updated / created / closed / exited)  # push
+  daemon:  events.subscribe(pane.updated / created / closed / exited / focused)  # push
            + 60s agent list 재조회 타이머
 ```
 
@@ -118,8 +159,8 @@ titles (Agent Titles)
 
 ```
 herdr-titles/
-  herdr-plugin.toml   # startup 1, events 1 (→ensure), panes 1 (popup), actions 2
-  titles.py           # ensure / watch / report / report-all / rename-open / rename-ui
+  herdr-plugin.toml   # startup 1, events 1 (→ensure), panes 1 (popup), actions 3
+  titles.py           # ensure / watch / report / report-all / rename-open / rename-ui / bookmark
   test_titles.py
   README.md
 ```
@@ -134,7 +175,7 @@ herdr-titles/
 python3 -m unittest test_titles
 ```
 
-순수 파서(title 추출·shell-title 판정·이벤트 pane 추출·pane별 title 선택·이름 검증·대상 pane 결정·herdr 에러 메시지 추출)만 테스트한다. herdr CLI/transcript 파일 접근은 얇은 래퍼로 격리.
+순수 파서(title 추출·shell-title 판정·이벤트 pane 추출·pane별 title 선택·이름 검증·대상 pane 결정·herdr 에러 메시지 추출·북마크 상태 전이)만 테스트한다. herdr CLI/transcript 파일 접근은 얇은 래퍼로 격리.
 
 ## Caveat
 
@@ -143,3 +184,5 @@ python3 -m unittest test_titles
 - macOS 전용(`platforms = ["macos"]`).
 - 세션 id 매핑은 herdr가 pane에 붙여주는 `agent_session.value`(claude jsonl stem / codex rollout uuid)를 그대로 쓴다.
 - pane metadata 토큰 write는 `pane.updated`를 **발생시키지 않는다**(실측: revision만 오르고 이벤트 0건). 데몬이 자기 write에 반응할 일 자체가 없다.
+- 북마크 해제 규칙 중 **status 쪽만 60s 틱 fallback이 있다**(재조회가 `agent list`의 `agent_status`를 다시 본다). 포커스 왕복 규칙은 순수 push라, 이벤트 스트림이 끊긴 동안 오간 포커스는 재구독 후 반영되지 않는다. 마커가 하나 남는 정도라 토글 키로 떼면 된다.
+- **herdr 서버를 재시작해도 마크는 유지된다.** pane id는 `session.json`의 `public_pane_numbers`(내부 pane 번호 → 공개 번호 매핑, Crockford base32로 인코딩)가 영속화하므로 `w1:pA`는 재시작 후에도 `w1:pA`다. 북마크 파일은 소켓 경로로 키를 잡는데 그 경로는 안 바뀐다. 복원되지 않은 pane의 마크는 재조회 틱이 정리한다.

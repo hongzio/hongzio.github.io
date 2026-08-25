@@ -72,6 +72,127 @@ class TestNameToken(unittest.TestCase):
         self.assertEqual(titles.name_token(None), "")
         self.assertEqual(titles.name_token("   "), "")
 
+    def test_bookmark_prefixes_the_name(self):
+        self.assertEqual(titles.name_token("backend", True),
+                         titles.BOOKMARK_MARK + " backend")
+
+    def test_bookmark_alone_when_unnamed(self):
+        # the row has to become findable, so an unnamed agent still shows the mark
+        self.assertEqual(titles.name_token("", True), titles.BOOKMARK_MARK)
+
+
+class TestNextMarks(unittest.TestCase):
+    def test_armed_survives_focus_on_its_own_pane(self):
+        # the pane is focused at the instant the key is pressed
+        marks = {"w1:p1": titles.PHASE_ARMED}
+        self.assertEqual(titles.next_marks(marks, "w1:p1"), marks)
+
+    def test_focus_elsewhere_arms_the_return_trip(self):
+        marks = {"w1:p1": titles.PHASE_ARMED}
+        self.assertEqual(titles.next_marks(marks, "w1:p2"),
+                         {"w1:p1": titles.PHASE_AWAY})
+
+    def test_returning_clears(self):
+        marks = {"w1:p1": titles.PHASE_AWAY}
+        self.assertEqual(titles.next_marks(marks, "w1:p1"), {})
+
+    def test_away_stays_away_while_focus_roams(self):
+        marks = {"w1:p1": titles.PHASE_AWAY}
+        self.assertEqual(titles.next_marks(marks, "w1:p3"), marks)
+
+    def test_marks_are_independent(self):
+        marks = {"w1:p1": titles.PHASE_AWAY, "w1:p2": titles.PHASE_ARMED}
+        self.assertEqual(titles.next_marks(marks, "w1:p1"),
+                         {"w1:p2": titles.PHASE_AWAY})
+
+    def test_full_round_trip(self):
+        marks = {"w1:p1": titles.PHASE_ARMED}
+        marks = titles.next_marks(marks, "w1:p1")   # the keypress itself
+        marks = titles.next_marks(marks, "w1:p9")   # look away
+        self.assertEqual(marks, {"w1:p1": titles.PHASE_AWAY})
+        self.assertEqual(titles.next_marks(marks, "w1:p1"), {})
+
+
+class TestMarkClearsOnStatus(unittest.TestCase):
+    def test_working_and_blocked_clear(self):
+        self.assertTrue(titles.mark_clears_on_status("working"))
+        self.assertTrue(titles.mark_clears_on_status("blocked"))
+
+    def test_done_keeps_the_mark(self):
+        # done is idle underneath, so a finished turn is not "you are back in here"
+        self.assertFalse(titles.mark_clears_on_status("done"))
+
+    def test_idle_and_unknown_keep_the_mark(self):
+        self.assertFalse(titles.mark_clears_on_status("idle"))
+        self.assertFalse(titles.mark_clears_on_status("unknown"))
+        self.assertFalse(titles.mark_clears_on_status(""))
+        self.assertFalse(titles.mark_clears_on_status(None))
+
+
+class TestRefreshAllPrune(unittest.TestCase):
+    """_refresh_all drops bookmarks for panes the snapshot no longer lists."""
+
+    def _state(self, marks):
+        return {"last": {}, "panes": {}, "names": {}, "path_cache": {},
+                "sess_cache": {}, "marks": dict(marks), "marks_stamp": 0}
+
+    def test_empty_snapshot_keeps_bookmarks(self):
+        # agent_list() returns [] for a failed CLI call as well as for "no agents",
+        # and this is the one prune where the difference destroys user state: the
+        # cache drops heal on the next event, a wiped bookmark does not.
+        state = self._state({"w1:p1": titles.PHASE_ARMED})
+        with mock.patch.object(titles, "agent_list", return_value=[]), \
+             mock.patch.object(titles, "_retire_marks") as retire:
+            titles._refresh_all(state, False)
+        retire.assert_not_called()
+
+    def test_live_snapshot_prunes_absent_panes(self):
+        state = self._state({"w1:p1": titles.PHASE_ARMED,
+                             "w1:gone": titles.PHASE_AWAY})
+        with mock.patch.object(titles, "agent_list",
+                               return_value=[{"pane_id": "w1:p1", "name": "a"}]), \
+             mock.patch.object(titles, "_refresh_pane"), \
+             mock.patch.object(titles, "_retire_marks") as retire:
+            titles._refresh_all(state, False)
+        retire.assert_called_once()
+        self.assertEqual(retire.call_args[0][0], {"w1:gone"})
+
+
+class TestMarksFrozen(unittest.TestCase):
+    """While the subscribe-time replay drains, replayed events must not retire marks."""
+
+    def _state(self, frozen):
+        return {"last": {}, "marks": {"w1:p1": titles.PHASE_ARMED},
+                "marks_stamp": 0, "marks_frozen": frozen}
+
+    def test_frozen_blocks_event_driven_retire(self):
+        state = self._state(True)
+        with mock.patch.object(titles, "update_bookmarks") as write:
+            self.assertEqual(titles._retire_marks({"w1:p1"}, state), set())
+        write.assert_not_called()
+        self.assertIn("w1:p1", state["marks"])
+
+    def test_frozen_blocks_focus_transitions(self):
+        state = self._state(True)
+        with mock.patch.object(titles, "update_bookmarks") as write:
+            self.assertEqual(titles._focus_marks("w1:p9", state), set())
+        write.assert_not_called()
+        self.assertEqual(state["marks"], {"w1:p1": titles.PHASE_ARMED})
+
+    def test_force_overrides_the_freeze(self):
+        # the `agent list` paths read authoritative state, not the replayed stream
+        state = self._state(True)
+        with mock.patch.object(titles, "update_bookmarks", return_value={}), \
+             mock.patch.object(titles, "_stamp_marks"):
+            self.assertEqual(titles._retire_marks({"w1:p1"}, state, force=True),
+                             {"w1:p1"})
+
+    def test_thawed_retires_normally(self):
+        state = self._state(False)
+        with mock.patch.object(titles, "update_bookmarks", return_value={}), \
+             mock.patch.object(titles, "_stamp_marks"):
+            self.assertEqual(titles._retire_marks({"w1:p1"}, state), {"w1:p1"})
+
 
 class TestContextPane(unittest.TestCase):
     def test_focused_pane_id(self):

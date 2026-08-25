@@ -57,6 +57,15 @@ writes its own token, so it never waits for a tick.
 
 The [[events]] hooks just `ensure` the daemon is up (idempotent, pidfile-guarded).
 
+`titles.bookmark` prefixes 🔖 onto one agent's $name as a "come back to this" marker.
+The marker cannot go in the herdr agent name (that is [a-z][a-z0-9_-]{0,31}, so an
+emoji is rejected), but $name is a token this plugin composes, so it goes there. It
+retires itself two ways, both driven by the daemon: the agent going working/blocked
+(you are back in it for real — `done` does not count, being idle underneath), or
+focus leaving the pane and later returning, which is what pane.focused is subscribed
+for. The bookmark table is a small JSON file under the state dir, written under a
+lock because the action process adds and the daemon retires.
+
 The parse/derive helpers are pure (no I/O) so they can be unit-tested; the herdr
 CLI, its event socket, and the agent transcript files are the only external
 dependencies and are reached through thin wrappers.
@@ -68,6 +77,7 @@ Subcommands:
   report-all   update every agent pane now (backfill / the titles.refresh action)
   rename-open  resolve the target agent pane and open the rename popup (the action)
   rename-ui    the rename popup itself (runs inside the plugin popup pane)
+  bookmark     toggle the 🔖 marker on the focused agent pane (the action)
 """
 from __future__ import annotations
 
@@ -93,6 +103,19 @@ TOKEN_NAME = "name"    # sidebar row token -> $name (the herdr agent name)
 TITLE_MAX = 60         # cap so the reported token stays small; herdr re-truncates
 TAB_LABEL_MAX = 24     # tab bar is narrow, so tab labels get a tighter cap
 AGENT_TAB_PREFIX = "🤖 "  # marks agent tabs in the tab bar; cap applies to the label only
+
+# "come back to this one" marker, prefixed onto $name by the titles.bookmark action.
+# It cannot live in the herdr agent name itself (that is [a-z][a-z0-9_-]{0,31}, so an
+# emoji is rejected) — but $name is a token we compose, and token values are free-form.
+BOOKMARK_MARK = "🔖"
+# A bookmark is armed while its pane still holds focus (you just pressed the key), and
+# goes away the moment focus lands anywhere else. Coming back to an away bookmark is
+# what clears it — hence two phases rather than a plain set.
+PHASE_ARMED = "armed"
+PHASE_AWAY = "away"
+# Statuses that mean "you are working in here again", which retires the marker. `done`
+# is deliberately absent: it is idle underneath, so a bookmark outlives a finished turn.
+BOOKMARK_CLEAR_STATUSES = ("working", "blocked")
 
 # Harness-injected "user" records that are not a real prompt (slash-command
 # caveats, reminders, memory blocks) — skipped when picking a fallback title.
@@ -164,12 +187,41 @@ def is_valid_agent_name(name: str) -> bool:
     return bool(_AGENT_NAME_RE.match(name or ""))
 
 
-def name_token(name: str) -> str:
+def name_token(name: str, marked: bool = False) -> str:
     """The $name token value: the herdr agent name, or "" when it has none.
 
     Empty clears the token, so an unnamed agent shows nothing on its sidebar row
-    rather than a placeholder."""
-    return " ".join(str(name or "").split())
+    rather than a placeholder. A bookmarked pane gets the marker prefixed — and a
+    bookmarked *unnamed* agent shows the bare marker, since the whole point is that
+    the row becomes findable.
+    """
+    name = " ".join(str(name or "").split())
+    if not marked:
+        return name
+    return BOOKMARK_MARK + " " + name if name else BOOKMARK_MARK
+
+
+def next_marks(marks: dict, focused_pane: str) -> dict:
+    """The bookmark table after focus lands on `focused_pane`.
+
+    Focus leaving a pane arms the return trip; focus coming back to a pane that was
+    already left retires the bookmark. The pane is focused at the instant the key is
+    pressed, so a fresh bookmark has to survive that first event — which is exactly
+    what the armed phase buys.
+    """
+    out = {}
+    for pid, phase in marks.items():
+        if pid != focused_pane:
+            out[pid] = PHASE_AWAY          # focus is elsewhere: the return trip is on
+        elif phase != PHASE_AWAY:
+            out[pid] = phase               # never left, so this is not a return
+        # else: came back after leaving -> drop it
+    return out
+
+
+def mark_clears_on_status(status: str) -> bool:
+    """Whether an agent status retires a bookmark (you started working in there)."""
+    return str(status or "") in BOOKMARK_CLEAR_STATUSES
 
 
 def parse_tab_rename(text: str) -> bool:
@@ -608,6 +660,18 @@ def report_token(pane_id: str, name: str, value: str) -> None:
         pass
 
 
+def notify(title: str, body: str = "") -> None:
+    """Best-effort herdr toast. An action with no popup has no other way to answer a
+    keypress, and a key that silently does nothing reads as a broken binding."""
+    args = [herdr_bin(), "notification", "show", title]
+    if body:
+        args += ["--body", body]
+    try:
+        subprocess.run(args, capture_output=True, text=True)
+    except OSError:
+        pass
+
+
 def tab_rename_enabled() -> bool:
     """Read [tab] rename from the plugin config dir; default on if absent/unreadable."""
     d = os.environ.get("HERDR_PLUGIN_CONFIG_DIR")
@@ -636,13 +700,14 @@ def set_tab_label(tab_id: str, label: str) -> None:
         pass
 
 
-def apply_pane(pane: dict, rename_tabs: bool, title: str = None, name: str = None) -> None:
+def apply_pane(pane: dict, rename_tabs: bool, title: str = None, name: str = None,
+               marked: bool = None) -> None:
     """Report an agent pane's $task + $name, and (optionally) rename its tab.
 
     Idempotent: each token is only rewritten when its value actually changes, and
     the tab only when its label differs — so re-applying every tick is cheap.
-    `title` is the precomputed $task and `name` the agent's herdr name (the daemon
-    already has both); None recomputes/reads them from `pane`.
+    `title` is the precomputed $task, `name` the agent's herdr name and `marked` its
+    bookmark state (the daemon already has all three); None recomputes/reads each.
     """
     pane_id = pane.get("pane_id")
     if not pane_id:
@@ -652,9 +717,11 @@ def apply_pane(pane: dict, rename_tabs: bool, title: str = None, name: str = Non
         title = title_for_pane(pane)
     if name is None:
         name = pane.get("name") or ""
+    if marked is None:
+        marked = is_marked(pane_id)
     if title != (tokens.get(TOKEN_TASK) or ""):
         report_token(pane_id, TOKEN_TASK, title)
-    value = name_token(name)
+    value = name_token(name, marked)
     if value != (tokens.get(TOKEN_NAME) or ""):
         report_token(pane_id, TOKEN_NAME, value)
     if rename_tabs and title and pane.get("tab_id"):
@@ -673,11 +740,17 @@ def state_dir() -> str:
     return d
 
 
+def _instance_key() -> str:
+    """Filename key for per-herdr-instance state, taken from the socket this hook
+    talks to. Both the daemon pidfile and the bookmark table are scoped by it —
+    pane ids only mean anything inside one instance."""
+    sp = os.environ.get("HERDR_SOCKET_PATH") or "default"
+    return re.sub(r"[^A-Za-z0-9]", "_", sp)[-40:]
+
+
 def pidfile_path() -> str:
     # one daemon per herdr instance: key the pidfile by the socket this hook talks to.
-    sp = os.environ.get("HERDR_SOCKET_PATH") or "default"
-    key = re.sub(r"[^A-Za-z0-9]", "_", sp)[-40:]
-    return os.path.join(state_dir(), "watch-%s.pid" % key)
+    return os.path.join(state_dir(), "watch-%s.pid" % _instance_key())
 
 
 def _pid_alive(pid: int) -> bool:
@@ -708,16 +781,84 @@ def _log(msg: str) -> None:
         pass
 
 
+# ---------------------------------------------------------------------------
+# bookmark store (shared by the titles.bookmark action and the watch daemon)
+# ---------------------------------------------------------------------------
+
+
+def bookmarks_path() -> str:
+    return os.path.join(state_dir(), "bookmarks-%s.json" % _instance_key())
+
+
+def load_bookmarks() -> dict:
+    """pane_id -> phase. A missing or corrupt file reads as "nothing bookmarked",
+    which is the right failure mode for a purely decorative marker."""
+    try:
+        with open(bookmarks_path(), encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items()
+            if isinstance(k, str) and isinstance(v, str)}
+
+
+def update_bookmarks(fn) -> dict:
+    """Read-modify-write the bookmark table under a lock; returns the new table.
+
+    Two processes write it — the action adds a bookmark, the daemon retires one —
+    and neither sees the other's events, so the round trip has to be atomic. The
+    rename is what makes a concurrent reader see one table or the other, never a
+    half-written one.
+    """
+    os.makedirs(state_dir(), exist_ok=True)
+    path = bookmarks_path()
+    lockfd = os.open(path + ".lock", os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(lockfd, fcntl.LOCK_EX)
+        marks = fn(load_bookmarks())
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(marks, fh)
+        os.replace(tmp, path)
+        return marks
+    finally:
+        try:
+            fcntl.flock(lockfd, fcntl.LOCK_UN)
+        finally:
+            os.close(lockfd)
+
+
+def is_marked(pane_id: str) -> bool:
+    """One-shot bookmark lookup, for the paths that have no daemon state to consult."""
+    return bool(pane_id) and pane_id in load_bookmarks()
+
+
 # subscriptions the watch loop needs: pane.updated carries every terminal-title /
 # status change (full pane inlined); created/closed/exited keep the set in sync.
 # agent_status_changed is subsumed by pane.updated, and its subscription would
-# demand a per-pane id anyway, so it is left out.
+# demand a per-pane id anyway, so it is left out. pane.focused is the bookmark
+# clock: it needs no pane id (required is just `type`), and it is the only signal
+# for "you left this agent and came back".
 WATCH_SUBSCRIPTIONS = [
     {"type": "pane.updated"},
     {"type": "pane.created"},
     {"type": "pane.closed"},
     {"type": "pane.exited"},
+    {"type": "pane.focused"},
 ]
+
+# A fresh events.subscribe replays its backlog before the stream goes live —
+# empirically a ~9s burst at a steady ~100ms cadence, then silence (measured: 89
+# pane.focused events in the first 9.2s, 0 in the next 50). Those replayed events are
+# history, not something the user just did, so letting them drive bookmarks wiped
+# every mark on every daemon restart (measured: gone 1s after resubscribe, via a
+# replayed focus and a replayed pre-agent pane.updated). herdr has no live-only
+# subscribe flag, so bookmarks stay frozen until the stream first goes quiet. Only
+# the bookmark rules freeze; titles keep updating throughout, and the authoritative
+# `agent list` paths (backfill and the refresh tick) still retire marks for real.
+REPLAY_QUIET = 1.0
 
 # How long the daemon may sleep between authoritative `agent list` re-derives. It
 # is a pure fallback for the two changes that emit no event — a Codex /rename
@@ -775,6 +916,21 @@ def _refresh_pane(pane: dict, state: dict, rename_tabs: bool, name: str = None) 
         name = state["names"].get(pid, "")
     else:
         state["names"][pid] = name
+    # working/blocked means you are genuinely back in this agent, which retires the
+    # bookmark without waiting for the focus round trip. Every observation of a pane
+    # comes through here carrying a fresh agent_status, so this is the one gate.
+    was_marked = pid in (state.get("marks") or {})
+    if mark_clears_on_status(pane.get("agent_status")):
+        _retire_marks({pid}, state)
+    marked = pid in (state.get("marks") or {})
+    if (marked or was_marked) and not name:
+        # The marker is composed onto the agent name, so any write of $name while a
+        # marker is on or coming off needs the real name. PaneInfo carries none, and
+        # the cache is empty both for a pane no tick has reached and for one whose
+        # entry a replayed agent-less pane.updated dropped — either way the cheap
+        # path would render a bare marker over a named agent.
+        name = (agent_info(pid) or {}).get("name") or ""
+        state["names"][pid] = name
     agent, sid = resolve_session(pane)
     # a Codex /rename lives in the shared index, not the transcript, so its mtime is
     # part of the title's cache key.
@@ -782,16 +938,126 @@ def _refresh_pane(pane: dict, state: dict, rename_tabs: bool, name: str = None) 
     meta = (mtime, codex_index_mtime()) if agent == "codex" else (mtime,)
     title = title_for_pane(pane, _cached_session_titles(agent, sid, meta, state))
     tt = pane.get("terminal_title_stripped") or ""
-    sig = (title, tt, name)
+    sig = (title, tt, name, marked)
     if sig != state["last"].get(pid):
         state["last"][pid] = sig
-        apply_pane(pane, rename_tabs, title=title, name=name)
+        apply_pane(pane, rename_tabs, title=title, name=name, marked=marked)
     state["panes"][pid] = pane
 
 
 def _forget_pane(pid: str, state: dict) -> None:
     for book in ("last", "panes", "names"):
         state[book].pop(pid, None)
+    _retire_marks({pid}, state)   # the pane is gone; do not leak its bookmark
+
+
+def _dlog(msg: str) -> None:
+    """Debug-only log line (TITLES_DEBUG=1). Bookmark transitions are driven by three
+    separate signals, so tracing which one moved is the only way to read a misfire."""
+    if os.environ.get("TITLES_DEBUG") == "1":
+        _log(msg)
+
+
+def _stamp_marks(state: dict) -> None:
+    """Remember the bookmark file's mtime so sync_marks can skip an unchanged parse."""
+    try:
+        state["marks_stamp"] = os.stat(bookmarks_path()).st_mtime_ns
+    except OSError:
+        state["marks_stamp"] = 0
+
+
+def sync_marks(state: dict) -> set:
+    """Reload the bookmark table if it changed on disk; return the panes that flipped.
+
+    The titles.bookmark action writes that file and herdr emits no event for it, so
+    the daemon watches its mtime instead — one stat per event batch, and a parse only
+    when a bookmark actually moved.
+    """
+    try:
+        stamp = os.stat(bookmarks_path()).st_mtime_ns
+    except OSError:
+        stamp = 0
+    if stamp == state.get("marks_stamp"):
+        return set()
+    state["marks_stamp"] = stamp
+    before = set(state.get("marks") or {})
+    state["marks"] = load_bookmarks()
+    flipped = before ^ set(state["marks"])
+    if flipped:
+        _dlog("mark sync %s -> %s" % (sorted(flipped), state["marks"]))
+    return flipped
+
+
+def _invalidate(pids: set, state: dict) -> None:
+    """Forget the cached token signature for these panes, forcing the next refresh to
+    re-apply rather than trust its fast path.
+
+    The signature gate assumes the daemon is the only writer of $name — and for a
+    bookmark it is not: the action writes the marker itself so it lands immediately.
+    Without this, a bookmark set and retired between two daemon observations leaves a
+    signature identical to before, and the marker is never wiped off the pane.
+    apply_pane still diffs against the pane's real tokens, so nothing is rewritten
+    twice; this only gives it the chance to look.
+    """
+    for pid in pids:
+        state["last"].pop(pid, None)
+
+
+def _retire_marks(pids: set, state: dict, force: bool = False) -> set:
+    """Drop the given panes' bookmarks; returns the ones that were actually set.
+
+    Refuses while the event replay is draining unless `force`: a replayed event says
+    what happened at some point in the past, and retiring on that throws away a mark
+    the user set in the present. `force` is for the `agent list` paths, which read
+    authoritative state rather than the stream.
+    """
+    if state.get("marks_frozen") and not force:
+        return set()
+    gone = {p for p in pids if p in state.get("marks", {})}
+    if not gone:
+        return set()
+    state["marks"] = update_bookmarks(
+        lambda m: {k: v for k, v in m.items() if k not in gone})
+    _stamp_marks(state)
+    _invalidate(gone, state)
+    _dlog("mark retire %s -> %s" % (sorted(gone), state["marks"]))
+    return gone
+
+
+def _focus_marks(pane_id: str, state: dict) -> set:
+    """Advance every bookmark for a focus landing on `pane_id`; return what flipped.
+
+    Skips the write when nothing would move, which is the normal case — most focus
+    changes happen with no bookmarks outstanding at all. Ignored entirely while the
+    replay drains: a replayed focus is somewhere the user has already been.
+    """
+    if state.get("marks_frozen"):
+        return set()
+    marks = state.get("marks") or {}
+    if next_marks(marks, pane_id) == marks:
+        return set()
+    before = set(marks)
+    state["marks"] = update_bookmarks(lambda m: next_marks(m, pane_id))
+    _stamp_marks(state)
+    _dlog("mark focus %s -> %s" % (pane_id, state["marks"]))
+    return before ^ set(state["marks"])
+
+
+def _redraw_marks(pids: set, state: dict, rename_tabs: bool) -> None:
+    """Rewrite $name for panes whose bookmark just appeared or vanished.
+
+    Goes back through _refresh_pane so the marker rides the same signature gate as
+    every other token change. Deliberately re-reads `agent get` rather than reusing
+    the cached PaneInfo: the marker is composed onto the agent name, PaneInfo has no
+    `name` field, and the daemon's cached name is empty until the first refresh tick
+    covers the pane — so the cheap path would write a bare marker over a named agent.
+    A bookmark flip is rare enough to afford the round trip.
+    """
+    _invalidate(pids, state)
+    for pid in pids:
+        agent = agent_info(pid)
+        if agent:
+            _refresh_pane(agent, state, rename_tabs, name=agent.get("name") or "")
 
 
 def _refresh_all(state: dict, rename_tabs: bool) -> None:
@@ -810,6 +1076,18 @@ def _refresh_all(state: dict, rename_tabs: bool) -> None:
         _refresh_pane(agent, state, rename_tabs, name=agent.get("name") or "")
     for pid in [p for p in state["panes"] if p not in live]:
         _forget_pane(pid, state)
+    # Bookmarks for panes this snapshot no longer knows about — a pane closed while
+    # the daemon was down, or left over from a previous session — have nothing left
+    # to decorate, so drop them rather than let the file grow forever.
+    #
+    # Only ever on a non-empty snapshot. agent_list() returns [] both for "no agents"
+    # and for a failed CLI call, and this prune is the one place that difference would
+    # destroy user state: the cache drops above heal on the next event, a wiped
+    # bookmark does not. Marks for panes that are genuinely gone are retired by
+    # _forget_pane when the pane closes anyway.
+    if live:
+        _retire_marks({p for p in (state.get("marks") or {}) if p not in live},
+                      state, force=True)   # authoritative snapshot, not the stream
 
 
 def cmd_watch() -> int:
@@ -831,9 +1109,13 @@ def cmd_watch() -> int:
     rename_tabs = tab_rename_enabled()
     _log("watch start pid=%d push mode interval=%.1f rename_tabs=%s"
          % (os.getpid(), interval, rename_tabs))
-    # pane_id -> signature / last full pane / last known agent name; session_id caches.
+    # pane_id -> signature / last full pane / last known agent name; session_id caches;
+    # the bookmark table plus the file mtime that tells us when to re-read it.
     state = {"last": {}, "panes": {}, "names": {},
-             "path_cache": {}, "sess_cache": {}}
+             "path_cache": {}, "sess_cache": {},
+             "marks": load_bookmarks(), "marks_stamp": None,
+             "marks_frozen": False}
+    _stamp_marks(state)
 
     while True:
         if sockpath and not os.path.exists(sockpath):
@@ -846,6 +1128,7 @@ def cmd_watch() -> int:
             continue
         _log("subscribed")
         try:
+            sync_marks(state)
             _refresh_all(state, rename_tabs)
         except Exception as exc:
             _log("backfill error: %r" % (exc,))
@@ -855,20 +1138,37 @@ def cmd_watch() -> int:
         # events stream in — a busy pane keeps select readable, so an idle-timeout
         # tick would starve and an event-less rename would never be re-checked.
         next_tick = time.time() + interval
+        # The backfill above ran on authoritative state; everything the stream is
+        # about to replay is history. Freeze the bookmark rules until it goes quiet.
+        state["marks_frozen"] = True
+        last_event = time.time()
         try:
             while True:
                 if sockpath and not os.path.exists(sockpath):
                     _log("socket gone, exiting")
                     sock.close()
                     return 0
-                ready, _, _ = select.select([sock], [], [], max(0.0, next_tick - time.time()))
+                timeout = max(0.0, next_tick - time.time())
+                if state["marks_frozen"]:
+                    # cap the wait so a drained replay is noticed in ~1s rather than
+                    # at the next tick, up to a minute away
+                    timeout = min(timeout, REPLAY_QUIET)
+                ready, _, _ = select.select([sock], [], [], timeout)
+                if not ready:
+                    if state["marks_frozen"] and time.time() - last_event >= REPLAY_QUIET:
+                        state["marks_frozen"] = False
+                        _dlog("event replay drained; bookmark rules live")
                 if ready:
                     data = sock.recv(65536)
                     if not data:
                         _log("event stream closed; reconnecting")
                         break
+                    last_event = time.time()
                     buf += data
                     applied = 0
+                    # a bookmark added by the action lands as a file write, not an
+                    # event, so pick it up before interpreting this batch.
+                    _redraw_marks(sync_marks(state), state, rename_tabs)
                     while b"\n" in buf:
                         line, buf = buf.split(b"\n", 1)
                         if not line.strip():
@@ -891,6 +1191,11 @@ def cmd_watch() -> int:
                                 applied += 1
                             else:
                                 _forget_pane(pid, state)  # agent released this pane
+                        elif et == "pane_focused":
+                            pid = d.get("pane_id")
+                            if pid:
+                                _redraw_marks(_focus_marks(pid, state), state,
+                                              rename_tabs)
                         elif et in ("pane_closed", "pane_exited"):
                             pid = d.get("pane_id")
                             if pid:
@@ -900,6 +1205,11 @@ def cmd_watch() -> int:
                 if time.time() >= next_tick:
                     # refresh tick: re-read agent names and transcripts / the Codex
                     # index as the fallback for changes that fire no event.
+                    # A full interval of traffic without a quiet gap means the session
+                    # is genuinely busy, not replaying — thaw rather than stay frozen
+                    # forever, since this tick reconciles from authoritative state.
+                    state["marks_frozen"] = False
+                    sync_marks(state)   # _refresh_all redraws, so no separate redraw
                     _refresh_all(state, rename_tabs)
                     next_tick = time.time() + interval
                     if debug:
@@ -1095,6 +1405,39 @@ def _rename_loop(stdscr, target: str, agent: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
+def cmd_bookmark() -> int:
+    """Toggle the bookmark marker on the focused agent pane (the titles.bookmark action).
+
+    Resolves its target the same way the rename action does — the pane the user was
+    looking at when the key fired — and writes the $name token itself rather than
+    waiting for the daemon. A marker exists to be seen before you look away, and
+    looking away is precisely what it is for.
+
+    The same key takes it back off, so a mis-hit costs one keypress.
+    """
+    caller = (context_pane(os.environ.get("HERDR_PLUGIN_CONTEXT_JSON") or "")
+              or (os.environ.get("HERDR_PANE_ID") or "")).strip()
+    target = resolve_target_pane(agent_list(), caller)
+    if not target:
+        notify("Bookmark", "No agent in this pane.")
+        return 1
+
+    marked = target not in load_bookmarks()
+
+    def toggle(marks: dict) -> dict:
+        out = {k: v for k, v in marks.items() if k != target}
+        if marked:
+            out[target] = PHASE_ARMED
+        return out
+
+    update_bookmarks(toggle)
+    agent = agent_info(target)
+    if agent:
+        apply_pane(agent, tab_rename_enabled(), name=agent.get("name") or "",
+                   marked=marked)
+    return 0
+
+
 def cmd_report() -> int:
     raw = os.environ.get("HERDR_PLUGIN_EVENT_JSON")
     if not raw:
@@ -1134,8 +1477,11 @@ def main(argv: list[str]) -> int:
         return cmd_rename_open()
     if cmd == "rename-ui":
         return cmd_rename_ui()
+    if cmd == "bookmark":
+        return cmd_bookmark()
     sys.stderr.write(
-        "usage: titles.py <ensure|watch|report|report-all|rename-open|rename-ui>\n")
+        "usage: titles.py "
+        "<ensure|watch|report|report-all|rename-open|rename-ui|bookmark>\n")
     return 2
 
 
