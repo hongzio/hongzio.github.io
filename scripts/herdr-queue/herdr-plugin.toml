@@ -1,0 +1,29 @@
+id = "queue"
+name = "Queued Questions"
+version = "0.1.0"
+description = "Per-agent-session queue of pending questions: capture the composer draft (even mid-turn), pick one back from a popup"
+min_herdr_version = "0.8.0"   # agent_session on agent get (0.8.0); popup placement (0.7.4)
+platforms = ["macos"]
+
+# The popup: a curses list of the focused agent's queued questions. Height in
+# cells (title + ~14 items + hint), width a % since questions vary. The action
+# below resolves the target pane/session and hands them over via env — once
+# the popup grabs focus it can only see its own pane's context (same trick as
+# nav's fav-open).
+[[panes]]
+id = "queue-picker"
+title = "Queued questions"
+placement = "popup"
+width = "62%"
+height = 18
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/questions.py\" ui"]
+
+# Capture the focused agent's composer draft into its session queue, clear the
+# composer (backspaces, never esc — esc would interrupt a working agent and
+# capturing mid-turn is the main use case), then open the popup. With an empty
+# composer it just opens the popup.
+[[actions]]
+id = "open"
+title = "Queued questions: capture draft & open list"
+contexts = ["workspace"]
+command = ["sh", "-lc", "exec python3 \"$HERDR_PLUGIN_ROOT/questions.py\" open"]

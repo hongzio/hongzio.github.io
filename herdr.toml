@@ -235,6 +235,18 @@ type = "plugin_action"
 command = "titles.bookmark"
 description = "mark this agent unread (come back later)"
 
+# queued questions (queue plugin): stash the focused agent's composer draft into
+# its per-session queue — works mid-turn, the composer is cleared with backspaces
+# so a working agent is never interrupted — and open the queue popup. With an
+# empty composer it just opens the popup: enter feeds a question back into the
+# composer (unsubmitted), e edits, d deletes, esc closes. Queues are keyed by
+# agent session id, so they survive server restarts and `claude --resume`.
+[[keys.command]]
+key = "prefix+u"
+type = "plugin_action"
+command = "queue.open"
+description = "queued questions: stash draft / open list"
+
 [theme]
 name = "terminal"
 auto_switch = false
