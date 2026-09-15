@@ -30,6 +30,10 @@
       "src": "https://github.com/ThePrimeagen/harpoon",
       "version": "'harpoon2'"
     },
+    "imswitch": {
+      "rev": "05f376a495faf0c35078937da3ba28d67f530c13",
+      "src": "https://github.com/hongzio/imswitch"
+    },
     "kanagawa.nvim": {
       "rev": "bb85e4bfc8d89b0e62c8fa53ccdd13d12e2f77b3",
       "src": "https://github.com/rebelot/kanagawa.nvim"

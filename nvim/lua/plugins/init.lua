@@ -64,6 +64,14 @@ vim.pack.add({
 
   -- Virgil: notes pinned onto code lines, readable/writable by agents over RPC.
   { src = 'https://github.com/hongzio/virgil.nvim' },
+
+  -- imswitch: forces the macOS input source back to ASCII when nvim moves into
+  -- command input (FocusGained / InsertLeave / CmdlineEnter), over a socket to
+  -- the Imswitch.app daemon — `brew services start imswitch`. Works the same
+  -- over SSH, via the reverse tunnel in `imswitch ssh-config`. Self-wiring, and
+  -- every default already fits here, so there is no plugins/imswitch.lua: a
+  -- setup({}) would only re-register the identical autocmds.
+  { src = 'https://github.com/hongzio/imswitch' },
 })
 
 -- Order matters: blink first (LSP capabilities), then the rest.
