@@ -36,3 +36,5 @@ map('n', '<leader>fs', fzf.lsp_document_symbols, { desc = 'Document symbols' })
 map('n', '<leader>fS', fzf.lsp_live_workspace_symbols, { desc = 'Workspace symbols (live)' })
 map('n', '<leader>/', fzf.blines, { desc = 'Search in buffer' })
 map('n', '<leader><space>', fzf.files, { desc = 'Find files' })
+-- Note: while multicursor is active its layer claims <C-p> (delete cursor).
+map('n', '<C-p>', fzf.keymaps, { desc = 'Keymaps' })
