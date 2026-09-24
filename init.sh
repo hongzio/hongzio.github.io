@@ -279,14 +279,30 @@ else
   echo -e "${GREEN}Skipping Herdr installation, already completed.${NC}"
 fi
 
+if ! check_step "brew_install_tinycast"; then
+  echo -e "${RED}Installing tinycast...${NC}"
+  $BREW_PATH trust --tap abue-ammar/tinycast || {
+    echo -e "${RED}Failed to trust abue-ammar/tinycast tap${NC}"
+    exit 1
+  }
+  $BREW_PATH tap abue-ammar/tinycast || {
+    echo -e "${RED}Failed to tap abue-ammar/tinycast${NC}"
+    exit 1
+  }
+  $BREW_PATH install --cask tinycast || {
+    echo -e "${RED}Failed to install tinycast${NC}"
+    exit 1
+  }
+  mark_step "brew_install_tinycast"
+else
+  echo -e "${GREEN}Skipping tinycast installation, already completed.${NC}"
+fi
+
 apps=(
   "obsidian"
   "pronotes"
   "firefox"
-  "raycast"
   "mas"
-  "maccy"
-  "rectangle"
   "hiddenbar"
   "surfshark"
   "font-hack-nerd-font"
@@ -294,6 +310,7 @@ apps=(
   "gureumkim"
   "bitwarden"
   "lazygit"
+  "age"
 )
 
 for app in "${apps[@]}"; do

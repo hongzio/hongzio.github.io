@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+PLAIN_DEFAULT="${REPO_ROOT}/backup.tinycast"
+CIPHER_DEFAULT="${REPO_ROOT}/backup.tinycast.age"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/tinycast-backup encrypt [plaintext] [ciphertext]
+  scripts/tinycast-backup decrypt [ciphertext] [plaintext]
+  scripts/tinycast-backup --help
+
+Encrypt a TinyCast backup with an age passphrase before it is committed.
+
+A raw .tinycast file is NOT encrypted -- it is an LZFSE-compressed archive that
+anyone can unpack without a key, and it holds clipboard history. This repo is
+public and is served at hongzio.com, so only the .age file may be committed.
+
+Defaults:
+  plaintext   backup.tinycast
+  ciphertext  backup.tinycast.age
+
+encrypt prompts for a passphrase and leaves the plaintext in place (it is
+gitignored); remove it yourself once the .age file is committed.
+decrypt refuses to overwrite an existing plaintext unless -f is given.
+EOF
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+require_age() {
+  command -v age >/dev/null 2>&1 || die "age is not installed. Run: brew install age"
+}
+
+cmd_encrypt() {
+  local plain="${1:-$PLAIN_DEFAULT}"
+  local cipher="${2:-$CIPHER_DEFAULT}"
+
+  [[ -f "$plain" ]] || die "no plaintext backup at $plain"
+
+  age -p -o "$cipher" "$plain"
+  chmod 600 "$plain" "$cipher"
+
+  echo "encrypted $(basename "$plain") -> $(basename "$cipher")"
+  echo "commit $(basename "$cipher") only; $(basename "$plain") stays gitignored."
+}
+
+cmd_decrypt() {
+  local force=0
+  if [[ "${1:-}" == "-f" ]]; then
+    force=1
+    shift
+  fi
+
+  local cipher="${1:-$CIPHER_DEFAULT}"
+  local plain="${2:-$PLAIN_DEFAULT}"
+
+  [[ -f "$cipher" ]] || die "no encrypted backup at $cipher"
+  if [[ -e "$plain" && $force -eq 0 ]]; then
+    die "$plain already exists; pass -f to overwrite"
+  fi
+
+  age -d -o "$plain" "$cipher"
+  chmod 600 "$plain"
+
+  echo "decrypted $(basename "$cipher") -> $plain"
+  echo "import it from TinyCast, then delete the plaintext."
+}
+
+main() {
+  local subcommand="${1:-}"
+  [[ $# -gt 0 ]] && shift || true
+
+  case "$subcommand" in
+    encrypt)
+      require_age
+      cmd_encrypt "$@"
+      ;;
+    decrypt)
+      require_age
+      cmd_decrypt "$@"
+      ;;
+    -h | --help | help | "")
+      usage
+      ;;
+    *)
+      usage >&2
+      die "unknown subcommand: $subcommand"
+      ;;
+  esac
+}
+
+main "$@"

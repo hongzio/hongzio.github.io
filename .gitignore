@@ -1,1 +1,4 @@
 zed/prompts/
+
+# TinyCast backups are unencrypted clipboard history; commit only the .age file
+*.tinycast
