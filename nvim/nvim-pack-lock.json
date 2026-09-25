@@ -31,7 +31,7 @@
       "version": "'harpoon2'"
     },
     "imswitch": {
-      "rev": "05f376a495faf0c35078937da3ba28d67f530c13",
+      "rev": "4bf7b49f8fe9c95c50f23ff006244981b631003c",
       "src": "https://github.com/hongzio/imswitch"
     },
     "kanagawa.nvim": {

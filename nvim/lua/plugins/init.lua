@@ -62,9 +62,11 @@ vim.pack.add({
   -- imswitch: forces the macOS input source back to ASCII when nvim moves into
   -- command input (FocusGained / InsertLeave / CmdlineEnter), over a socket to
   -- the Imswitch.app daemon — `brew services start imswitch`. Works the same
-  -- over SSH, via the reverse tunnel in `imswitch ssh-config`. Self-wiring, and
-  -- every default already fits here, so there is no plugins/imswitch.lua: a
-  -- setup({}) would only re-register the identical autocmds.
+  -- over SSH and inside containers: the same request also rides an escape
+  -- sequence in the terminal stream, which `imswitch remote -- <cmd>` strips
+  -- back out on the Mac. Self-wiring, and every default already fits here, so
+  -- there is no plugins/imswitch.lua: a setup({}) would only re-register the
+  -- identical autocmds.
   { src = 'https://github.com/hongzio/imswitch' },
 })
 
