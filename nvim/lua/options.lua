@@ -25,6 +25,63 @@ o.undofile = true             -- persistent undo
 o.swapfile = false
 o.clipboard = 'unnamedplus'
 
+-- Clipboard. pbcopy takes every register write, as the builtin provider did.
+-- Yanks, and only yanks, also go out as OSC 52, which reaches the terminal in
+-- front of you through ssh, herdr and `imswitch remote`; pbcopy only reaches
+-- this box, and which box you are sitting at cannot be told from here.
+do
+  local pb = vim.fn.executable('pbcopy') == 1
+  local last = { ['+'] = {}, ['*'] = {} } -- what `p` reads back without pbpaste
+
+  local function copy(reg)
+    return function(lines)
+      last[reg] = lines
+      if pb then vim.system({ 'pbcopy' }, { stdin = table.concat(lines, '\n') }):wait() end
+    end
+  end
+
+  -- keepempty keeps a linewise yank's trailing '' so that nvim matches its own
+  -- cache and restores the regtype.
+  local function paste(reg)
+    return function()
+      if pb then return vim.fn.systemlist({ 'pbpaste' }, '', 1) end
+      return last[reg]
+    end
+  end
+
+  vim.g.clipboard = {
+    name = 'pbcopy+osc52',
+    copy = { ['+'] = copy('+'), ['*'] = copy('*') },
+    paste = { ['+'] = paste('+'), ['*'] = paste('*') },
+  }
+
+  -- '*' goes out as 'c' as well: Ghostty on a Mac keeps OSC 52 'p' in its own
+  -- selection pasteboard, out of reach of Cmd-V.
+  local send = require('vim.ui.clipboard.osc52').copy('+')
+  local limit = 195000 -- measured through herdr: 195000 bytes arrive, 200000 vanish
+
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    group = vim.api.nvim_create_augroup('ClipboardOsc52', { clear = true }),
+    callback = function()
+      local ev = vim.v.event
+      if ev.operator ~= 'y' then return end
+      -- A plain yank reports regname '' whatever 'clipboard' is set to.
+      local reg = ev.regname
+      if reg == '' and o.clipboard:find('unnamed') then reg = '+' end
+      if reg ~= '+' and reg ~= '*' then return end
+      -- The provider sees a trailing '' on linewise yanks; regcontents does not.
+      local lines = ev.regcontents
+      if ev.regtype == 'V' then table.insert(lines, '') end
+      send(lines)
+      local size = #table.concat(lines, '\n')
+      if not pb and size > limit then
+        vim.notify(('clipboard: %d bytes may not reach the local clipboard'):format(size),
+          vim.log.levels.WARN)
+      end
+    end,
+  })
+end
+
 -- [perf] Treesitter-based folding, opened by default.
 o.foldmethod = 'expr'
 o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
