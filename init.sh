@@ -298,6 +298,34 @@ else
   echo -e "${GREEN}Skipping tinycast installation, already completed.${NC}"
 fi
 
+if ! check_step "brew_install_imswitch"; then
+  echo -e "${RED}Installing imswitch...${NC}"
+  # trust before tap: the other order fails with "Cannot tap: invalid syntax in
+  # tap!" rather than with anything about trust.
+  $BREW_PATH trust --tap hongzio/tap || {
+    echo -e "${RED}Failed to trust hongzio/tap${NC}"
+    exit 1
+  }
+  $BREW_PATH tap hongzio/tap || {
+    echo -e "${RED}Failed to tap hongzio/tap${NC}"
+    exit 1
+  }
+  $BREW_PATH install --HEAD imswitch || {
+    echo -e "${RED}Failed to install imswitch${NC}"
+    exit 1
+  }
+  # brew services bootstraps the LaunchAgent into gui/$UID, the Aqua session.
+  # Both TIS and NSStatusItem require that session, so do not hand-write the
+  # plist.
+  $BREW_PATH services start imswitch || {
+    echo -e "${RED}Failed to start imswitch${NC}"
+    exit 1
+  }
+  mark_step "brew_install_imswitch"
+else
+  echo -e "${GREEN}Skipping imswitch installation, already completed.${NC}"
+fi
+
 apps=(
   "obsidian"
   "pronotes"
