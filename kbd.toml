@@ -1,0 +1,66 @@
+# kbd 설정 파일입니다. 저장하면 바로 반영됩니다.
+
+[toggle]
+# 한/영 전환 키입니다. 이 키는 원래 기능을 잃고 전환 전용이 됩니다.
+# caps_lock | {left,right}_{command,option,control,shift} | f13 ~ f20
+key = "right_command"
+# 수식키나 CapsLock을 고르면 HID 레벨에서 이 F키로 리매핑합니다. (f13 ~ f20)
+# F키를 key로 직접 지정하면(예: Karabiner로 이미 매핑한 경우) 리매핑하지 않습니다.
+remap_to = "f20"
+
+[hangul]
+layout = "dubeolsik"     # dubeolsik
+backspace = "jamo"       # jamo(자모 단위) | syllable(음절 단위)
+
+[escape]
+# ESC(또는 Ctrl-[)를 누르면 영문으로 전환합니다. ESC 키는 앱에 그대로 전달됩니다.
+# 기본은 꺼 두고, 아래 앱별 설정에서 필요한 앱만 켭니다.
+enabled = false
+keys = ["escape", "ctrl+["]
+
+[mode]
+# 처음 보는 앱의 모드: inherit(직전 모드 유지) | en | ko
+new_app = "inherit"
+
+# 앱별 설정 (bundle ID)
+#   on_activate = "remember"  앱마다 마지막 모드를 기억 (기본값)
+#   on_activate = "en" | "ko"  앱이 활성화될 때마다 이 모드로 시작
+#   escape = true | false      [escape].enabled를 이 앱에서만 바꿈
+# [apps."com.mitchellh.ghostty"]
+# escape = true
+
+# [apps."com.googlecode.iterm2"]
+# escape = true
+
+# [apps."com.apple.Terminal"]
+# escape = true
+
+# [apps."com.microsoft.VSCode"]
+# escape = true
+
+# [apps."com.jetbrains.intellij"]
+# escape = true
+
+# Ghostty: 터미널이라 바꿔치기가 불가능하고, 조합을 끝낸 키를 버립니다(ghostty#14272).
+#   composition = "auto" | "inline" | "marked"   조합 중인 글자 표시 방식
+#   commit_keys: 조합 중 이 키를 누르면 확정된 글자 뒤에 문자열을 붙여 한 번에 보냄
+#                키: [shift+][ctrl+][alt+][cmd+]enter|tab|escape
+[apps."com.mitchellh.ghostty"]
+composition = "marked"
+[apps."com.mitchellh.ghostty".commit_keys]
+enter = "\r"
+"shift+enter" = "\n"     # 줄바꿈(LF): Claude Code 등에서 제출 없이 줄바꿈
+tab = "\t"
+# ESC는 확정된 글자와 따로 보냅니다. 글자에 붙여 보내면 neovim처럼 kitty 키보드 프로토콜을
+# 쓰는 프로그램에서 Ghostty가 글자를 버리기 때문입니다.
+# 값을 두 번 반복한 것은 macOS가 제어 문자 하나만 담긴 입력을 전달하지 않기 때문입니다.
+# Ghostty는 제어 문자로 시작하는 입력을 ESC 키 한 번으로 보내므로, 실제로는 ESC가 한 번만 갑니다.
+escape = "\u001B\u001B"
+
+# 소켓 IPC. 이 섹션을 쓰면 적은 소켓만 열립니다.
+[[ipc.socket]]
+path = "~/.local/state/kbd/kbd.sock"
+
+# imswitch 클라이언트(nvim 플러그인, imswitch remote)용. switch = set en (기본 요청)
+[[ipc.socket]]
+path = "~/.local/state/imswitch/imswitch.sock"

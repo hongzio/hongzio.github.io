@@ -314,16 +314,30 @@ if ! check_step "brew_install_imswitch"; then
     echo -e "${RED}Failed to install imswitch${NC}"
     exit 1
   }
-  # brew services bootstraps the LaunchAgent into gui/$UID, the Aqua session.
-  # Both TIS and NSStatusItem require that session, so do not hand-write the
-  # plist.
-  $BREW_PATH services start imswitch || {
-    echo -e "${RED}Failed to start imswitch${NC}"
-    exit 1
-  }
+  # Don't start the imswitch service: kbd serves imswitch's socket itself. A
+  # running service could take the socket first and switch the input source to
+  # ABC, away from kbd.
   mark_step "brew_install_imswitch"
 else
   echo -e "${GREEN}Skipping imswitch installation, already completed.${NC}"
+fi
+
+if ! check_step "brew_install_kbd"; then
+  echo -e "${RED}Installing kbd...${NC}"
+  # hongzio/tap is trusted and tapped by the imswitch step above.
+  $BREW_PATH install --cask kbd || {
+    echo -e "${RED}Failed to install kbd${NC}"
+    exit 1
+  }
+  mkdir -p $HOME/.config/kbd
+  ln -s -f $HOME/.hongzio.github.io/kbd.toml $HOME/.config/kbd/config.toml || {
+    echo -e "${RED}Failed to link kbd config${NC}"
+    exit 1
+  }
+  echo -e "${RED}kbd is installed. Add it in System Settings > Keyboard > Input Sources (log out and back in if it isn't listed)${NC}"
+  mark_step "brew_install_kbd"
+else
+  echo -e "${GREEN}Skipping kbd installation, already completed.${NC}"
 fi
 
 apps=(
@@ -335,7 +349,6 @@ apps=(
   "surfshark"
   "font-hack-nerd-font"
   "font-d2coding-nerd-font"
-  "gureumkim"
   "bitwarden"
   "lazygit"
   "age"
