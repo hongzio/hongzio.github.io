@@ -18,4 +18,13 @@ require('copilot').setup({
     },
   },
   panel = { enabled = false }, -- inline only, no panel window
+  -- Per-project opt-out: never attach (so never send buffer contents) inside a
+  -- tree that has a `.nocopilot` marker in any ancestor dir. Setting this
+  -- replaces the default hook, so keep its buflisted/buftype checks first.
+  should_attach = function(buf, name)
+    if not require('copilot.config.should_attach').default(buf, name) then
+      return false
+    end
+    return vim.fs.root(buf, '.nocopilot') == nil
+  end,
 })
