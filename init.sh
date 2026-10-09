@@ -342,7 +342,6 @@ fi
 
 apps=(
   "obsidian"
-  "pronotes"
   "firefox"
   "mas"
   "hiddenbar"
