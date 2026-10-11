@@ -92,9 +92,36 @@ vim.lsp.config('basedpyright', {
   end,
 })
 
+-- zls (install: `mise install` in the project; versions pinned in mise.toml).
+-- cmd is a bare 'zls' on purpose: no version manager leaks into this config, so
+-- swapping mise for a plain tarball later needs no change here. The trade-off is
+-- that a project-pinned toolchain is only visible when nvim is launched from
+-- inside that project.
+--
+-- zls's own analysis is largely syntactic; real compile errors come from it
+-- shelling out to the `zig` on PATH (build-on-save). That costs a `zig build`
+-- per save, which also grows .zig-cache -- set enable_build_on_save = false to
+-- trade diagnostics for disk/CPU.
+vim.lsp.config('zls', {
+  cmd = { 'zls' },
+  filetypes = { 'zig' }, -- nvim resolves *.zon to the zig filetype as well
+  root_markers = { 'build.zig', 'build.zig.zon', '.git' },
+  settings = {
+    -- Only non-defaults are listed; zls already defaults semantic_tokens to
+    -- 'full' and every inlay hint to on (the LspAttach autocmd below turns
+    -- inlay hints on for any server that advertises them).
+    zls = {
+      enable_build_on_save = true,
+      warn_style = true,               -- flag non-idiomatic naming/style
+      skip_std_references = true,      -- keep grr output to project code
+      inlay_hints_hide_redundant_param_names = true,
+    },
+  },
+})
+
 -- Enable the servers you have installed. Add more names here after declaring
 -- their vim.lsp.config above.
-vim.lsp.enable({ 'lua_ls', 'gopls', 'basedpyright' })
+vim.lsp.enable({ 'lua_ls', 'gopls', 'basedpyright', 'zls' })
 
 -- Extra keymaps on attach. Neovim 0.11 already provides defaults: K (hover),
 -- grn (rename), <C-s> (signature help in insert). We override the navigation /

@@ -57,6 +57,9 @@ the box:
 - `basedpyright` — `uv tool install basedpyright` (a single install serves every
   project and Python version; `on_init` points it at the project venv
   — `.mise/python/venv` or a plain `.venv` — so its packages resolve)
+- `zls` — `mise install` in the project (versions pinned in `mise.toml`; `cmd`
+  is a bare `zls` from `PATH`, so start nvim inside the project to pick up its
+  pinned toolchain — build-on-save diagnostics need `zig` there too)
 
 Add a server: declare `vim.lsp.config('<name>', {...})` and add its name to
 `vim.lsp.enable({...})` in `lua/plugins/lsp.lua`.
