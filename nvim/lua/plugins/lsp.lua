@@ -127,7 +127,9 @@ vim.lsp.enable({ 'lua_ls', 'gopls', 'basedpyright', 'zls' })
 -- grn (rename), <C-s> (signature help in insert). We override the navigation /
 -- list actions with fzf-lua pickers (preview window with surrounding code), and
 -- add grh/grs so hover and signature help live in the gr* family in normal mode
--- (K still works). Buffer-local maps take precedence over Neovim's gr* defaults.
+-- (K still works). <C-s> is mirrored into normal mode so signature help has the
+-- same key in both modes. Buffer-local maps take precedence over Neovim's gr*
+-- defaults.
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     local buf = args.buf
@@ -143,6 +145,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map('gra', fzf.lsp_code_actions, 'Code actions')
     map('grh', vim.lsp.buf.hover, 'Hover')
     map('grs', vim.lsp.buf.signature_help, 'Signature help')
+    map('<C-s>', vim.lsp.buf.signature_help, 'Signature help')
     map('<leader>f', function() vim.lsp.buf.format({ async = true }) end, 'Format buffer')
 
     -- [perf] Enable inlay hints if the server supports them.

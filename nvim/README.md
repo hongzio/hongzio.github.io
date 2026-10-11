@@ -124,7 +124,7 @@ Directional moves stay on `<C-h>` / `<C-w>h/j/k/l`; `<C-w>` is untouched.
 | `grr` / `gri` / `grt` | References / implementations / type definitions |
 | `gra` / `grn` | Code actions / rename |
 | `grh` / `K` | Hover (also `K`) |
-| `grs` | Signature help (also `<C-s>` in insert) |
+| `grs` / `<C-s>` | Signature help (`<C-s>` also in insert) |
 | `gO` | Document symbols |
 | `<leader>f` | Format buffer |
 
