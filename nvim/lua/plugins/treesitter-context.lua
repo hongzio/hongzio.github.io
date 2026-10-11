@@ -7,7 +7,8 @@ require('treesitter-context').setup({
   separator = nil,      -- no underline separator (minimal)
 })
 
--- Toggle, matching the <leader>t* toggle convention (tt terminal, tb blame).
-vim.keymap.set('n', '<leader>tc', function()
+-- Toggle, matching the <leader>u* toggle convention (ub blame). <leader>t* is
+-- for test runners.
+vim.keymap.set('n', '<leader>uc', function()
   require('treesitter-context').toggle()
 end, { desc = 'Toggle treesitter context' })

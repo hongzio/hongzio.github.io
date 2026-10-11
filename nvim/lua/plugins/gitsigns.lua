@@ -39,7 +39,7 @@ require('gitsigns').setup({
 
     -- Blame.
     map('n', '<leader>gb', function() gs.blame_line({ full = true }) end, 'Blame line (full)')
-    map('n', '<leader>tb', gs.toggle_current_line_blame, 'Toggle inline blame')
+    map('n', '<leader>ub', gs.toggle_current_line_blame, 'Toggle inline blame')
 
     -- Diff whole file against index / last commit.
     map('n', '<leader>gd', gs.diffthis, 'Diff against index')
