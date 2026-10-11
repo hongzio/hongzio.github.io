@@ -220,6 +220,27 @@ UI toggles live under `<leader>u`; `<leader>t` is for tests.
 |-----|--------|
 | `<leader>e` / `<leader>q` | Line diagnostics float / send to loclist |
 
+### Tests (buffer-local, per filetype)
+
+Every filetype with a test runner binds the same keys and a buffer-local
+`:Test nearest|file|all|last` to its own runner. Results go to quickfix.
+
+| Key | Action |
+|-----|--------|
+| `<leader>tn` | Test under cursor |
+| `<leader>tf` | Every test in this file |
+| `<leader>ta` | Whole suite |
+| `<leader>tl` | Re-run the last test command |
+
+Runners:
+
+- Zig (`lua/zigtest.lua`) — `tn` / `tf` run `zig test <file>` (`tn` adds
+  `--test-filter <name>`), `ta` runs `zig build test`. Frames outside the
+  project are dropped, so `]q` stops on your own code; a passing run opens
+  quickfix only when the tests printed something. `tn` / `tf` reach files no
+  build step imports yet but break on package `@import`s — use `ta` once the
+  file is wired into `build.zig`.
+
 ## Maintenance
 
 - `:Pack update` — update plugins
@@ -232,6 +253,8 @@ UI toggles live under `<leader>u`; `<leader>t` is for tests.
 init.lua              loader, leader, requires
 lua/options.lua       options + perf (providers/builtins off, ts folds)
 lua/keymaps.lua       general keymaps
+lua/zigtest.lua       Zig test runner (quickfix)
+ftplugin/zig.lua      zig buffer test keymaps + :Test
 lua/plugins/
   init.lua            vim.pack.add + require order
   blink.lua           completion
