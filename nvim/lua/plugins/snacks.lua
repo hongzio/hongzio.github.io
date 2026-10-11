@@ -22,7 +22,14 @@ map('n', '<leader>fp', function() Snacks.picker.projects() end, { desc = 'Projec
 -- Floating toggle terminal. Mapped in BOTH normal and terminal mode so the same
 -- key opens it and closes it from inside (no need to leave terminal mode first).
 -- Reuses the same instance, so it hides/restores. Inherits the shell env (mise).
-map({ 'n', 't' }, '<leader>tt', function()
+--
+-- Not on <leader>: a terminal-mode map that starts with <Space> holds every
+-- space typed into the shell for 'timeoutlen'. <C-_> is the same key on a
+-- terminal without the kitty keyboard protocol (Ctrl-/ arrives as 0x1F); the
+-- cost is that a shell inside nvim loses Ctrl-_ (undo in zsh/readline).
+local function toggle_terminal()
   Snacks.terminal.toggle(nil, { win = { position = 'float' } })
-end, { desc = 'Toggle terminal (float)' })
+end
+map({ 'n', 't' }, '<C-/>', toggle_terminal, { desc = 'Toggle terminal (float)' })
+map({ 'n', 't' }, '<C-_>', toggle_terminal, { desc = 'Toggle terminal (float)' })
 -- snacks already maps <Esc><Esc> inside the terminal to reach normal mode.

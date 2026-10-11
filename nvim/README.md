@@ -202,7 +202,7 @@ needed and `:Copilot status` to check. Requires `node` on `PATH` (via mise).
 
 | Key | Action |
 |-----|--------|
-| `<leader>tt` | Toggle floating terminal (works from inside too) |
+| `<C-/>` | Toggle floating terminal (works from inside too) |
 | `<Esc><Esc>` (terminal) | Go to normal mode (snacks) |
 
 ### Diagnostics
